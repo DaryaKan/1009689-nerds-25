@@ -1,7 +1,7 @@
 # Личный проект «Нёрдс»
 
 * Студент: [Darya Kan](https://up.htmlacademy.ru/htmlcss/25/user/1009689).
-* Наставник: `Неизвестно`.
+* Наставник: [Сережа Петтай](https://up.htmlacademy.ru/htmlcss/25/user/970211).
 
 ---
 
