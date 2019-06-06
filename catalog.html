@@ -11,23 +11,83 @@
           <img src="img/nerds-logo.svg" width="100" height="50" alt="Нёрдс">
         </a>
         <ul class="site-navigation">
+          <li><a href="#">СТУДИЯ</a></li>
+          <li><a href="#">КЛИЕНТЫ</a></li>
+          <li><a href="#">МАГАЗИН</a></li>
+          <li><a href="#">КОНТАКТЫ</a></li>
           <li><a href="info.html">СТУДИЯ</a></li>
           <li><a href="clients.html">КЛИЕНТЫ</a></li>
           <li><a href="catalog.html">МАГАЗИН</a></li>
           <li><a href="contacts.html">КОНТАКТЫ</a></li>
         </ul>
         <ul class="user-navigation">
-          <li class="cart">КОРЗИНА</li>
+          <li class="cart.html">КОРЗИНА</li>
         </ul>
       </nav>
     </header>
     <main class="container">
       <h1 class="page-title">Магазин готовых шаблонов</h1>
 
-  <!--     <section class="filters">-->
-        <!--   <h2 class="visually-hidden">Фильтр товаров</h2> -->
-        <!-- Здесь будет форма -->
-    <!--   </section> -->
+      <section class="filter-panel">
+         <h2 class="visibility-hidden">Фильтр шаблонов</h2>
+         <!-- Здесь будет форма -->
+         <h2 class="visually-hidden">Фильтр шаблонов</h2>
+         <form class="filter" method="get" action="https://echo.htmlacademy.ru">
+           <fieldset>
+             <legend>
+               Сетка:
+             </legend>
+             <ul>
+               <li class="filter-option">
+                 <input type="checkbox" name="adaptive" id="filter-adaptive" checked>
+                 <label for="filter-adaptive">
+                   Адаптивная
+                 </label>
+               </li>
+               <li class="filter-option">
+                 <input type="checkbox" name="adaptive" id="filter-fixed">
+                 <label for="filter-fixed">
+                   Фиксированная
+                 </label>
+               </li>
+               <li class="filter-option">
+                 <input type="checkbox" name="adaptive" id="filter-rubber">
+                 <label for="filter-rubber">
+                   Резиновая
+                 </label>
+               </li>
+             </ul>
+           </fieldset>
+           <fieldset>
+             <legend>
+               Особенности:
+             </legend>
+             <ul>
+               <li class="filter-option">
+                 <input type="radio" name="filter-features" value="slider" id="filter-slider">
+                 <label for="filter-slider">Слайдер</label>
+               </li>
+               <li class="filter-option">
+                 <input type="radio" name="filter-features" value="features-block" id="filter-features-block">
+                 <label for="filter-features-block">Блок преимуществ</label>
+               </li>
+               <li class="filter-option">
+                 <input type="radio" name="filter-features" value="news" id="filter-news">
+                 <label for="filter-news">Новости</label>
+               </li>
+               <li class="filter-option">
+                 <input type="radio" name="filter-features" value="gallery" id="filter-gallery">
+                 <label for="filter-gallery">Галерея</label>
+               </li>
+               <li class="filter-option">
+                 <input type="radio" name="filter-features" value="cart" id="filter-cart">
+                 <label for="filter-cart">Корзина</label>
+               </li>
+             </ul>
+           </fieldset>
+           <button class="button" type="submit">Показать</button>
+         </form>
+       </section>
 
     <section class="catalog">
             <ul class="catalog-list">
