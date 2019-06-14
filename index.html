@@ -46,6 +46,19 @@
           </section>
           </main>
 
+    <section class="contacts">
+        <h2 class="visually-hidden">Наши контакты</h2>
+        <div class="center">
+            <div class="contacts-card">
+                <h3>Nёrds design studio</h3>
+                <p>191186, Санкт-Петербург,
+                ул. Б. Конюшенная, д. 19/8</p>
+                <p>тел. +7 (812) 275-75-75</p>
+                <a href="email.html" class="button contacts-button">Напишите нам</a>
+            </div>
+        </div>
+    </section>
+
     <footer class="main-footer">
         <ul class="social-btns">
         <li class="social-button-vk"><a href="#" class="visually-hidden">ВКонтакте</a></li>
@@ -56,5 +69,22 @@
         <span>Давайте дружить, это выгодно!<br></span>
         Скидка 10% для друзей из социальных сетей.</p>
     </footer>
+    
+    <div class="container">
+      <section class="write-us-hidden" id="modal">
+          <h3>Напишите нам</h3>
+          <a><span class="modal-close"></span></a>
+          <form class="form-write-us" method="post">
+          <p><label for="name">Ваше имя:</label>
+          <input type="text" id="name" class="write-name" name="name" placeholder="Представтесь, пожалуйста" required></p>
+          <p><label for="email">Ваш e-mail:</label>
+          <input type="text" id="email" class="write-email" name="email" placeholder="Для отправки ответа" required></p>
+          <label for="message">Текст письма:</label>
+          <textarea name="message" id="message" class="write-message" cols="30" rows="10" required>В свободной форме</textarea>
+          <button class="button-submit">Отправить</button>
+      </form>
+      </section>
+  </div>
+<script src="js/modal.popup.js"></script>
   </body>
 </html>
