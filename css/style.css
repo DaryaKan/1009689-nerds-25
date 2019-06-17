@@ -789,3 +789,8 @@ body {
 	  font: 400 11px system-ui;
   }
   
+  .maps iframe {
+	width: 1200px;
+	height: 416px;
+	border: none;
+  }
