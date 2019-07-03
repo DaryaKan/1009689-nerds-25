@@ -14,14 +14,10 @@ body {
 }
 
 .main-navigation {
-	font-size: 16px;
-	line-height: 30px;
-	color: #000000;
-	background-color: #eeeeee;
 	display: flex;
 	flex-wrap: wrap;
-	margin: auto;
 	width: 1200px;
+	margin: auto;
 	justify-content: space-between;
 }
 
@@ -41,18 +37,21 @@ body {
 }
 
 .site-navigation {
+	display: flex;
+	flex-wrap: wrap;
+	flex-direction: row;
+	justify-content: center;
 	max-width: 825px;
 	margin-top: 78px;
 	margin-bottom: 0;
 	padding: 0 30px;
 	font-weight: 500;
 	list-style: none;
-	justify-content: center;
 }
 
 .site-navigation li{
-	display: inline;
 	padding-right: 45px;
+	margin-bottom: 16px
 }
 
 .site-navigation a,
@@ -82,7 +81,7 @@ body {
 .order-cart {
 	/*display: block;*/
 	background: url("../img/cart-icon.svg") no-repeat 0 3px;
-	margin: 78px 0 0;
+	margin: 79px 0 0;
 	padding-left: 40px;
 	margin-right: 20px;
 }
@@ -235,9 +234,16 @@ body {
 	cursor: pointer;
 }
 
-.filter input[type="radio"] {
-	display: none;
-	position: relative;
+.filter input[type="radio"],
+.filter input[type="checkbox"] {
+    border: 0;
+    clip: rect(0 0 0 0);
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    padding: 0;
+    position: absolute;
+    width: 1px;
 }
 
 .radio {
@@ -270,8 +276,14 @@ body {
 }
 
 .filter input:checked+.radio:before {
-	-webkit-transform: scale(1);
 	transform: scale(1);
+}
+
+.filter input:focus+.radio:before {
+	outline: rgb(59, 153, 252) auto 5px;
+}
+.filter input:focus+.radio {
+	outline: rgb(59, 153, 252) auto 5px;
 }
 
 .filter span {
@@ -299,17 +311,19 @@ body {
 	cursor: pointer;
 }
 
-.filter input[type="checkbox"] {
-	display: none;
-}
-
 .filter-features span:hover {
 	color: #000;
 }
 
 .filter input:checked+.checkbox:before {
-	-webkit-transform: scale(1);
 	transform: scale(1);
+}
+
+.filter input:focus+.checkbox:before {
+	outline: rgb(59, 153, 252) auto 5px;
+}
+.filter input:focus+.checkbox {
+	outline: rgb(59, 153, 252) auto 5px;
 }
 
 .filter a {
@@ -490,8 +504,14 @@ body {
 
 .item-info p {
 	text-align: center;
-	width: 230px;
+	width: 205px;
 	margin: 0 auto;
+    line-height: 20px;
+}
+
+.item-info h3 {
+	text-transform: uppercase;
+	margin-top: 25px
 }
 
 .catalog-link:hover .item-info {
@@ -518,8 +538,9 @@ body {
 
 .button-buy {
 	border: none;
-	margin: 10px 0 50px;
+	margin: 25px 0 40px;
 	cursor: pointer;
+	padding: 14px 60px;
 }
 
 
@@ -668,7 +689,7 @@ background: url("../img/fb-icon-active.svg") no-repeat center center
 }
 
 .contacts-button {
-	font-family: Roboto, Verdana, sans-serif;
+	font-family: Roboto, Arial, sans-serif;
 	font-weight: 500;
 	margin: 22px 0 20px;
 	display: inline-block;
@@ -903,7 +924,7 @@ a {
 }
 
 .form-write-us textarea {
-	font-family: Roboto, Verdana, sans-serif;
+	font-family: Roboto, Arial, sans-serif;
 	width: 758px;
 	height: 110px;
 	border: 2px solid rgba(0, 0, 0, 0.1);
@@ -1079,6 +1100,25 @@ a {
 .slide3:checked~.controls label:nth-of-type(3):after {
 	opacity: 1;
 	border: 2px solid silver;
+}
+
+.button-grey {
+	font-family: 'Roboto', 'Verdana', sans-serif;
+	font-weight: 500;
+	border: none;
+	background-color: #eee;
+	margin-top: 33px;
+	color: #000
+}
+
+.button-grey:hover,
+.button-grey:focus {
+	background-color: #dfdfdf
+}
+
+.button-grey:active {
+	background-color: #d5d5d5;
+	color: rgba(0, 0, 0, 0.3)
 }
 
 .studio {
