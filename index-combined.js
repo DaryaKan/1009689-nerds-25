@@ -59,7 +59,7 @@ Respond ONLY with JSON (no markdown):
 Set confidence to true if you can identify the marketplace. Only set false if you truly cannot determine it.`;
 
   // Try different API endpoints - using available models
-  const models = ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-pro-vision'];
+  const models = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-2.5-pro'];
   
   for (const model of models) {
     try {
@@ -469,7 +469,7 @@ app.get('/api/test-gemini', async (req, res) => {
   }
   
   try {
-    const models = ['gemini-1.5-flash', 'gemini-1.5-pro'];
+    const models = ['gemini-2.5-flash', 'gemini-2.0-flash'];
     const results = [];
     
     for (const model of models) {
