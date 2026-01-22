@@ -687,25 +687,52 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
+      gap: 12px;
     }
 
     .detail-label {
       font-size: 13px;
       color: var(--text-muted);
+      white-space: nowrap;
     }
 
-    .detail-value {
-      font-size: 14px;
-      font-weight: 500;
+    .detail-select {
+      flex: 1;
+      max-width: 200px;
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 13px;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      cursor: pointer;
+    }
+
+    .detail-select:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .detail-date-input,
+    .detail-text-input {
+      flex: 1;
+      max-width: 200px;
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 13px;
+      background: var(--bg-primary);
       color: var(--text-primary);
     }
 
-    .detail-badge {
-      background: var(--accent);
-      color: #fff;
-      padding: 4px 12px;
-      border-radius: 20px;
-      font-size: 12px;
+    .detail-text-input {
+      max-width: 250px;
+    }
+
+    .detail-date-input:focus,
+    .detail-text-input:focus {
+      outline: none;
+      border-color: var(--accent);
     }
 
     .detail-link-container {
@@ -757,13 +784,25 @@
       border: none;
     }
 
-    .detail-btn-primary {
-      background: var(--accent);
+    .detail-btn-save {
+      background: #22c55e;
       color: #fff;
+      flex: 2;
     }
 
-    .detail-btn-primary:hover {
-      background: var(--accent-hover);
+    .detail-btn-save:hover {
+      background: #16a34a;
+    }
+
+    .detail-btn-secondary {
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      border: 1px solid var(--border);
+    }
+
+    .detail-btn-secondary:hover {
+      border-color: var(--accent);
+      color: var(--accent);
     }
 
     .detail-btn-danger {
@@ -955,19 +994,43 @@
         <div class="detail-info">
           <div class="detail-row">
             <span class="detail-label">Маркетплейс</span>
-            <span class="detail-value detail-badge" id="detailMarketplace"></span>
+            <select class="detail-select" id="detailMarketplace" onchange="markDetailChanged()">
+              <option value="Ozon">Ozon</option>
+              <option value="Wildberries">Wildberries</option>
+              <option value="Яндекс.Маркет">Яндекс.Маркет</option>
+              <option value="AliExpress">AliExpress</option>
+              <option value="СберМегаМаркет">СберМегаМаркет</option>
+              <option value="Amazon">Amazon</option>
+              <option value="Lamoda">Lamoda</option>
+              <option value="Avito">Avito</option>
+              <option value="Другой">Другой</option>
+              <option value="Не указан">Не указан</option>
+            </select>
           </div>
           <div class="detail-row">
             <span class="detail-label">Страница</span>
-            <span class="detail-value" id="detailPage"></span>
+            <select class="detail-select" id="detailPage" onchange="markDetailChanged()">
+              <option value="Главная">Главная</option>
+              <option value="Каталог">Каталог</option>
+              <option value="Карточка товара">Карточка товара</option>
+              <option value="Корзина">Корзина</option>
+              <option value="Поиск">Поиск</option>
+              <option value="Заказы">Заказы</option>
+              <option value="Профиль">Профиль</option>
+              <option value="Акции">Акции</option>
+              <option value="Избранное">Избранное</option>
+              <option value="Оформление заказа">Оформление заказа</option>
+              <option value="Другая">Другая</option>
+              <option value="Не указана">Не указана</option>
+            </select>
           </div>
           <div class="detail-row">
             <span class="detail-label">Дата</span>
-            <span class="detail-value" id="detailDate"></span>
+            <input type="date" class="detail-date-input" id="detailDate" onchange="markDetailChanged()">
           </div>
-          <div class="detail-row" id="detailDescriptionRow">
+          <div class="detail-row">
             <span class="detail-label">Описание</span>
-            <span class="detail-value" id="detailDescription"></span>
+            <input type="text" class="detail-text-input" id="detailDescription" placeholder="Добавить описание..." onchange="markDetailChanged()">
           </div>
           <div class="detail-row">
             <span class="detail-label">Ссылка</span>
@@ -978,8 +1041,11 @@
           </div>
         </div>
         <div class="detail-actions">
-          <a class="detail-btn detail-btn-primary" id="detailOpenBtn" href="" target="_blank">
-            Открыть в новой вкладке
+          <button class="detail-btn detail-btn-save" id="detailSaveBtn" onclick="saveDetailChanges()" style="display: none;">
+            Сохранить изменения
+          </button>
+          <a class="detail-btn detail-btn-secondary" id="detailOpenBtn" href="" target="_blank">
+            Открыть
           </a>
           <button class="detail-btn detail-btn-danger" id="detailDeleteBtn" onclick="deleteFromDetail()">
             Удалить
@@ -1319,30 +1385,47 @@
     }
 
     // Detail Modal
+    let detailChanged = false;
+
     function openDetailModal(imageId) {
       const img = allImages.find(i => i.id === imageId);
       if (!img) return;
       
       currentDetailImage = img;
+      detailChanged = false;
       
       const mp = img.metadata?.marketplace || 'Не указан';
       const pg = img.metadata?.page || 'Не указана';
       const date = img.metadata?.date || '';
       const desc = img.metadata?.description || '';
-      const formattedDate = date ? new Date(date).toLocaleDateString('ru-RU') : 'Не указана';
       const title = `${mp} • ${pg}`;
       
       document.getElementById('detailModalTitle').textContent = title;
       document.getElementById('detailImage').src = img.url;
-      document.getElementById('detailMarketplace').textContent = mp;
-      document.getElementById('detailPage').textContent = pg;
-      document.getElementById('detailDate').textContent = formattedDate;
-      document.getElementById('detailDescription').textContent = desc || 'Нет описания';
+      
+      // Set select values
+      const mpSelect = document.getElementById('detailMarketplace');
+      const pgSelect = document.getElementById('detailPage');
+      
+      // Set marketplace - add option if not exists
+      if (![...mpSelect.options].find(o => o.value === mp)) {
+        mpSelect.add(new Option(mp, mp));
+      }
+      mpSelect.value = mp;
+      
+      // Set page - add option if not exists
+      if (![...pgSelect.options].find(o => o.value === pg)) {
+        pgSelect.add(new Option(pg, pg));
+      }
+      pgSelect.value = pg;
+      
+      document.getElementById('detailDate').value = date;
+      document.getElementById('detailDescription').value = desc;
       document.getElementById('detailUrl').value = img.url;
       document.getElementById('detailOpenBtn').href = img.url;
       
-      // Show/hide description row if empty
-      document.getElementById('detailDescriptionRow').style.display = desc ? 'flex' : 'none';
+      // Hide save button initially
+      document.getElementById('detailSaveBtn').style.display = 'none';
       
       document.getElementById('detailModal').classList.add('active');
     }
@@ -1350,6 +1433,66 @@
     function closeDetailModal() {
       document.getElementById('detailModal').classList.remove('active');
       currentDetailImage = null;
+      detailChanged = false;
+    }
+
+    function markDetailChanged() {
+      detailChanged = true;
+      document.getElementById('detailSaveBtn').style.display = 'block';
+      
+      // Update title preview
+      const mp = document.getElementById('detailMarketplace').value;
+      const pg = document.getElementById('detailPage').value;
+      document.getElementById('detailModalTitle').textContent = `${mp} • ${pg}`;
+    }
+
+    async function saveDetailChanges() {
+      if (!currentDetailImage || !detailChanged) return;
+      
+      const saveBtn = document.getElementById('detailSaveBtn');
+      saveBtn.disabled = true;
+      saveBtn.textContent = 'Сохранение...';
+      
+      const metadata = {
+        marketplace: document.getElementById('detailMarketplace').value,
+        page: document.getElementById('detailPage').value,
+        date: document.getElementById('detailDate').value,
+        description: document.getElementById('detailDescription').value
+      };
+      
+      try {
+        const response = await fetch(`${API_URL}/api/images/${currentDetailImage.id}/metadata`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(metadata)
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          showToast('Изменения сохранены!', 'success');
+          detailChanged = false;
+          saveBtn.style.display = 'none';
+          
+          // Update local data
+          const imgIndex = allImages.findIndex(i => i.id === currentDetailImage.id);
+          if (imgIndex !== -1) {
+            allImages[imgIndex].metadata = metadata;
+          }
+          currentDetailImage.metadata = metadata;
+          
+          // Refresh gallery and filters
+          updateFilters();
+          applyFilters();
+        } else {
+          showToast('Ошибка сохранения', 'error');
+        }
+      } catch (error) {
+        showToast('Ошибка сохранения', 'error');
+      }
+      
+      saveBtn.disabled = false;
+      saveBtn.textContent = 'Сохранить изменения';
     }
 
     function openLightboxFromDetail() {

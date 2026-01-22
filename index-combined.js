@@ -416,6 +416,42 @@ app.delete('/api/images/:id', async (req, res) => {
   }
 });
 
+// Update image metadata
+app.put('/api/images/:id/metadata', express.json(), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { marketplace, page, date, description } = req.body;
+    
+    // Check if image exists
+    const existingMeta = imageMetadata.get(id);
+    if (!existingMeta) {
+      // Check if file exists in storage
+      const { data } = await supabase.storage.from(BUCKET).list('images');
+      const fileExists = data?.some(f => f.name === id);
+      if (!fileExists) {
+        return res.status(404).json({ error: 'Image not found' });
+      }
+    }
+    
+    // Update metadata
+    const newMetadata = {
+      marketplace: marketplace || existingMeta?.marketplace || '',
+      page: page || existingMeta?.page || '',
+      date: date || existingMeta?.date || '',
+      description: description !== undefined ? description : (existingMeta?.description || '')
+    };
+    
+    imageMetadata.set(id, newMetadata);
+    await saveMetadata();
+    
+    res.json({ success: true, metadata: newMetadata });
+    
+  } catch (error) {
+    console.error('Update metadata error:', error);
+    res.status(500).json({ error: 'Update failed', details: error.message });
+  }
+});
+
 // Health check
 app.get('/api/health', (req, res) => {
   res.json({
