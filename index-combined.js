@@ -461,6 +461,120 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+// Analyze images with missing metadata
+app.post('/api/analyze-missing', async (req, res) => {
+  try {
+    // Get all images
+    const { data: files, error } = await supabase.storage
+      .from(BUCKET)
+      .list('images', { limit: 1000 });
+    
+    if (error) {
+      return res.status(500).json({ error: 'Failed to list images' });
+    }
+    
+    const images = files.filter(f => f.name !== '.emptyFolderPlaceholder');
+    
+    // Find images that need analysis
+    const invalidValues = ['не указан', 'не указана', 'не определён', 'не определена', 'unknown', ''];
+    const toAnalyze = images.filter(img => {
+      const meta = imageMetadata.get(img.name);
+      if (!meta) return true;
+      const mp = (meta.marketplace || '').toLowerCase();
+      const pg = (meta.page || '').toLowerCase();
+      return invalidValues.includes(mp) || invalidValues.includes(pg);
+    });
+    
+    if (toAnalyze.length === 0) {
+      return res.json({ success: true, message: 'All images have valid metadata', analyzed: 0 });
+    }
+    
+    console.log(`Analyzing ${toAnalyze.length} images with missing metadata...`);
+    
+    let updated = 0;
+    let failed = 0;
+    const results = [];
+    
+    for (const img of toAnalyze) {
+      try {
+        // Get public URL
+        const { data: urlData } = supabase.storage
+          .from(BUCKET)
+          .getPublicUrl(`images/${img.name}`);
+        
+        // Download image
+        const imageBuffer = await new Promise((resolve, reject) => {
+          const protocol = urlData.publicUrl.startsWith('https') ? https : http;
+          protocol.get(urlData.publicUrl, (response) => {
+            const chunks = [];
+            response.on('data', (chunk) => chunks.push(chunk));
+            response.on('end', () => resolve(Buffer.concat(chunks)));
+            response.on('error', reject);
+          }).on('error', reject);
+        });
+        
+        // Analyze with AI
+        const analysis = await analyzeScreenshot(imageBuffer);
+        
+        if (analysis && analysis.marketplace) {
+          // Normalize marketplace name
+          let normalizedMp = analysis.marketplace;
+          const lower = normalizedMp.toLowerCase();
+          
+          if (lower.includes('мегамаркет') || lower.includes('сбер')) {
+            normalizedMp = 'Мегамаркет';
+          } else if (lower.includes('яндекс') && lower.includes('маркет')) {
+            normalizedMp = 'Яндекс Маркет';
+          }
+          
+          // Get existing metadata
+          const existingMeta = imageMetadata.get(img.name) || {};
+          
+          // Update metadata
+          const newMeta = {
+            marketplace: normalizedMp,
+            page: analysis.page || existingMeta.page || 'Не указана',
+            date: existingMeta.date || new Date().toISOString().split('T')[0],
+            description: analysis.description || existingMeta.description || ''
+          };
+          
+          imageMetadata.set(img.name, newMeta);
+          results.push({ id: img.name, success: true, marketplace: normalizedMp, page: analysis.page });
+          updated++;
+        } else {
+          results.push({ id: img.name, success: false });
+          failed++;
+        }
+        
+        // Small delay
+        await new Promise(r => setTimeout(r, 500));
+        
+      } catch (err) {
+        console.error(`Error analyzing ${img.name}:`, err.message);
+        results.push({ id: img.name, success: false, error: err.message });
+        failed++;
+      }
+    }
+    
+    // Save metadata
+    if (updated > 0) {
+      await saveMetadata();
+    }
+    
+    res.json({
+      success: true,
+      total: toAnalyze.length,
+      updated,
+      failed,
+      results
+    });
+    
+  } catch (error) {
+    console.error('Analyze missing error:', error);
+    res.status(500).json({ error: 'Analysis failed', details: error.message });
+  }
+});
+
 // Serve library page (now index.html)
 app.get('/library', (req, res) => {
   res.sendFile(path.join(__dirname, './index.html'));
