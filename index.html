@@ -50,6 +50,7 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
+      gap: 20px;
     }
 
     .logo {
@@ -59,10 +60,33 @@
       display: flex;
       align-items: center;
       gap: 8px;
+      white-space: nowrap;
     }
 
     .logo span {
       color: var(--accent);
+    }
+
+    .header-search {
+      flex: 1;
+      max-width: 400px;
+    }
+
+    .search-input {
+      width: 100%;
+      padding: 10px 16px;
+      padding-left: 40px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 14px;
+      background: var(--bg-secondary) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23999999'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z'%3E%3C/path%3E%3C/svg%3E") no-repeat 12px center;
+      background-size: 18px;
+    }
+
+    .search-input:focus {
+      outline: none;
+      border-color: var(--accent);
+      background-color: var(--bg-primary);
     }
 
     .upload-btn {
@@ -78,10 +102,170 @@
       align-items: center;
       gap: 8px;
       transition: background 0.2s;
+      white-space: nowrap;
     }
 
     .upload-btn:hover {
       background: var(--accent-hover);
+    }
+
+    /* Filters Bar */
+    .filters-bar {
+      background: var(--bg-primary);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 24px;
+    }
+
+    .filters-content {
+      max-width: 1400px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .filter-dropdown {
+      position: relative;
+    }
+
+    .filter-dropdown-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 14px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 13px;
+      color: var(--text-primary);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .filter-dropdown-btn:hover {
+      border-color: var(--accent);
+    }
+
+    .filter-dropdown-btn.active {
+      border-color: var(--accent);
+      background: rgba(0, 131, 255, 0.1);
+    }
+
+    .filter-dropdown-btn .arrow {
+      font-size: 10px;
+      transition: transform 0.2s;
+    }
+
+    .filter-dropdown.open .filter-dropdown-btn .arrow {
+      transform: rotate(180deg);
+    }
+
+    .filter-dropdown-btn .count {
+      background: var(--accent);
+      color: #fff;
+      font-size: 11px;
+      padding: 2px 6px;
+      border-radius: 10px;
+      margin-left: 4px;
+    }
+
+    .filter-dropdown-menu {
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0;
+      min-width: 200px;
+      background: var(--bg-primary);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+      z-index: 50;
+      display: none;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+
+    .filter-dropdown.open .filter-dropdown-menu {
+      display: block;
+    }
+
+    .filter-option {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .filter-option:hover {
+      background: var(--bg-secondary);
+    }
+
+    .filter-option input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+
+    .filter-option label {
+      flex: 1;
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    .filter-option .option-count {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .date-filter-content {
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .date-filter-content label {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+    }
+
+    .date-filter-content input {
+      padding: 8px 10px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 13px;
+      width: 100%;
+    }
+
+    .date-filter-content input:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .clear-filters-btn {
+      padding: 8px 14px;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 13px;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .clear-filters-btn:hover {
+      border-color: #dc2626;
+      color: #dc2626;
+    }
+
+    .results-count {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-left: auto;
     }
 
     /* Main Layout */
@@ -89,142 +273,6 @@
       max-width: 1400px;
       margin: 0 auto;
       padding: 24px;
-      display: grid;
-      grid-template-columns: 280px 1fr;
-      gap: 24px;
-    }
-
-    /* Sidebar - Filters */
-    .sidebar {
-      background: var(--bg-primary);
-      border-radius: 12px;
-      padding: 20px;
-      height: fit-content;
-      position: sticky;
-      top: 100px;
-      border: 1px solid var(--border);
-    }
-
-    .filter-section {
-      margin-bottom: 24px;
-    }
-
-    .filter-section:last-child {
-      margin-bottom: 0;
-    }
-
-    .filter-title {
-      font-size: 11px;
-      font-weight: 600;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      margin-bottom: 12px;
-    }
-
-    .filter-group {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-
-    .filter-item {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 8px 12px;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-
-    .filter-item:hover {
-      background: var(--bg-secondary);
-    }
-
-    .filter-item.active {
-      background: rgba(0, 131, 255, 0.1);
-      color: var(--accent);
-    }
-
-    .filter-item input[type="checkbox"] {
-      width: 16px;
-      height: 16px;
-      accent-color: var(--accent);
-    }
-
-    .filter-item label {
-      font-size: 14px;
-      cursor: pointer;
-      flex: 1;
-    }
-
-    .filter-count {
-      font-size: 11px;
-      color: var(--text-muted);
-      background: var(--bg-secondary);
-      padding: 2px 8px;
-      border-radius: 10px;
-    }
-
-    /* Date Filter */
-    .date-inputs {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .date-inputs input {
-      padding: 10px 12px;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      font-size: 14px;
-      width: 100%;
-      background: var(--bg-primary);
-    }
-
-    .date-inputs input:focus {
-      outline: none;
-      border-color: var(--accent);
-    }
-
-    /* Search */
-    .search-box {
-      margin-bottom: 20px;
-    }
-
-    .search-input {
-      width: 100%;
-      padding: 12px 16px;
-      padding-left: 40px;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      font-size: 14px;
-      background: var(--bg-primary) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23999999'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z'%3E%3C/path%3E%3C/svg%3E") no-repeat 12px center;
-      background-size: 20px;
-    }
-
-    .search-input:focus {
-      outline: none;
-      border-color: var(--accent);
-    }
-
-    .clear-filters {
-      width: 100%;
-      padding: 10px;
-      background: var(--bg-secondary);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      font-size: 14px;
-      color: var(--text-secondary);
-      cursor: pointer;
-      margin-top: 16px;
-      transition: all 0.2s;
-    }
-
-    .clear-filters:hover {
-      border-color: var(--accent);
-      color: var(--accent);
     }
 
     /* Content Area */
@@ -232,51 +280,11 @@
       min-height: 500px;
     }
 
-    .content-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 20px;
-    }
-
-    .results-count {
-      font-size: 14px;
-      color: var(--text-secondary);
-    }
-
-    .view-toggle {
-      display: flex;
-      gap: 4px;
-      background: var(--bg-primary);
-      padding: 4px;
-      border-radius: 8px;
-      border: 1px solid var(--border);
-    }
-
-    .view-btn {
-      padding: 8px 12px;
-      border: none;
-      background: transparent;
-      border-radius: 6px;
-      cursor: pointer;
-      color: var(--text-muted);
-      transition: all 0.2s;
-    }
-
-    .view-btn.active {
-      background: var(--text-primary);
-      color: var(--bg-primary);
-    }
-
     /* Gallery Grid */
     .gallery {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
       gap: 20px;
-    }
-
-    .gallery.list-view {
-      grid-template-columns: 1fr;
     }
 
     /* Card */
@@ -367,23 +375,6 @@
 
     .action-btn.delete-btn:hover {
       background: #dc2626;
-    }
-
-    /* List View Card */
-    .gallery.list-view .card {
-      display: grid;
-      grid-template-columns: 200px 1fr;
-    }
-
-    .gallery.list-view .card-image {
-      aspect-ratio: auto;
-      height: 120px;
-    }
-
-    .gallery.list-view .card-body {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
     }
 
     /* Modal */
@@ -789,11 +780,22 @@
 
     /* Responsive */
     @media (max-width: 900px) {
-      .main {
-        grid-template-columns: 1fr;
+      .header-content {
+        flex-wrap: wrap;
       }
-      .sidebar {
-        position: static;
+      .header-search {
+        order: 3;
+        flex: 100%;
+        max-width: 100%;
+        margin-top: 12px;
+      }
+      .filters-content {
+        justify-content: flex-start;
+      }
+      .results-count {
+        flex: 100%;
+        margin-left: 0;
+        margin-top: 8px;
       }
     }
 
@@ -801,9 +803,9 @@
       .gallery {
         grid-template-columns: 1fr;
       }
-      .header-content {
-        flex-direction: column;
-        gap: 12px;
+      .filter-dropdown-btn {
+        padding: 8px 10px;
+        font-size: 12px;
       }
     }
   </style>
@@ -814,59 +816,63 @@
       <div class="logo">
         Screenshot<span>Library</span>
       </div>
+      <div class="header-search">
+        <input type="text" class="search-input" placeholder="Поиск..." id="searchInput" oninput="applyFilters()">
+      </div>
       <button class="upload-btn" onclick="openUploadModal()">
-        <span>+</span> Загрузить скриншот
+        <span>+</span> Загрузить
       </button>
     </div>
   </header>
 
+  <div class="filters-bar">
+    <div class="filters-content">
+      <div class="filter-dropdown" id="marketplaceDropdown">
+        <button class="filter-dropdown-btn" onclick="toggleDropdown('marketplaceDropdown')">
+          Маркетплейс <span class="arrow">▼</span>
+        </button>
+        <div class="filter-dropdown-menu" id="marketplaceFilters">
+          <!-- Generated dynamically -->
+        </div>
+      </div>
+
+      <div class="filter-dropdown" id="pageDropdown">
+        <button class="filter-dropdown-btn" onclick="toggleDropdown('pageDropdown')">
+          Страница <span class="arrow">▼</span>
+        </button>
+        <div class="filter-dropdown-menu" id="pageFilters">
+          <!-- Generated dynamically -->
+        </div>
+      </div>
+
+      <div class="filter-dropdown" id="dateDropdown">
+        <button class="filter-dropdown-btn" onclick="toggleDropdown('dateDropdown')">
+          Дата <span class="arrow">▼</span>
+        </button>
+        <div class="filter-dropdown-menu">
+          <div class="date-filter-content">
+            <label>От</label>
+            <input type="date" id="dateFrom" onchange="applyFilters(); updateDropdownButtons()">
+            <label>До</label>
+            <input type="date" id="dateTo" onchange="applyFilters(); updateDropdownButtons()">
+          </div>
+        </div>
+      </div>
+
+      <button class="clear-filters-btn" onclick="clearFilters()">Сбросить</button>
+
+      <div class="results-count" id="resultsCount">0 скриншотов</div>
+    </div>
+  </div>
+
   <main class="main">
-    <aside class="sidebar">
-      <div class="search-box">
-        <input type="text" class="search-input" placeholder="Поиск по названию..." id="searchInput" oninput="applyFilters()">
+    <div class="gallery" id="gallery">
+      <div class="empty-state">
+        <div class="empty-state-icon">📭</div>
+        <h3>Библиотека пуста</h3>
+        <p>Загрузите первый скриншот</p>
       </div>
-
-      <div class="filter-section">
-        <div class="filter-title">Маркетплейс</div>
-        <div class="filter-group" id="marketplaceFilters">
-          <!-- Generated dynamically -->
-        </div>
-      </div>
-
-      <div class="filter-section">
-        <div class="filter-title">Страница</div>
-        <div class="filter-group" id="pageFilters">
-          <!-- Generated dynamically -->
-        </div>
-      </div>
-
-      <div class="filter-section">
-        <div class="filter-title">Дата</div>
-        <div class="date-inputs">
-          <input type="date" id="dateFrom" placeholder="От" onchange="applyFilters()">
-          <input type="date" id="dateTo" placeholder="До" onchange="applyFilters()">
-        </div>
-      </div>
-
-      <button class="clear-filters" onclick="clearFilters()">Сбросить фильтры</button>
-    </aside>
-
-    <section class="content">
-      <div class="content-header">
-        <div class="results-count" id="resultsCount">0 скриншотов</div>
-        <div class="view-toggle">
-          <button class="view-btn active" onclick="setView('grid')" id="gridViewBtn">▦</button>
-          <button class="view-btn" onclick="setView('list')" id="listViewBtn">☰</button>
-        </div>
-      </div>
-      <div class="gallery" id="gallery">
-        <div class="empty-state">
-          <div class="empty-state-icon">📭</div>
-          <h3>Библиотека пуста</h3>
-          <p>Загрузите первый скриншот</p>
-        </div>
-      </div>
-    </section>
+    </div>
   </main>
 
   <!-- Upload Modal -->
@@ -990,7 +996,6 @@
     const API_URL = window.location.origin;
     let allImages = [];
     let selectedFile = null;
-    let currentView = 'grid';
     let currentDetailImage = null;
 
     // Initialize
@@ -1155,6 +1160,27 @@
       }
     }
 
+    // Toggle dropdown
+    function toggleDropdown(id) {
+      const dropdown = document.getElementById(id);
+      const wasOpen = dropdown.classList.contains('open');
+      
+      // Close all dropdowns
+      document.querySelectorAll('.filter-dropdown').forEach(d => d.classList.remove('open'));
+      
+      // Open this one if it was closed
+      if (!wasOpen) {
+        dropdown.classList.add('open');
+      }
+    }
+
+    // Close dropdowns when clicking outside
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.filter-dropdown')) {
+        document.querySelectorAll('.filter-dropdown').forEach(d => d.classList.remove('open'));
+      }
+    });
+
     // Update filter options
     function updateFilters() {
       const marketplaces = {};
@@ -1169,21 +1195,41 @@
 
       document.getElementById('marketplaceFilters').innerHTML = Object.entries(marketplaces)
         .map(([name, count]) => `
-          <div class="filter-item">
-            <input type="checkbox" id="mp-${name}" value="${name}" onchange="applyFilters()">
+          <div class="filter-option">
+            <input type="checkbox" id="mp-${name}" value="${name}" onchange="applyFilters(); updateDropdownButtons()">
             <label for="mp-${name}">${name}</label>
-            <span class="filter-count">${count}</span>
+            <span class="option-count">${count}</span>
           </div>
         `).join('');
 
       document.getElementById('pageFilters').innerHTML = Object.entries(pages)
         .map(([name, count]) => `
-          <div class="filter-item">
-            <input type="checkbox" id="pg-${name}" value="${name}" onchange="applyFilters()">
+          <div class="filter-option">
+            <input type="checkbox" id="pg-${name}" value="${name}" onchange="applyFilters(); updateDropdownButtons()">
             <label for="pg-${name}">${name}</label>
-            <span class="filter-count">${count}</span>
+            <span class="option-count">${count}</span>
           </div>
         `).join('');
+    }
+
+    // Update dropdown button states
+    function updateDropdownButtons() {
+      const mpCount = document.querySelectorAll('#marketplaceFilters input:checked').length;
+      const pgCount = document.querySelectorAll('#pageFilters input:checked').length;
+      const dateFrom = document.getElementById('dateFrom').value;
+      const dateTo = document.getElementById('dateTo').value;
+
+      const mpBtn = document.querySelector('#marketplaceDropdown .filter-dropdown-btn');
+      const pgBtn = document.querySelector('#pageDropdown .filter-dropdown-btn');
+      const dateBtn = document.querySelector('#dateDropdown .filter-dropdown-btn');
+
+      mpBtn.innerHTML = `Маркетплейс ${mpCount ? `<span class="count">${mpCount}</span>` : ''} <span class="arrow">▼</span>`;
+      mpBtn.classList.toggle('active', mpCount > 0);
+
+      pgBtn.innerHTML = `Страница ${pgCount ? `<span class="count">${pgCount}</span>` : ''} <span class="arrow">▼</span>`;
+      pgBtn.classList.toggle('active', pgCount > 0);
+
+      dateBtn.classList.toggle('active', dateFrom || dateTo);
     }
 
     // Apply filters
@@ -1227,16 +1273,9 @@
       document.getElementById('searchInput').value = '';
       document.getElementById('dateFrom').value = '';
       document.getElementById('dateTo').value = '';
-      document.querySelectorAll('.sidebar input[type="checkbox"]').forEach(el => el.checked = false);
+      document.querySelectorAll('.filter-dropdown-menu input[type="checkbox"]').forEach(el => el.checked = false);
+      updateDropdownButtons();
       applyFilters();
-    }
-
-    // Set view
-    function setView(view) {
-      currentView = view;
-      document.getElementById('gallery').classList.toggle('list-view', view === 'list');
-      document.getElementById('gridViewBtn').classList.toggle('active', view === 'grid');
-      document.getElementById('listViewBtn').classList.toggle('active', view === 'list');
     }
 
     // Render gallery
