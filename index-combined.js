@@ -13,6 +13,64 @@ const path = require('path');
 const TelegramBot = require('node-telegram-bot-api');
 const https = require('https');
 const http = require('http');
+const { GoogleGenerativeAI } = require('@google/generative-ai');
+
+// Initialize Gemini AI
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+let genAI = null;
+let visionModel = null;
+
+if (GEMINI_API_KEY) {
+  genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
+  visionModel = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+  console.log('Gemini Vision AI initialized');
+}
+
+// Function to analyze screenshot with Gemini
+async function analyzeScreenshot(imageBuffer) {
+  if (!visionModel) {
+    return { marketplace: 'Не определён', page: 'Не определена', description: '' };
+  }
+
+  try {
+    const prompt = `Проанализируй этот скриншот и определи:
+1. Какой это маркетплейс? (Ozon, Wildberries, Яндекс.Маркет, AliExpress, СберМегаМаркет, Amazon, или другой)
+2. Какая это страница? (Главная, Каталог, Карточка товара, Корзина, Заказы, Поиск, Личный кабинет, или другая)
+3. Краткое описание что изображено на скриншоте (1 предложение)
+
+Ответь СТРОГО в формате JSON без markdown:
+{"marketplace": "название", "page": "название страницы", "description": "краткое описание"}
+
+Если не можешь определить - напиши "Не определён" или "Не определена".`;
+
+    const imagePart = {
+      inlineData: {
+        data: imageBuffer.toString('base64'),
+        mimeType: 'image/jpeg'
+      }
+    };
+
+    const result = await visionModel.generateContent([prompt, imagePart]);
+    const response = await result.response;
+    const text = response.text();
+    
+    // Parse JSON from response
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      const parsed = JSON.parse(jsonMatch[0]);
+      return {
+        marketplace: parsed.marketplace || 'Не определён',
+        page: parsed.page || 'Не определена',
+        description: parsed.description || ''
+      };
+    }
+    
+    return { marketplace: 'Не определён', page: 'Не определена', description: '' };
+  } catch (error) {
+    console.error('Gemini analysis error:', error.message);
+    return { marketplace: 'Не определён', page: 'Не определена', description: '' };
+  }
+}
 
 // ============ EXPRESS SERVER ============
 
@@ -255,9 +313,6 @@ if (BOT_TOKEN && BOT_TOKEN.length > 10) {
     const bot = new TelegramBot(BOT_TOKEN, { polling: { interval: 1000, autoStart: true } });
     console.log('Telegram bot started');
 
-    // User states for step-by-step upload
-    const userStates = new Map();
-
     async function downloadFile(fileUrl) {
       return new Promise((resolve, reject) => {
         const protocol = fileUrl.startsWith('https') ? https : http;
@@ -272,33 +327,20 @@ if (BOT_TOKEN && BOT_TOKEN.length > 10) {
 
     // Start command
     bot.onText(/\/start/, (msg) => {
-      userStates.delete(msg.chat.id);
       bot.sendMessage(msg.chat.id, `
 📸 *Screenshot Library Bot*
 
-Загружайте скриншоты в библиотеку!
-
-*Как загрузить:*
-1. Отправьте фото
-2. Выберите маркетплейс
-3. Укажите страницу
-4. Готово!
-
-*Или быстрая загрузка:*
-Отправьте фото с подписью в формате:
-\`Ozon | Карточка товара\`
+Просто отправьте мне скриншот — я автоматически определю:
+• Маркетплейс (Ozon, Wildberries, и др.)
+• Тип страницы (Карточка товара, Каталог, и др.)
+• Описание содержимого
 
 *Команды:*
 /list — последние скриншоты
 /stats — статистика
-/cancel — отменить загрузку
-      `, { parse_mode: 'Markdown' });
-    });
 
-    // Cancel command
-    bot.onText(/\/cancel/, (msg) => {
-      userStates.delete(msg.chat.id);
-      bot.sendMessage(msg.chat.id, '❌ Загрузка отменена');
+🤖 Powered by Gemini AI
+      `, { parse_mode: 'Markdown' });
     });
 
     // List command
@@ -336,229 +378,38 @@ if (BOT_TOKEN && BOT_TOKEN.length > 10) {
       try {
         const { data } = await supabase.storage.from(BUCKET).list('images', { limit: 1000 });
         const images = data?.filter(f => f.name !== '.emptyFolderPlaceholder') || [];
-        bot.sendMessage(msg.chat.id, `📊 *Статистика*\n\nВсего скриншотов: *${images.length}*`, { parse_mode: 'Markdown' });
+        bot.sendMessage(msg.chat.id, `📊 *Статистика*\n\nВсего скриншотов: *${images.length}*\nAI-анализ: ${visionModel ? '✅ включён' : '❌ выключен'}`, { parse_mode: 'Markdown' });
       } catch (e) {
         bot.sendMessage(msg.chat.id, '❌ Ошибка');
       }
     });
 
-    // Handle photo upload
+    // Handle photo upload with AI analysis
     bot.on('photo', async (msg) => {
       const chatId = msg.chat.id;
-      const caption = msg.caption || '';
 
       try {
-        // Check if caption has metadata (format: "Marketplace | Page")
-        if (caption.includes('|')) {
-          const parts = caption.split('|').map(s => s.trim());
-          const marketplace = parts[0] || 'Другой';
-          const page = parts[1] || 'Не указана';
+        const statusMsg = await bot.sendMessage(chatId, '🔍 *Анализирую скриншот...*', { parse_mode: 'Markdown' });
 
-          await uploadPhoto(msg, { marketplace, page, date: new Date().toISOString().split('T')[0] });
-        } else {
-          // Start step-by-step process
-          const photo = msg.photo[msg.photo.length - 1];
-          userStates.set(chatId, { 
-            step: 'marketplace', 
-            fileId: photo.file_id,
-            description: caption 
-          });
-
-          const keyboard = {
-            inline_keyboard: [
-              [{ text: '🔵 Ozon', callback_data: 'mp_Ozon' }, { text: '🟣 Wildberries', callback_data: 'mp_Wildberries' }],
-              [{ text: '🟡 Яндекс.Маркет', callback_data: 'mp_Яндекс.Маркет' }, { text: '🟠 AliExpress', callback_data: 'mp_AliExpress' }],
-              [{ text: '🟢 СберМегаМаркет', callback_data: 'mp_СберМегаМаркет' }, { text: '⚪ Другой', callback_data: 'mp_Другой' }]
-            ]
-          };
-
-          bot.sendMessage(chatId, '📦 *Выберите маркетплейс:*', { 
-            parse_mode: 'Markdown',
-            reply_markup: keyboard 
-          });
-        }
-      } catch (e) {
-        console.error('Photo handler error:', e);
-        bot.sendMessage(chatId, '❌ Ошибка при обработке фото');
-      }
-    });
-
-    // Handle document (file) upload
-    bot.on('document', async (msg) => {
-      const chatId = msg.chat.id;
-      const doc = msg.document;
-      const caption = msg.caption || '';
-
-      // Check if it's an image
-      if (!doc.mime_type || !doc.mime_type.startsWith('image/')) {
-        bot.sendMessage(chatId, '⚠️ Пожалуйста, отправьте изображение (JPEG, PNG, GIF, WebP)');
-        return;
-      }
-
-      try {
-        if (caption.includes('|')) {
-          const parts = caption.split('|').map(s => s.trim());
-          const marketplace = parts[0] || 'Другой';
-          const page = parts[1] || 'Не указана';
-
-          await uploadDocument(msg, { marketplace, page, date: new Date().toISOString().split('T')[0] });
-        } else {
-          userStates.set(chatId, { 
-            step: 'marketplace', 
-            fileId: doc.file_id,
-            isDocument: true,
-            mimeType: doc.mime_type,
-            description: caption
-          });
-
-          const keyboard = {
-            inline_keyboard: [
-              [{ text: '🔵 Ozon', callback_data: 'mp_Ozon' }, { text: '🟣 Wildberries', callback_data: 'mp_Wildberries' }],
-              [{ text: '🟡 Яндекс.Маркет', callback_data: 'mp_Яндекс.Маркет' }, { text: '🟠 AliExpress', callback_data: 'mp_AliExpress' }],
-              [{ text: '🟢 СберМегаМаркет', callback_data: 'mp_СберМегаМаркет' }, { text: '⚪ Другой', callback_data: 'mp_Другой' }]
-            ]
-          };
-
-          bot.sendMessage(chatId, '📦 *Выберите маркетплейс:*', { 
-            parse_mode: 'Markdown',
-            reply_markup: keyboard 
-          });
-        }
-      } catch (e) {
-        console.error('Document handler error:', e);
-        bot.sendMessage(chatId, '❌ Ошибка при обработке файла');
-      }
-    });
-
-    // Handle callback queries (button clicks)
-    bot.on('callback_query', async (query) => {
-      const chatId = query.message.chat.id;
-      const data = query.data;
-      const state = userStates.get(chatId);
-
-      if (!state) {
-        bot.answerCallbackQuery(query.id, { text: 'Сессия истекла, отправьте фото заново' });
-        return;
-      }
-
-      bot.answerCallbackQuery(query.id);
-
-      if (data.startsWith('mp_')) {
-        // Marketplace selected
-        state.marketplace = data.replace('mp_', '');
-        state.step = 'page';
-        userStates.set(chatId, state);
-
-        const keyboard = {
-          inline_keyboard: [
-            [{ text: '🏠 Главная', callback_data: 'pg_Главная' }, { text: '📋 Каталог', callback_data: 'pg_Каталог' }],
-            [{ text: '🛍️ Карточка товара', callback_data: 'pg_Карточка товара' }, { text: '🛒 Корзина', callback_data: 'pg_Корзина' }],
-            [{ text: '📦 Заказы', callback_data: 'pg_Заказы' }, { text: '🔍 Поиск', callback_data: 'pg_Поиск' }],
-            [{ text: '✏️ Другое (напишите)', callback_data: 'pg_custom' }]
-          ]
-        };
-
-        bot.editMessageText(`✅ Маркетплейс: *${state.marketplace}*\n\n📄 *Выберите страницу:*`, {
-          chat_id: chatId,
-          message_id: query.message.message_id,
-          parse_mode: 'Markdown',
-          reply_markup: keyboard
-        });
-
-      } else if (data.startsWith('pg_')) {
-        // Page selected
-        if (data === 'pg_custom') {
-          state.step = 'page_input';
-          userStates.set(chatId, state);
-          bot.editMessageText(`✅ Маркетплейс: *${state.marketplace}*\n\n✏️ *Напишите название страницы:*`, {
-            chat_id: chatId,
-            message_id: query.message.message_id,
-            parse_mode: 'Markdown'
-          });
-        } else {
-          state.page = data.replace('pg_', '');
-          state.date = new Date().toISOString().split('T')[0];
-          
-          // Upload the file
-          await finalizeUpload(chatId, state, query.message.message_id);
-        }
-      }
-    });
-
-    // Handle text messages for custom page input
-    bot.on('text', async (msg) => {
-      if (msg.text.startsWith('/')) return; // Skip commands
-      
-      const chatId = msg.chat.id;
-      const state = userStates.get(chatId);
-
-      if (state && state.step === 'page_input') {
-        state.page = msg.text;
-        state.date = new Date().toISOString().split('T')[0];
-        
-        await finalizeUpload(chatId, state);
-      }
-    });
-
-    // Finalize upload
-    async function finalizeUpload(chatId, state, editMessageId = null) {
-      const statusMsg = editMessageId 
-        ? await bot.editMessageText('⏳ *Загружаю скриншот...*', { chat_id: chatId, message_id: editMessageId, parse_mode: 'Markdown' })
-        : await bot.sendMessage(chatId, '⏳ *Загружаю скриншот...*', { parse_mode: 'Markdown' });
-
-      try {
-        const file = await bot.getFile(state.fileId);
-        const fileUrl = `https://api.telegram.org/file/bot${BOT_TOKEN}/${file.file_path}`;
-        const fileBuffer = await downloadFile(fileUrl);
-
-        const ext = file.file_path.split('.').pop() || 'jpg';
-        const fileName = `${uuidv4()}.${ext}`;
-
-        const { error } = await supabase.storage
-          .from(BUCKET)
-          .upload(`images/${fileName}`, fileBuffer, {
-            contentType: state.mimeType || `image/${ext === 'jpg' ? 'jpeg' : ext}`
-          });
-
-        if (error) {
-          throw error;
-        }
-
-        // Save metadata
-        imageMetadata.set(fileName, {
-          marketplace: state.marketplace,
-          page: state.page,
-          date: state.date,
-          description: state.description || ''
-        });
-
-        const { data: urlData } = supabase.storage.from(BUCKET).getPublicUrl(`images/${fileName}`);
-
-        const msgId = editMessageId || statusMsg.message_id;
-        await bot.editMessageText(
-          `✅ *Скриншот загружен!*\n\n📦 Маркетплейс: ${state.marketplace}\n📄 Страница: ${state.page}\n📅 Дата: ${state.date}\n\n🔗 ${urlData.publicUrl}`,
-          { chat_id: chatId, message_id: msgId, parse_mode: 'Markdown' }
-        );
-
-        userStates.delete(chatId);
-
-      } catch (e) {
-        console.error('Upload error:', e);
-        bot.sendMessage(chatId, '❌ Ошибка загрузки. Попробуйте ещё раз.');
-        userStates.delete(chatId);
-      }
-    }
-
-    // Quick upload with metadata from caption
-    async function uploadPhoto(msg, metadata) {
-      const chatId = msg.chat.id;
-      const statusMsg = await bot.sendMessage(chatId, '⏳ Загружаю...');
-
-      try {
         const photo = msg.photo[msg.photo.length - 1];
         const file = await bot.getFile(photo.file_id);
         const fileUrl = `https://api.telegram.org/file/bot${BOT_TOKEN}/${file.file_path}`;
         const fileBuffer = await downloadFile(fileUrl);
+
+        // Analyze with Gemini AI
+        await bot.editMessageText('🤖 *AI анализирует изображение...*', { 
+          chat_id: chatId, 
+          message_id: statusMsg.message_id, 
+          parse_mode: 'Markdown' 
+        });
+
+        const analysis = await analyzeScreenshot(fileBuffer);
+
+        await bot.editMessageText('⏳ *Загружаю в библиотеку...*', { 
+          chat_id: chatId, 
+          message_id: statusMsg.message_id, 
+          parse_mode: 'Markdown' 
+        });
 
         const ext = file.file_path.split('.').pop() || 'jpg';
         const fileName = `${uuidv4()}.${ext}`;
@@ -571,30 +422,60 @@ if (BOT_TOKEN && BOT_TOKEN.length > 10) {
 
         if (error) throw error;
 
+        // Save metadata from AI analysis
+        const metadata = {
+          marketplace: analysis.marketplace,
+          page: analysis.page,
+          date: new Date().toISOString().split('T')[0],
+          description: analysis.description
+        };
         imageMetadata.set(fileName, metadata);
 
         const { data: urlData } = supabase.storage.from(BUCKET).getPublicUrl(`images/${fileName}`);
 
         await bot.editMessageText(
-          `✅ *Загружено!*\n\n📦 ${metadata.marketplace} • ${metadata.page}\n🔗 ${urlData.publicUrl}`,
+          `✅ *Скриншот загружен!*\n\n📦 Маркетплейс: *${metadata.marketplace}*\n📄 Страница: *${metadata.page}*\n📝 ${metadata.description}\n📅 Дата: ${metadata.date}\n\n🔗 ${urlData.publicUrl}`,
           { chat_id: chatId, message_id: statusMsg.message_id, parse_mode: 'Markdown' }
         );
 
       } catch (e) {
-        console.error('Quick upload error:', e);
-        bot.editMessageText('❌ Ошибка', { chat_id: chatId, message_id: statusMsg.message_id });
+        console.error('Photo upload error:', e);
+        bot.sendMessage(chatId, '❌ Ошибка при загрузке. Попробуйте ещё раз.');
       }
-    }
+    });
 
-    async function uploadDocument(msg, metadata) {
+    // Handle document (file) upload with AI analysis
+    bot.on('document', async (msg) => {
       const chatId = msg.chat.id;
-      const statusMsg = await bot.sendMessage(chatId, '⏳ Загружаю...');
+      const doc = msg.document;
+
+      // Check if it's an image
+      if (!doc.mime_type || !doc.mime_type.startsWith('image/')) {
+        bot.sendMessage(chatId, '⚠️ Пожалуйста, отправьте изображение (JPEG, PNG, GIF, WebP)');
+        return;
+      }
 
       try {
-        const doc = msg.document;
+        const statusMsg = await bot.sendMessage(chatId, '🔍 *Анализирую скриншот...*', { parse_mode: 'Markdown' });
+
         const file = await bot.getFile(doc.file_id);
         const fileUrl = `https://api.telegram.org/file/bot${BOT_TOKEN}/${file.file_path}`;
         const fileBuffer = await downloadFile(fileUrl);
+
+        // Analyze with Gemini AI
+        await bot.editMessageText('🤖 *AI анализирует изображение...*', { 
+          chat_id: chatId, 
+          message_id: statusMsg.message_id, 
+          parse_mode: 'Markdown' 
+        });
+
+        const analysis = await analyzeScreenshot(fileBuffer);
+
+        await bot.editMessageText('⏳ *Загружаю в библиотеку...*', { 
+          chat_id: chatId, 
+          message_id: statusMsg.message_id, 
+          parse_mode: 'Markdown' 
+        });
 
         const ext = file.file_path.split('.').pop() || 'jpg';
         const fileName = `${uuidv4()}.${ext}`;
@@ -607,20 +488,27 @@ if (BOT_TOKEN && BOT_TOKEN.length > 10) {
 
         if (error) throw error;
 
+        // Save metadata from AI analysis
+        const metadata = {
+          marketplace: analysis.marketplace,
+          page: analysis.page,
+          date: new Date().toISOString().split('T')[0],
+          description: analysis.description
+        };
         imageMetadata.set(fileName, metadata);
 
         const { data: urlData } = supabase.storage.from(BUCKET).getPublicUrl(`images/${fileName}`);
 
         await bot.editMessageText(
-          `✅ *Загружено!*\n\n📦 ${metadata.marketplace} • ${metadata.page}\n🔗 ${urlData.publicUrl}`,
+          `✅ *Скриншот загружен!*\n\n📦 Маркетплейс: *${metadata.marketplace}*\n📄 Страница: *${metadata.page}*\n📝 ${metadata.description}\n📅 Дата: ${metadata.date}\n\n🔗 ${urlData.publicUrl}`,
           { chat_id: chatId, message_id: statusMsg.message_id, parse_mode: 'Markdown' }
         );
 
       } catch (e) {
         console.error('Document upload error:', e);
-        bot.editMessageText('❌ Ошибка', { chat_id: chatId, message_id: statusMsg.message_id });
+        bot.sendMessage(chatId, '❌ Ошибка при загрузке. Попробуйте ещё раз.');
       }
-    }
+    });
 
     bot.on('polling_error', (error) => {
       console.error('Bot polling error:', error.code);
