@@ -2,12 +2,15 @@
   "name": "image-library",
   "version": "1.0.0",
   "description": "Image library with Supabase storage, web upload and Telegram bot",
-  "main": "index.js",
+  "main": "index-combined.js",
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "scripts": {
-    "start": "node index-local.js",
+    "start": "node index-combined.js",
+    "start:local": "node index-local.js",
     "start:cloud": "node index.js",
-    "bot": "node bot.js",
-    "dev": "node index.js & node bot.js"
+    "bot": "node bot.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.39.0",
