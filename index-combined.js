@@ -596,8 +596,8 @@ app.post('/api/analyze-missing', async (req, res) => {
           failed++;
         }
         
-        // Small delay
-        await new Promise(r => setTimeout(r, 500));
+        // Delay to avoid rate limiting (20 requests per minute = 3 seconds per request)
+        await new Promise(r => setTimeout(r, 3500));
         
       } catch (err) {
         console.error(`Error analyzing ${img.name}:`, err.message);
