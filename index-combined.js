@@ -32,82 +32,104 @@ async function analyzeScreenshot(imageBuffer) {
 
 TASK: Identify the marketplace name and page type from this screenshot.
 
+=== CRITICAL: TEXT ON IMAGES ===
+IMPORTANT: The screenshot may contain TEXT MENTIONING marketplace names!
+Look carefully for ANY text that says:
+- "Ozon", "OZON", "Озон"
+- "Wildberries", "WB", "Вайлдберриз"  
+- "AliExpress", "Али", "Алиэкспресс"
+- "Яндекс Маркет", "Yandex Market"
+- "Мегамаркет", "СберМегаМаркет", "Сбер"
+- "Lamoda", "LAMODA", "Ламода"
+- "Avito", "Авито"
+- "Золотое Яблоко", "Золотое яблоко"
+- "SHEIN", "Shein"
+- "Lazada"
+- "KazanExpress", "Казань Экспресс"
+
+If the image shows a comparison chart, review, or article MENTIONING a marketplace - that IS the marketplace!
+
+=== ACTIVE TAB / NAVIGATION ===
+Look for ACTIVE/SELECTED tabs in the interface:
+- Bottom navigation bar with highlighted icon
+- Top tabs with underline or bold text
+- Sidebar with selected menu item
+
+Active tab indicates the PAGE TYPE:
+- "Главная" / Home icon = Главная
+- "Каталог" / Grid icon = Каталог  
+- "Корзина" / Cart icon = Корзина
+- "Избранное" / Heart icon = Избранное
+- "Профиль" / Person icon = Профиль
+- "Заказы" / Box icon = Заказы
+
 === MARKETPLACE VISUAL SIGNATURES ===
 
 **OZON** (Озон):
-- Blue interface color (#005BFF)
-- "OZON" logo in blue
-- Blue "В корзину" (Add to cart) buttons
-- Blue header with search bar
+- Blue interface (#005BFF)
+- "OZON" logo, blue buttons
 - "Ozon fresh", "Ozon Express" badges
-- Star ratings in blue/yellow
 
 **WILDBERRIES** (Вайлдберриз):
-- Purple/magenta colors (#CB11AB)
+- Purple/magenta (#CB11AB)
 - "Wildberries" or "WB" logo
-- Purple buttons and accents
-- Pink/purple gradient elements
-- "WB" icon in app
+- Purple/pink interface
 
 **ALIEXPRESS** (АлиЭкспресс):
-- Red/orange brand color (#FF4747, #E53935)
-- "AliExpress" text/logo
-- Chinese seller names
-- Long delivery times (15-45 days)
-- "Бесплатная доставка" badges
-- Multiple discount labels
-- "Выбор покупателей" sections
+- Red/orange (#FF4747)
+- "AliExpress" text
+- Chinese products, long delivery
 
-**ЯНДЕКС МАРКЕТ** (Yandex Market):
-- Yellow accent color (#FFCC00)
-- Yandex logo (red Y)
-- "Маркет" text
-- Yellow shopping cart icon
-- "Яндекс" branding anywhere
+**ЯНДЕКС МАРКЕТ**:
+- Yellow (#FFCC00)
+- "Яндекс" or "Маркет" text
+- Red Y logo
 
-**МЕГАМАРКЕТ** (СберМегаМаркет):
-- Green color (#21A038 - Sber green)
-- "Мегамаркет" or "СберМегаМаркет" text
-- Green interface elements
-- Sber ecosystem branding
+**МЕГАМАРКЕТ**:
+- Green (#21A038 Sber green)
+- "Мегамаркет" text
 
 **LAMODA**:
-- Black and white minimalist design
-- "LAMODA" text in black
-- Fashion/clothing focus
-- Clean typography
+- Black/white minimalist
+- "LAMODA" text
+- Fashion focus
 
 **AVITO**:
-- Green/teal colors
+- Green/teal
 - "Avito" logo
-- Classifieds-style listings
-- "Авито" text
+- Classifieds style
 
-**AMAZON**:
-- Orange smile arrow logo
-- "Amazon" text
-- Yellow/orange buttons
+**ЗОЛОТОЕ ЯБЛОКО**:
+- Green/gold colors
+- Beauty/cosmetics focus
+- "Золотое Яблоко" text
+
+**SHEIN**:
+- Black/white with orange accents
+- "SHEIN" text
+- Fast fashion
 
 === PAGE TYPES ===
-- Главная = main/home page (banners, promo, categories)
-- Каталог = catalog/category listing (multiple products grid/list)
-- Карточка товара = product detail page (single product, buy button, description)
-- Корзина = shopping cart
-- Поиск = search results
-- Избранное = favorites/wishlist
-- Заказы = orders history
-- Профиль = user profile/account
+- Главная (home page, banners, recommendations)
+- Каталог (product grid/list, category)
+- Карточка товара (single product page)
+- Корзина (shopping cart)
+- Поиск (search results)
+- Избранное (favorites/wishlist)
+- Заказы (order history)
+- Профиль (account/profile)
+- Акции (promotions/sales)
+- Отзывы (reviews)
 
-=== RESPONSE FORMAT ===
-Respond with ONLY valid JSON, no markdown code blocks:
-{"marketplace": "MARKETPLACE_NAME", "page": "PAGE_TYPE", "description": "brief description in Russian", "confidence": true}
+=== RESPONSE ===
+JSON only, no markdown:
+{"marketplace": "NAME", "page": "PAGE_TYPE", "description": "описание на русском", "confidence": true}
 
-CRITICAL RULES:
-1. Look for ANY text containing marketplace name - even small logos or watermarks
-2. Color scheme is a strong indicator
-3. If you see the marketplace name ANYWHERE, use it
-4. Always set confidence: true if you can identify marketplace
-5. Use Russian page type names exactly as listed above`;
+RULES:
+1. TEXT ON IMAGE mentioning marketplace = USE THAT MARKETPLACE
+2. Active tab = page type indicator
+3. Color scheme = marketplace indicator
+4. Set confidence: true if you identify marketplace`;
 
   // Try different API endpoints - using available models
   const models = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-2.5-pro'];
@@ -685,6 +707,38 @@ app.post('/api/normalize-marketplaces', async (req, res) => {
   } catch (error) {
     console.error('Normalize error:', error);
     res.status(500).json({ error: 'Normalization failed', details: error.message });
+  }
+});
+
+// Reset "AI: не определён" marks for re-analysis
+app.post('/api/reset-unrecognized', async (req, res) => {
+  try {
+    let reset = 0;
+    const resetIds = [];
+    
+    for (const [id, meta] of imageMetadata.entries()) {
+      if (meta.marketplace && meta.marketplace.startsWith('AI:')) {
+        meta.marketplace = 'Не указан';
+        meta.page = 'Не указана';
+        imageMetadata.set(id, meta);
+        resetIds.push(id);
+        reset++;
+      }
+    }
+    
+    if (reset > 0) {
+      await saveMetadata();
+    }
+    
+    res.json({
+      success: true,
+      message: `Reset ${reset} images for re-analysis`,
+      count: reset
+    });
+    
+  } catch (error) {
+    console.error('Reset error:', error);
+    res.status(500).json({ error: 'Reset failed', details: error.message });
   }
 });
 
