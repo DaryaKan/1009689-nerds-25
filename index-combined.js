@@ -19,23 +19,46 @@ const { GoogleGenerativeAI } = require('@google/generative-ai');
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 let genAI = null;
 let visionModel = null;
+const VISION_MODELS = ['gemini-1.5-flash-latest', 'gemini-1.5-pro-latest', 'gemini-pro-vision', 'gemini-1.0-pro-vision-latest'];
+let currentModelIndex = 0;
 
 if (GEMINI_API_KEY) {
   genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-  // Use gemini-pro-vision for image analysis
-  visionModel = genAI.getGenerativeModel({ model: 'gemini-pro-vision' });
-  console.log('Gemini Vision AI initialized (gemini-pro-vision)');
+  visionModel = genAI.getGenerativeModel({ model: VISION_MODELS[0] });
+  console.log(`Gemini Vision AI initialized, will try models: ${VISION_MODELS.join(', ')}`);
 }
 
 // Function to analyze screenshot with Gemini
 async function analyzeScreenshot(imageBuffer) {
-  if (!visionModel) {
-    console.log('Vision model not initialized');
+  if (!genAI) {
+    console.log('Gemini AI not initialized');
     return { marketplace: null, page: null, description: '', confidence: false };
   }
 
-  try {
-    const prompt = `Analyze this screenshot of a marketplace/e-commerce app or website.
+  // Try each model until one works
+  for (let i = 0; i < VISION_MODELS.length; i++) {
+    const modelName = VISION_MODELS[i];
+    console.log(`Trying model: ${modelName}`);
+    
+    try {
+      const model = genAI.getGenerativeModel({ model: modelName });
+      const result = await tryAnalyzeWithModel(model, imageBuffer);
+      if (result) {
+        console.log(`Success with model: ${modelName}`);
+        return result;
+      }
+    } catch (error) {
+      console.log(`Model ${modelName} failed: ${error.message}`);
+      continue;
+    }
+  }
+  
+  console.log('All models failed');
+  return { marketplace: null, page: null, description: '', confidence: false };
+}
+
+async function tryAnalyzeWithModel(model, imageBuffer) {
+  const prompt = `Analyze this screenshot of a marketplace/e-commerce app or website.
 
 TASK: Identify the marketplace and page type.
 
@@ -112,10 +135,10 @@ Set confidence to true if you can identify the marketplace. Only set false if yo
       }
     }
     
-    return { marketplace: null, page: null, description: '', confidence: false };
+    return null;
   } catch (error) {
-    console.error('Gemini analysis error:', error.message, error.stack);
-    return { marketplace: null, page: null, description: '', confidence: false };
+    console.error('Model error:', error.message);
+    throw error; // Re-throw to try next model
   }
 }
 
