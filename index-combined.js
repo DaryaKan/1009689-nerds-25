@@ -484,6 +484,12 @@ if (BOT_TOKEN && BOT_TOKEN.length > 10) {
     // Store pending uploads waiting for user input
     const pendingUploads = new Map();
     
+    // Store user states (date selection, etc.)
+    const userStates = new Map();
+    
+    // Store pending photos waiting for date
+    const pendingPhotos = new Map();
+    
     // Store media groups (albums) for batch processing
     const mediaGroups = new Map();
     const MEDIA_GROUP_TIMEOUT = 1000; // Wait 1 second to collect all photos in album
@@ -522,33 +528,70 @@ if (BOT_TOKEN && BOT_TOKEN.length > 10) {
       ]
     };
 
+    // Date keyboard
+    const dateKeyboard = {
+      inline_keyboard: [
+        [{ text: '📅 Сегодня', callback_data: 'date_today' }, { text: '📅 Вчера', callback_data: 'date_yesterday' }],
+        [{ text: '📅 Позавчера', callback_data: 'date_2days' }, { text: '📅 3 дня назад', callback_data: 'date_3days' }],
+        [{ text: '✏️ Ввести дату', callback_data: 'date_custom' }]
+      ]
+    };
+
+    // Format date for display
+    function formatDate(date) {
+      return date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' });
+    }
+
+    // Get date string (YYYY-MM-DD)
+    function getDateString(date) {
+      return date.toISOString().split('T')[0];
+    }
+
     // Start command
     bot.onText(/\/start/, (msg) => {
       pendingUploads.delete(msg.chat.id);
+      userStates.delete(msg.chat.id);
+      pendingPhotos.delete(msg.chat.id);
       bot.sendMessage(msg.chat.id, `
 📸 *Screenshot Library Bot*
 
-Отправьте мне скриншоты маркетплейсов — я автоматически определю:
-• Маркетплейс (Ozon, Wildberries, AliExpress и др.)
-• Тип страницы (Карточка товара, Каталог, и др.)
-
-✨ *Можно отправлять сразу несколько фото!*
-
-Если не смогу определить — спрошу у вас.
+*Как загрузить скриншоты:*
+1️⃣ Укажите дату командой /date
+2️⃣ Отправьте скриншоты (можно несколько сразу)
+3️⃣ Бот определит маркетплейс и страницу автоматически
 
 *Команды:*
+/date — установить дату для загрузок
 /list — последние скриншоты
 /stats — статистика
-/cancel — отменить загрузку
+/cancel — отменить / сбросить
 
 🤖 Powered by Gemini AI
       `, { parse_mode: 'Markdown' });
     });
 
+    // Date command
+    bot.onText(/\/date/, (msg) => {
+      const state = userStates.get(msg.chat.id) || {};
+      const currentDate = state.date ? new Date(state.date) : null;
+      
+      let text = '📅 *Выберите дату для скриншотов:*';
+      if (currentDate) {
+        text += `\n\nТекущая дата: *${formatDate(currentDate)}*`;
+      }
+      
+      bot.sendMessage(msg.chat.id, text, { 
+        parse_mode: 'Markdown',
+        reply_markup: dateKeyboard 
+      });
+    });
+
     // Cancel command
     bot.onText(/\/cancel/, (msg) => {
       pendingUploads.delete(msg.chat.id);
-      bot.sendMessage(msg.chat.id, '❌ Загрузка отменена');
+      userStates.delete(msg.chat.id);
+      pendingPhotos.delete(msg.chat.id);
+      bot.sendMessage(msg.chat.id, '❌ Сброшено. Используйте /date чтобы начать заново.');
     });
 
     // List command
@@ -586,9 +629,75 @@ if (BOT_TOKEN && BOT_TOKEN.length > 10) {
       try {
         const { data } = await supabase.storage.from(BUCKET).list('images', { limit: 1000 });
         const images = data?.filter(f => f.name !== '.emptyFolderPlaceholder') || [];
-        bot.sendMessage(msg.chat.id, `📊 *Статистика*\n\nВсего скриншотов: *${images.length}*\nAI-анализ: ${visionModel ? '✅ включён' : '❌ выключен'}`, { parse_mode: 'Markdown' });
+        bot.sendMessage(msg.chat.id, `📊 *Статистика*\n\nВсего скриншотов: *${images.length}*\nAI-анализ: ${GEMINI_API_KEY ? '✅ включён' : '❌ выключен'}`, { parse_mode: 'Markdown' });
       } catch (e) {
         bot.sendMessage(msg.chat.id, '❌ Ошибка');
+      }
+    });
+
+    // Handle text messages (for custom date input)
+    bot.on('text', async (msg) => {
+      // Skip commands
+      if (msg.text.startsWith('/')) return;
+      
+      const chatId = msg.chat.id;
+      const state = userStates.get(chatId);
+      
+      // Check if waiting for custom date
+      if (state && state.waitingForDate) {
+        const text = msg.text.trim();
+        
+        // Try to parse date in DD.MM.YYYY format
+        const dateMatch = text.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);
+        
+        if (dateMatch) {
+          const [, day, month, year] = dateMatch;
+          const date = new Date(year, month - 1, day);
+          
+          // Validate date
+          if (date.getDate() == day && date.getMonth() == month - 1) {
+            const dateStr = getDateString(date);
+            userStates.set(chatId, { date: dateStr });
+            
+            // Check for pending photos
+            const pending = pendingPhotos.get(chatId);
+            if (pending && pending.length > 0) {
+              pendingPhotos.delete(chatId);
+              
+              bot.sendMessage(chatId, 
+                `✅ *Дата установлена: ${formatDate(date)}*\n\n⏳ Обрабатываю ${pending.length} скриншот(ов)...`,
+                { parse_mode: 'Markdown' }
+              );
+              
+              // Process pending photos
+              const photos = pending.map(p => p.photo);
+              if (photos.length === 1) {
+                const photo = photos[0];
+                const file = await bot.getFile(photo.file_id);
+                const fileUrl = `https://api.telegram.org/file/bot${BOT_TOKEN}/${file.file_path}`;
+                const fileBuffer = await downloadFile(fileUrl);
+                const ext = file.file_path.split('.').pop() || 'jpg';
+                const fileName = `${uuidv4()}.${ext}`;
+                const mimeType = `image/${ext === 'jpg' ? 'jpeg' : ext}`;
+                
+                const statusMsg = await bot.sendMessage(chatId, '🔍 *Анализирую скриншот...*', { parse_mode: 'Markdown' });
+                await processImage(chatId, fileBuffer, fileName, mimeType, statusMsg.message_id);
+              } else {
+                await processAlbum(chatId, photos);
+              }
+            } else {
+              bot.sendMessage(chatId, 
+                `✅ *Дата установлена: ${formatDate(date)}*\n\n📸 Теперь отправьте скриншоты — они будут сохранены с этой датой.\n\nДля смены даты: /date`,
+                { parse_mode: 'Markdown' }
+              );
+            }
+          } else {
+            bot.sendMessage(chatId, '❌ Некорректная дата. Введите в формате ДД.ММ.ГГГГ\nНапример: 15.01.2026');
+          }
+        } else {
+          bot.sendMessage(chatId, '❌ Неверный формат. Введите дату в формате ДД.ММ.ГГГГ\nНапример: 15.01.2026');
+        }
+        return;
       }
     });
 
@@ -682,20 +791,25 @@ if (BOT_TOKEN && BOT_TOKEN.length > 10) {
 
         if (error) throw error;
 
+        // Get date from user state or use today
+        const state = userStates.get(chatId);
+        const screenshotDate = state?.date || new Date().toISOString().split('T')[0];
+
         // Save metadata
         const metadata = {
           marketplace: analysis.marketplace,
           page: analysis.page,
-          date: new Date().toISOString().split('T')[0],
+          date: screenshotDate,
           description: analysis.description || ''
         };
         imageMetadata.set(fileName, metadata);
         await saveMetadata();
 
         const { data: urlData } = supabase.storage.from(BUCKET).getPublicUrl(`images/${fileName}`);
+        const formattedDate = new Date(screenshotDate).toLocaleDateString('ru-RU');
 
         await bot.editMessageText(
-          `✅ *Скриншот загружен!*\n\n📦 Маркетплейс: *${metadata.marketplace}*\n📄 Страница: *${metadata.page}*\n${metadata.description ? `📝 ${metadata.description}\n` : ''}📅 Дата: ${metadata.date}\n\n🔗 ${urlData.publicUrl}`,
+          `✅ *Скриншот загружен!*\n\n📦 Маркетплейс: *${metadata.marketplace}*\n📄 Страница: *${metadata.page}*\n${metadata.description ? `📝 ${metadata.description}\n` : ''}📅 Дата: ${formattedDate}\n\n🔗 ${urlData.publicUrl}`,
           { chat_id: chatId, message_id: statusMsgId, parse_mode: 'Markdown' }
         );
 
@@ -712,14 +826,83 @@ if (BOT_TOKEN && BOT_TOKEN.length > 10) {
     bot.on('callback_query', async (query) => {
       const chatId = query.message.chat.id;
       const data = query.data;
-      const pending = pendingUploads.get(chatId);
 
-      if (!pending) {
-        bot.answerCallbackQuery(query.id, { text: 'Сессия истекла, отправьте фото заново' });
+      bot.answerCallbackQuery(query.id);
+
+      // Handle date selection
+      if (data.startsWith('date_')) {
+        let selectedDate;
+        const today = new Date();
+        
+        if (data === 'date_today') {
+          selectedDate = today;
+        } else if (data === 'date_yesterday') {
+          selectedDate = new Date(today);
+          selectedDate.setDate(selectedDate.getDate() - 1);
+        } else if (data === 'date_2days') {
+          selectedDate = new Date(today);
+          selectedDate.setDate(selectedDate.getDate() - 2);
+        } else if (data === 'date_3days') {
+          selectedDate = new Date(today);
+          selectedDate.setDate(selectedDate.getDate() - 3);
+        } else if (data === 'date_custom') {
+          // Ask for custom date input
+          userStates.set(chatId, { waitingForDate: true });
+          await bot.editMessageText(
+            '✏️ *Введите дату в формате ДД.ММ.ГГГГ*\n\nНапример: 15.01.2026',
+            { chat_id: chatId, message_id: query.message.message_id, parse_mode: 'Markdown' }
+          );
+          return;
+        }
+
+        if (selectedDate) {
+          const dateStr = getDateString(selectedDate);
+          userStates.set(chatId, { date: dateStr });
+          
+          // Check for pending photos
+          const pending = pendingPhotos.get(chatId);
+          if (pending && pending.length > 0) {
+            pendingPhotos.delete(chatId);
+            
+            await bot.editMessageText(
+              `✅ *Дата установлена: ${formatDate(selectedDate)}*\n\n⏳ Обрабатываю ${pending.length} скриншот(ов)...`,
+              { chat_id: chatId, message_id: query.message.message_id, parse_mode: 'Markdown' }
+            );
+            
+            // Process pending photos
+            const photos = pending.map(p => p.photo);
+            if (photos.length === 1) {
+              // Single photo
+              const photo = photos[0];
+              const file = await bot.getFile(photo.file_id);
+              const fileUrl = `https://api.telegram.org/file/bot${BOT_TOKEN}/${file.file_path}`;
+              const fileBuffer = await downloadFile(fileUrl);
+              const ext = file.file_path.split('.').pop() || 'jpg';
+              const fileName = `${uuidv4()}.${ext}`;
+              const mimeType = `image/${ext === 'jpg' ? 'jpeg' : ext}`;
+              
+              const statusMsg = await bot.sendMessage(chatId, '🔍 *Анализирую скриншот...*', { parse_mode: 'Markdown' });
+              await processImage(chatId, fileBuffer, fileName, mimeType, statusMsg.message_id);
+            } else {
+              // Multiple photos
+              await processAlbum(chatId, photos);
+            }
+          } else {
+            await bot.editMessageText(
+              `✅ *Дата установлена: ${formatDate(selectedDate)}*\n\n📸 Теперь отправьте скриншоты — они будут сохранены с этой датой.\n\nДля смены даты: /date`,
+              { chat_id: chatId, message_id: query.message.message_id, parse_mode: 'Markdown' }
+            );
+          }
+        }
         return;
       }
 
-      bot.answerCallbackQuery(query.id);
+      // Handle marketplace/page selection
+      const pending = pendingUploads.get(chatId);
+
+      if (!pending) {
+        return;
+      }
 
       if (data.startsWith('mp_')) {
         // Marketplace selected
@@ -755,7 +938,12 @@ if (BOT_TOKEN && BOT_TOKEN.length > 10) {
 
     // Process album (multiple photos)
     async function processAlbum(chatId, photos) {
-      const statusMsg = await bot.sendMessage(chatId, `📸 *Обрабатываю ${photos.length} скриншотов...*`, { parse_mode: 'Markdown' });
+      // Get date from user state or use today
+      const state = userStates.get(chatId);
+      const screenshotDate = state?.date || new Date().toISOString().split('T')[0];
+      const formattedDate = new Date(screenshotDate).toLocaleDateString('ru-RU');
+
+      const statusMsg = await bot.sendMessage(chatId, `📸 *Обрабатываю ${photos.length} скриншотов...*\n📅 Дата: ${formattedDate}`, { parse_mode: 'Markdown' });
       
       let successCount = 0;
       let failCount = 0;
@@ -764,7 +952,7 @@ if (BOT_TOKEN && BOT_TOKEN.length > 10) {
       for (let i = 0; i < photos.length; i++) {
         try {
           await bot.editMessageText(
-            `🔍 *Анализирую скриншот ${i + 1} из ${photos.length}...*`,
+            `🔍 *Анализирую скриншот ${i + 1} из ${photos.length}...*\n📅 Дата: ${formattedDate}`,
             { chat_id: chatId, message_id: statusMsg.message_id, parse_mode: 'Markdown' }
           );
 
@@ -789,11 +977,11 @@ if (BOT_TOKEN && BOT_TOKEN.length > 10) {
 
           if (error) throw error;
 
-          // Save metadata
+          // Save metadata with user-specified date
           const metadata = {
             marketplace: analysis.marketplace || 'Не определён',
             page: analysis.page || 'Не определена',
-            date: new Date().toISOString().split('T')[0],
+            date: screenshotDate,
             description: analysis.description || ''
           };
           imageMetadata.set(fileName, metadata);
@@ -847,6 +1035,28 @@ if (BOT_TOKEN && BOT_TOKEN.length > 10) {
 
       try {
         const photo = msg.photo[msg.photo.length - 1];
+        const state = userStates.get(chatId);
+
+        // Check if date is set
+        if (!state?.date) {
+          // Store photos for later processing
+          if (!pendingPhotos.has(chatId)) {
+            pendingPhotos.set(chatId, []);
+          }
+          pendingPhotos.get(chatId).push({ photo, mediaGroupId });
+
+          // Only send message once (for first photo or single photo)
+          if (!mediaGroupId || pendingPhotos.get(chatId).length === 1) {
+            setTimeout(async () => {
+              // After collecting all photos from album, ask for date
+              bot.sendMessage(chatId, 
+                '📅 *Сначала укажите дату скриншотов*\n\nВыберите дату, под которой сохранить скриншоты:',
+                { parse_mode: 'Markdown', reply_markup: dateKeyboard }
+              );
+            }, mediaGroupId ? MEDIA_GROUP_TIMEOUT + 100 : 0);
+          }
+          return;
+        }
 
         if (mediaGroupId) {
           // This is part of an album
@@ -902,7 +1112,12 @@ if (BOT_TOKEN && BOT_TOKEN.length > 10) {
 
     // Process document album
     async function processDocumentAlbum(chatId, documents) {
-      const statusMsg = await bot.sendMessage(chatId, `📸 *Обрабатываю ${documents.length} файлов...*`, { parse_mode: 'Markdown' });
+      // Get date from user state or use today
+      const state = userStates.get(chatId);
+      const screenshotDate = state?.date || new Date().toISOString().split('T')[0];
+      const formattedDate = new Date(screenshotDate).toLocaleDateString('ru-RU');
+
+      const statusMsg = await bot.sendMessage(chatId, `📸 *Обрабатываю ${documents.length} файлов...*\n📅 Дата: ${formattedDate}`, { parse_mode: 'Markdown' });
       
       let successCount = 0;
       let failCount = 0;
@@ -911,7 +1126,7 @@ if (BOT_TOKEN && BOT_TOKEN.length > 10) {
       for (let i = 0; i < documents.length; i++) {
         try {
           await bot.editMessageText(
-            `🔍 *Анализирую файл ${i + 1} из ${documents.length}...*`,
+            `🔍 *Анализирую файл ${i + 1} из ${documents.length}...*\n📅 Дата: ${formattedDate}`,
             { chat_id: chatId, message_id: statusMsg.message_id, parse_mode: 'Markdown' }
           );
 
@@ -935,11 +1150,11 @@ if (BOT_TOKEN && BOT_TOKEN.length > 10) {
 
           if (error) throw error;
 
-          // Save metadata
+          // Save metadata with user-specified date
           const metadata = {
             marketplace: analysis.marketplace || 'Не определён',
             page: analysis.page || 'Не определена',
-            date: new Date().toISOString().split('T')[0],
+            date: screenshotDate,
             description: analysis.description || ''
           };
           imageMetadata.set(fileName, metadata);
