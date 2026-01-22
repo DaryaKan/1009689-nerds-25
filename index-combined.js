@@ -464,6 +464,14 @@ app.get('/api/health', (req, res) => {
 // Analyze images with missing metadata
 app.post('/api/analyze-missing', async (req, res) => {
   try {
+    // Check if Gemini is configured
+    if (!GEMINI_API_KEY) {
+      return res.status(400).json({ 
+        error: 'GEMINI_API_KEY not configured',
+        hint: 'Set GEMINI_API_KEY environment variable in Railway'
+      });
+    }
+    
     // Get all images
     const { data: files, error } = await supabase.storage
       .from(BUCKET)
