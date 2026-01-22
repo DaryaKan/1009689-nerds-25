@@ -13,51 +13,21 @@ const path = require('path');
 const TelegramBot = require('node-telegram-bot-api');
 const https = require('https');
 const http = require('http');
-const { GoogleGenerativeAI } = require('@google/generative-ai');
 
 // Initialize Gemini AI
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-let genAI = null;
-let visionModel = null;
-const VISION_MODELS = ['gemini-1.5-flash-latest', 'gemini-1.5-pro-latest', 'gemini-pro-vision', 'gemini-1.0-pro-vision-latest'];
-let currentModelIndex = 0;
 
 if (GEMINI_API_KEY) {
-  genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-  visionModel = genAI.getGenerativeModel({ model: VISION_MODELS[0] });
-  console.log(`Gemini Vision AI initialized, will try models: ${VISION_MODELS.join(', ')}`);
+  console.log('Gemini API key configured');
 }
 
-// Function to analyze screenshot with Gemini
+// Function to analyze screenshot with Gemini using direct HTTP API
 async function analyzeScreenshot(imageBuffer) {
-  if (!genAI) {
-    console.log('Gemini AI not initialized');
+  if (!GEMINI_API_KEY) {
+    console.log('Gemini API key not configured');
     return { marketplace: null, page: null, description: '', confidence: false };
   }
 
-  // Try each model until one works
-  for (let i = 0; i < VISION_MODELS.length; i++) {
-    const modelName = VISION_MODELS[i];
-    console.log(`Trying model: ${modelName}`);
-    
-    try {
-      const model = genAI.getGenerativeModel({ model: modelName });
-      const result = await tryAnalyzeWithModel(model, imageBuffer);
-      if (result) {
-        console.log(`Success with model: ${modelName}`);
-        return result;
-      }
-    } catch (error) {
-      console.log(`Model ${modelName} failed: ${error.message}`);
-      continue;
-    }
-  }
-  
-  console.log('All models failed');
-  return { marketplace: null, page: null, description: '', confidence: false };
-}
-
-async function tryAnalyzeWithModel(model, imageBuffer) {
   const prompt = `Analyze this screenshot of a marketplace/e-commerce app or website.
 
 TASK: Identify the marketplace and page type.
@@ -88,58 +58,93 @@ Respond ONLY with JSON (no markdown):
 
 Set confidence to true if you can identify the marketplace. Only set false if you truly cannot determine it.`;
 
-    const imagePart = {
-      inlineData: {
-        data: imageBuffer.toString('base64'),
-        mimeType: 'image/jpeg'
-      }
-    };
+  // Try different API endpoints
+  const models = ['gemini-1.5-flash', 'gemini-pro-vision', 'gemini-1.5-pro'];
+  
+  for (const model of models) {
+    try {
+      console.log(`Trying Gemini model: ${model}`);
+      
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_API_KEY}`;
+      
+      const requestBody = {
+        contents: [{
+          parts: [
+            { text: prompt },
+            {
+              inline_data: {
+                mime_type: 'image/jpeg',
+                data: imageBuffer.toString('base64')
+              }
+            }
+          ]
+        }]
+      };
 
-    const result = await visionModel.generateContent([prompt, imagePart]);
-    const response = await result.response;
-    const text = response.text();
-    
-    console.log('Gemini raw response:', text);
-    
-    // Parse JSON from response
-    const jsonMatch = text.match(/\{[\s\S]*?\}/);
-    if (jsonMatch) {
-      try {
-        const parsed = JSON.parse(jsonMatch[0]);
-        console.log('Parsed result:', parsed);
-        
-        // Normalize marketplace names
-        let marketplace = parsed.marketplace;
-        if (marketplace) {
-          marketplace = marketplace.trim();
-          // Normalize common variations
-          if (marketplace.toLowerCase().includes('aliexpress') || marketplace.toLowerCase().includes('ali express')) {
-            marketplace = 'AliExpress';
-          } else if (marketplace.toLowerCase().includes('ozon')) {
-            marketplace = 'Ozon';
-          } else if (marketplace.toLowerCase().includes('wildberries') || marketplace.toLowerCase() === 'wb') {
-            marketplace = 'Wildberries';
-          } else if (marketplace.toLowerCase().includes('яндекс') || marketplace.toLowerCase().includes('yandex')) {
-            marketplace = 'Яндекс.Маркет';
-          }
-        }
-        
-        return {
-          marketplace: marketplace || null,
-          page: parsed.page || null,
-          description: parsed.description || '',
-          confidence: parsed.confidence !== false
-        };
-      } catch (parseError) {
-        console.error('JSON parse error:', parseError.message);
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestBody)
+      });
+
+      const data = await response.json();
+      
+      if (data.error) {
+        console.log(`Model ${model} error:`, data.error.message);
+        continue;
       }
+
+      const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+      
+      if (!text) {
+        console.log(`Model ${model}: No text in response`);
+        continue;
+      }
+
+      console.log(`Gemini response from ${model}:`, text);
+      
+      // Parse JSON from response
+      const jsonMatch = text.match(/\{[\s\S]*?\}/);
+      if (jsonMatch) {
+        try {
+          const parsed = JSON.parse(jsonMatch[0]);
+          console.log('Parsed result:', parsed);
+          
+          // Normalize marketplace names
+          let marketplace = parsed.marketplace;
+          if (marketplace) {
+            marketplace = marketplace.trim();
+            if (marketplace.toLowerCase().includes('aliexpress') || marketplace.toLowerCase().includes('ali express')) {
+              marketplace = 'AliExpress';
+            } else if (marketplace.toLowerCase().includes('ozon')) {
+              marketplace = 'Ozon';
+            } else if (marketplace.toLowerCase().includes('wildberries') || marketplace.toLowerCase() === 'wb') {
+              marketplace = 'Wildberries';
+            } else if (marketplace.toLowerCase().includes('яндекс') || marketplace.toLowerCase().includes('yandex')) {
+              marketplace = 'Яндекс.Маркет';
+            }
+          }
+          
+          return {
+            marketplace: marketplace || null,
+            page: parsed.page || null,
+            description: parsed.description || '',
+            confidence: parsed.confidence !== false
+          };
+        } catch (parseError) {
+          console.error('JSON parse error:', parseError.message);
+        }
+      }
+    } catch (error) {
+      console.error(`Model ${model} request error:`, error.message);
+      continue;
     }
-    
-    return null;
-  } catch (error) {
-    console.error('Model error:', error.message);
-    throw error; // Re-throw to try next model
   }
+  
+  console.log('All Gemini models failed');
+  return { marketplace: null, page: null, description: '', confidence: false };
 }
 
 // ============ EXPRESS SERVER ============
