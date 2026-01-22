@@ -229,9 +229,10 @@ app.listen(PORT, () => {
 
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 
-if (BOT_TOKEN) {
-  const bot = new TelegramBot(BOT_TOKEN, { polling: true });
-  console.log('Telegram bot started');
+if (BOT_TOKEN && BOT_TOKEN.length > 10) {
+  try {
+    const bot = new TelegramBot(BOT_TOKEN, { polling: { interval: 1000, autoStart: true } });
+    console.log('Telegram bot started');
 
   async function downloadFile(fileUrl) {
     return new Promise((resolve, reject) => {
@@ -332,8 +333,12 @@ if (BOT_TOKEN) {
 
   bot.on('polling_error', (error) => {
     console.error('Bot polling error:', error.code);
+    // Don't crash the server on bot errors
   });
 
+  } catch (botError) {
+    console.error('Failed to start Telegram bot:', botError.message);
+  }
 } else {
   console.log('Telegram bot disabled (no token)');
 }
