@@ -638,20 +638,37 @@
 
     /* Detail Modal */
     .detail-modal {
-      max-width: 600px;
+      max-width: 900px;
+      width: 95%;
+    }
+
+    .detail-grid {
+      display: grid;
+      grid-template-columns: 1fr 1.2fr;
+      gap: 24px;
+    }
+
+    .detail-left {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .detail-right {
+      display: flex;
+      align-items: flex-start;
     }
 
     .detail-image-container {
       position: relative;
       border-radius: 12px;
       overflow: hidden;
-      margin-bottom: 24px;
       cursor: pointer;
+      width: 100%;
     }
 
     .detail-image-container img {
       width: 100%;
-      max-height: 400px;
+      max-height: 500px;
       object-fit: contain;
       background: var(--bg-secondary);
     }
@@ -680,38 +697,39 @@
       display: flex;
       flex-direction: column;
       gap: 16px;
-      margin-bottom: 24px;
+      flex: 1;
     }
 
     .detail-row {
       display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 12px;
+      flex-direction: column;
+      gap: 6px;
     }
 
     .detail-label {
-      font-size: 13px;
+      font-size: 12px;
+      font-weight: 500;
       color: var(--text-muted);
-      white-space: nowrap;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
     }
 
     .combo-select {
       display: flex;
       gap: 8px;
-      flex: 1;
-      max-width: 220px;
+      width: 100%;
     }
 
     .detail-select {
       flex: 1;
-      padding: 8px 12px;
+      padding: 10px 12px;
       border: 1px solid var(--border);
-      border-radius: 6px;
-      font-size: 13px;
+      border-radius: 8px;
+      font-size: 14px;
       background: var(--bg-primary);
       color: var(--text-primary);
       cursor: pointer;
+      width: 100%;
     }
 
     .detail-select:focus {
@@ -725,18 +743,13 @@
 
     .detail-date-input,
     .detail-text-input {
-      flex: 1;
-      max-width: 200px;
-      padding: 8px 12px;
+      width: 100%;
+      padding: 10px 12px;
       border: 1px solid var(--border);
-      border-radius: 6px;
-      font-size: 13px;
+      border-radius: 8px;
+      font-size: 14px;
       background: var(--bg-primary);
       color: var(--text-primary);
-    }
-
-    .detail-text-input {
-      max-width: 250px;
     }
 
     .detail-date-input:focus,
@@ -748,24 +761,23 @@
     .detail-link-container {
       display: flex;
       gap: 8px;
-      flex: 1;
-      max-width: 300px;
+      width: 100%;
     }
 
     .detail-link-input {
       flex: 1;
-      padding: 8px 12px;
+      padding: 10px 12px;
       border: 1px solid var(--border);
-      border-radius: 6px;
-      font-size: 12px;
+      border-radius: 8px;
+      font-size: 13px;
       background: var(--bg-secondary);
       color: var(--text-secondary);
     }
 
     .detail-copy-btn {
-      padding: 8px 12px;
+      padding: 10px 14px;
       border: 1px solid var(--border);
-      border-radius: 6px;
+      border-radius: 8px;
       background: var(--bg-primary);
       cursor: pointer;
       transition: all 0.2s;
@@ -778,14 +790,15 @@
 
     .detail-actions {
       display: flex;
-      gap: 12px;
+      gap: 10px;
+      margin-top: 20px;
     }
 
     .detail-btn {
       flex: 1;
-      padding: 12px 20px;
+      padding: 12px 16px;
       border-radius: 8px;
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 500;
       text-align: center;
       text-decoration: none;
@@ -845,6 +858,18 @@
         flex: 100%;
         margin-left: 0;
         margin-top: 8px;
+      }
+      .detail-modal {
+        max-width: 95%;
+      }
+      .detail-grid {
+        grid-template-columns: 1fr;
+      }
+      .detail-right {
+        order: -1;
+      }
+      .detail-image-container img {
+        max-height: 300px;
       }
     }
 
@@ -994,56 +1019,60 @@
         <h2 class="modal-title" id="detailModalTitle">Детали скриншота</h2>
         <button class="modal-close" onclick="closeDetailModal()">×</button>
       </div>
-      <div class="modal-body">
-        <div class="detail-image-container">
-          <img id="detailImage" src="" alt="" onclick="openLightboxFromDetail()">
-          <div class="detail-image-overlay">
-            <span>🔍 Увеличить</span>
+      <div class="modal-body detail-grid">
+        <div class="detail-left">
+          <div class="detail-info">
+            <div class="detail-row">
+              <span class="detail-label">Маркетплейс</span>
+              <div class="combo-select">
+                <select class="detail-select" id="detailMarketplace" onchange="handleComboSelect(this, 'detailMarketplaceCustom'); markDetailChanged()">
+                </select>
+                <input type="text" class="detail-select combo-input" id="detailMarketplaceCustom" placeholder="Введите название..." style="display:none" oninput="markDetailChanged()">
+              </div>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Страница</span>
+              <div class="combo-select">
+                <select class="detail-select" id="detailPage" onchange="handleComboSelect(this, 'detailPageCustom'); markDetailChanged()">
+                </select>
+                <input type="text" class="detail-select combo-input" id="detailPageCustom" placeholder="Введите название..." style="display:none" oninput="markDetailChanged()">
+              </div>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Дата</span>
+              <input type="date" class="detail-date-input" id="detailDate" onchange="markDetailChanged()">
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Описание</span>
+              <input type="text" class="detail-text-input" id="detailDescription" placeholder="Добавить описание..." onchange="markDetailChanged()">
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Ссылка</span>
+              <div class="detail-link-container">
+                <input type="text" class="detail-link-input" id="detailUrl" readonly>
+                <button class="detail-copy-btn" onclick="copyDetailUrl()">📋</button>
+              </div>
+            </div>
+          </div>
+          <div class="detail-actions">
+            <button class="detail-btn detail-btn-save" id="detailSaveBtn" onclick="saveDetailChanges()" style="display: none;">
+              Сохранить
+            </button>
+            <a class="detail-btn detail-btn-secondary" id="detailOpenBtn" href="" target="_blank">
+              Открыть
+            </a>
+            <button class="detail-btn detail-btn-danger" id="detailDeleteBtn" onclick="deleteFromDetail()">
+              Удалить
+            </button>
           </div>
         </div>
-        <div class="detail-info">
-          <div class="detail-row">
-            <span class="detail-label">Маркетплейс</span>
-            <div class="combo-select">
-              <select class="detail-select" id="detailMarketplace" onchange="handleComboSelect(this, 'detailMarketplaceCustom'); markDetailChanged()">
-              </select>
-              <input type="text" class="detail-select combo-input" id="detailMarketplaceCustom" placeholder="Введите название..." style="display:none" oninput="markDetailChanged()">
+        <div class="detail-right">
+          <div class="detail-image-container">
+            <img id="detailImage" src="" alt="" onclick="openLightboxFromDetail()">
+            <div class="detail-image-overlay">
+              <span>🔍 Увеличить</span>
             </div>
           </div>
-          <div class="detail-row">
-            <span class="detail-label">Страница</span>
-            <div class="combo-select">
-              <select class="detail-select" id="detailPage" onchange="handleComboSelect(this, 'detailPageCustom'); markDetailChanged()">
-              </select>
-              <input type="text" class="detail-select combo-input" id="detailPageCustom" placeholder="Введите название..." style="display:none" oninput="markDetailChanged()">
-            </div>
-          </div>
-          <div class="detail-row">
-            <span class="detail-label">Дата</span>
-            <input type="date" class="detail-date-input" id="detailDate" onchange="markDetailChanged()">
-          </div>
-          <div class="detail-row">
-            <span class="detail-label">Описание</span>
-            <input type="text" class="detail-text-input" id="detailDescription" placeholder="Добавить описание..." onchange="markDetailChanged()">
-          </div>
-          <div class="detail-row">
-            <span class="detail-label">Ссылка</span>
-            <div class="detail-link-container">
-              <input type="text" class="detail-link-input" id="detailUrl" readonly>
-              <button class="detail-copy-btn" onclick="copyDetailUrl()">📋</button>
-            </div>
-          </div>
-        </div>
-        <div class="detail-actions">
-          <button class="detail-btn detail-btn-save" id="detailSaveBtn" onclick="saveDetailChanges()" style="display: none;">
-            Сохранить изменения
-          </button>
-          <a class="detail-btn detail-btn-secondary" id="detailOpenBtn" href="" target="_blank">
-            Открыть
-          </a>
-          <button class="detail-btn detail-btn-danger" id="detailDeleteBtn" onclick="deleteFromDetail()">
-            Удалить
-          </button>
         </div>
       </div>
     </div>
