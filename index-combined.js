@@ -605,10 +605,21 @@ app.post('/api/analyze-one', async (req, res) => {
           remaining: toAnalyze.length - 1
         });
       } else {
+        // Mark as analyzed but unknown so we don't retry
+        const existingMeta = imageMetadata.get(img.name) || {};
+        const newMeta = {
+          marketplace: 'AI: не определён',
+          page: 'AI: не определена',
+          date: existingMeta.date || new Date().toISOString().split('T')[0],
+          description: existingMeta.description || ''
+        };
+        imageMetadata.set(img.name, newMeta);
+        await saveMetadata();
+        
         return res.json({
           success: false,
           id: img.name,
-          error: 'AI could not analyze image',
+          error: 'AI could not analyze image - marked as checked',
           remaining: toAnalyze.length - 1
         });
       }
