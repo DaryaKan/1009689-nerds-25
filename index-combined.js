@@ -844,11 +844,12 @@ app.post('/api/analyze-by-comparison', async (req, res) => {
 
     const images = files.filter(f => f.name !== '.emptyFolderPlaceholder');
 
-    // Find unrecognized images
+    // Find unrecognized images (AI: or Сравнение: prefixes mean failed analysis)
     const unrecognized = images.filter(img => {
       const meta = imageMetadata.get(img.name);
       if (!meta) return false;
-      return meta.marketplace && meta.marketplace.startsWith('AI:');
+      const mp = meta.marketplace || '';
+      return mp.startsWith('AI:') && !mp.includes('Сравнение:');
     });
 
     if (unrecognized.length === 0) {
@@ -936,10 +937,19 @@ app.post('/api/analyze-by-comparison', async (req, res) => {
         remaining: unrecognized.length - 1
       });
     } else {
+      // Mark as checked so we don't retry
+      const existingMeta = imageMetadata.get(unknown.name) || {};
+      imageMetadata.set(unknown.name, {
+        ...existingMeta,
+        marketplace: 'Сравнение: не определён',
+        page: existingMeta.page || 'Не указана'
+      });
+      await saveMetadata();
+      
       return res.json({
         success: false,
         id: unknown.name,
-        error: 'Could not determine by comparison',
+        error: 'Could not determine by comparison - marked',
         remaining: unrecognized.length - 1
       });
     }
