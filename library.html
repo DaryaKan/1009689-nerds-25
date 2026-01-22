@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Image Library - Библиотека изображений</title>
-  <link href="https://fonts.googleapis.com/css?family=Roboto:400,500,700&display=swap&subset=cyrillic" rel="stylesheet">
+  <title>Screenshot Library - Библиотека скриншотов</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     * {
       margin: 0;
@@ -13,238 +13,498 @@
     }
 
     body {
-      font-family: 'Roboto', Arial, sans-serif;
-      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #f5f7fa;
       min-height: 100vh;
-      color: #fff;
-    }
-
-    .container {
-      max-width: 1400px;
-      margin: 0 auto;
-      padding: 20px;
+      color: #1a1a2e;
     }
 
     /* Header */
     .header {
+      background: #fff;
+      border-bottom: 1px solid #e5e7eb;
+      padding: 16px 24px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .header-content {
+      max-width: 1400px;
+      margin: 0 auto;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 20px 0;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-      margin-bottom: 30px;
     }
 
     .logo {
-      font-size: 28px;
+      font-size: 20px;
       font-weight: 700;
-      background: linear-gradient(90deg, #e94560, #ff6b6b);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-
-    .stats {
-      display: flex;
-      gap: 30px;
-      font-size: 14px;
-      color: rgba(255, 255, 255, 0.7);
-    }
-
-    .stat-item {
+      color: #6366f1;
       display: flex;
       align-items: center;
       gap: 8px;
     }
 
-    .stat-value {
-      font-weight: 700;
-      color: #e94560;
-    }
-
-    /* Upload Section */
-    .upload-section {
-      background: rgba(255, 255, 255, 0.05);
-      border-radius: 20px;
-      padding: 40px;
-      margin-bottom: 40px;
-      border: 2px dashed rgba(233, 69, 96, 0.3);
-      transition: all 0.3s ease;
-    }
-
-    .upload-section:hover,
-    .upload-section.dragover {
-      border-color: #e94560;
-      background: rgba(233, 69, 96, 0.1);
-    }
-
-    .upload-content {
-      text-align: center;
-    }
-
-    .upload-icon {
-      font-size: 64px;
-      margin-bottom: 20px;
-    }
-
-    .upload-title {
-      font-size: 24px;
-      margin-bottom: 10px;
-    }
-
-    .upload-subtitle {
-      color: rgba(255, 255, 255, 0.6);
-      margin-bottom: 20px;
-    }
-
     .upload-btn {
-      display: inline-block;
-      padding: 14px 40px;
-      background: linear-gradient(90deg, #e94560, #ff6b6b);
+      background: #6366f1;
       color: #fff;
       border: none;
-      border-radius: 30px;
-      font-size: 16px;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: 14px;
       font-weight: 500;
       cursor: pointer;
-      transition: transform 0.3s, box-shadow 0.3s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: background 0.2s;
     }
 
     .upload-btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 10px 30px rgba(233, 69, 96, 0.4);
+      background: #4f46e5;
     }
 
-    #fileInput {
-      display: none;
+    /* Main Layout */
+    .main {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 24px;
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      gap: 24px;
     }
 
-    /* Progress */
-    .progress-container {
-      margin-top: 20px;
-      display: none;
+    /* Sidebar - Filters */
+    .sidebar {
+      background: #fff;
+      border-radius: 12px;
+      padding: 20px;
+      height: fit-content;
+      position: sticky;
+      top: 100px;
     }
 
-    .progress-container.active {
-      display: block;
+    .filter-section {
+      margin-bottom: 24px;
     }
 
-    .progress-bar {
-      height: 8px;
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 4px;
-      overflow: hidden;
+    .filter-section:last-child {
+      margin-bottom: 0;
     }
 
-    .progress-fill {
-      height: 100%;
-      background: linear-gradient(90deg, #e94560, #ff6b6b);
-      width: 0%;
-      transition: width 0.3s;
+    .filter-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: #6b7280;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 12px;
     }
 
-    .progress-text {
-      text-align: center;
-      margin-top: 10px;
+    .filter-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .filter-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .filter-item:hover {
+      background: #f3f4f6;
+    }
+
+    .filter-item.active {
+      background: #eef2ff;
+      color: #6366f1;
+    }
+
+    .filter-item input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      accent-color: #6366f1;
+    }
+
+    .filter-item label {
       font-size: 14px;
-      color: rgba(255, 255, 255, 0.7);
+      cursor: pointer;
+      flex: 1;
     }
 
-    /* Gallery */
-    .gallery-header {
+    .filter-count {
+      font-size: 12px;
+      color: #9ca3af;
+      background: #f3f4f6;
+      padding: 2px 8px;
+      border-radius: 10px;
+    }
+
+    /* Date Filter */
+    .date-inputs {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .date-inputs input {
+      padding: 10px 12px;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      font-size: 14px;
+      width: 100%;
+    }
+
+    .date-inputs input:focus {
+      outline: none;
+      border-color: #6366f1;
+    }
+
+    /* Search */
+    .search-box {
+      margin-bottom: 20px;
+    }
+
+    .search-input {
+      width: 100%;
+      padding: 12px 16px;
+      padding-left: 40px;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      font-size: 14px;
+      background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%239ca3af'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z'%3E%3C/path%3E%3C/svg%3E") no-repeat 12px center;
+      background-size: 20px;
+    }
+
+    .search-input:focus {
+      outline: none;
+      border-color: #6366f1;
+    }
+
+    .clear-filters {
+      width: 100%;
+      padding: 10px;
+      background: #f3f4f6;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      color: #6b7280;
+      cursor: pointer;
+      margin-top: 16px;
+    }
+
+    .clear-filters:hover {
+      background: #e5e7eb;
+    }
+
+    /* Content Area */
+    .content {
+      min-height: 500px;
+    }
+
+    .content-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
       margin-bottom: 20px;
     }
 
-    .gallery-title {
-      font-size: 20px;
-      font-weight: 500;
+    .results-count {
+      font-size: 14px;
+      color: #6b7280;
     }
 
-    .refresh-btn {
-      padding: 10px 20px;
-      background: rgba(255, 255, 255, 0.1);
+    .view-toggle {
+      display: flex;
+      gap: 4px;
+      background: #fff;
+      padding: 4px;
+      border-radius: 8px;
+    }
+
+    .view-btn {
+      padding: 8px 12px;
       border: none;
-      border-radius: 20px;
-      color: #fff;
+      background: transparent;
+      border-radius: 6px;
       cursor: pointer;
-      transition: background 0.3s;
+      color: #6b7280;
     }
 
-    .refresh-btn:hover {
-      background: rgba(255, 255, 255, 0.2);
+    .view-btn.active {
+      background: #6366f1;
+      color: #fff;
     }
 
+    /* Gallery Grid */
     .gallery {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
       gap: 20px;
     }
 
-    .gallery-item {
-      position: relative;
-      border-radius: 16px;
+    .gallery.list-view {
+      grid-template-columns: 1fr;
+    }
+
+    /* Card */
+    .card {
+      background: #fff;
+      border-radius: 12px;
       overflow: hidden;
-      background: rgba(255, 255, 255, 0.05);
-      aspect-ratio: 1;
+      transition: transform 0.2s, box-shadow 0.2s;
       cursor: pointer;
-      transition: transform 0.3s, box-shadow 0.3s;
     }
 
-    .gallery-item:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    .card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
     }
 
-    .gallery-item img {
+    .card-image {
+      position: relative;
+      aspect-ratio: 16/10;
+      overflow: hidden;
+      background: #f3f4f6;
+    }
+
+    .card-image img {
       width: 100%;
       height: 100%;
       object-fit: cover;
     }
 
-    .gallery-item .overlay {
+    .card-badge {
       position: absolute;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      padding: 20px;
-      background: linear-gradient(transparent, rgba(0, 0, 0, 0.8));
-      opacity: 0;
-      transition: opacity 0.3s;
+      top: 12px;
+      left: 12px;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 500;
+      color: #fff;
     }
 
-    .gallery-item:hover .overlay {
+    .badge-ozon { background: #005bff; }
+    .badge-wildberries { background: #cb11ab; }
+    .badge-yandex { background: #fc0; color: #000; }
+    .badge-other { background: #6b7280; }
+
+    .card-body {
+      padding: 16px;
+    }
+
+    .card-title {
+      font-size: 14px;
+      font-weight: 500;
+      margin-bottom: 8px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .card-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      color: #6b7280;
+    }
+
+    .card-date {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .card-actions {
+      display: flex;
+      gap: 8px;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    .card:hover .card-actions {
       opacity: 1;
     }
 
-    .overlay-actions {
-      display: flex;
-      gap: 10px;
-    }
-
     .action-btn {
-      padding: 8px 16px;
+      width: 28px;
+      height: 28px;
       border: none;
-      border-radius: 20px;
-      font-size: 12px;
+      background: #f3f4f6;
+      border-radius: 6px;
       cursor: pointer;
-      transition: background 0.3s;
-    }
-
-    .action-btn.copy {
-      background: #e94560;
-      color: #fff;
-    }
-
-    .action-btn.delete {
-      background: rgba(255, 255, 255, 0.2);
-      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
     }
 
     .action-btn:hover {
-      filter: brightness(1.2);
+      background: #e5e7eb;
+    }
+
+    /* List View Card */
+    .gallery.list-view .card {
+      display: grid;
+      grid-template-columns: 200px 1fr;
+    }
+
+    .gallery.list-view .card-image {
+      aspect-ratio: auto;
+      height: 120px;
+    }
+
+    .gallery.list-view .card-body {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    /* Modal */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      padding: 20px;
+    }
+
+    .modal-overlay.active {
+      display: flex;
+    }
+
+    .modal {
+      background: #fff;
+      border-radius: 16px;
+      width: 100%;
+      max-width: 500px;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    .modal-header {
+      padding: 20px 24px;
+      border-bottom: 1px solid #e5e7eb;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .modal-title {
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .modal-close {
+      width: 32px;
+      height: 32px;
+      border: none;
+      background: #f3f4f6;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 18px;
+    }
+
+    .modal-body {
+      padding: 24px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 14px;
+      font-weight: 500;
+      margin-bottom: 8px;
+    }
+
+    .form-input, .form-select {
+      width: 100%;
+      padding: 12px 16px;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+
+    .form-input:focus, .form-select:focus {
+      outline: none;
+      border-color: #6366f1;
+    }
+
+    /* Upload Zone */
+    .upload-zone {
+      border: 2px dashed #e5e7eb;
+      border-radius: 12px;
+      padding: 40px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+    }
+
+    .upload-zone:hover, .upload-zone.dragover {
+      border-color: #6366f1;
+      background: #eef2ff;
+    }
+
+    .upload-zone-icon {
+      font-size: 48px;
+      margin-bottom: 12px;
+    }
+
+    .upload-zone-text {
+      font-size: 14px;
+      color: #6b7280;
+    }
+
+    .upload-zone-text span {
+      color: #6366f1;
+      font-weight: 500;
+    }
+
+    .preview-image {
+      max-width: 100%;
+      max-height: 200px;
+      border-radius: 8px;
+      margin-top: 16px;
+    }
+
+    .submit-btn {
+      width: 100%;
+      padding: 14px;
+      background: #6366f1;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 500;
+      cursor: pointer;
+      margin-top: 8px;
+    }
+
+    .submit-btn:hover {
+      background: #4f46e5;
+    }
+
+    .submit-btn:disabled {
+      background: #9ca3af;
+      cursor: not-allowed;
     }
 
     /* Lightbox */
@@ -258,7 +518,7 @@
       display: none;
       justify-content: center;
       align-items: center;
-      z-index: 1000;
+      z-index: 1001;
     }
 
     .lightbox.active {
@@ -269,35 +529,68 @@
       max-width: 90%;
       max-height: 90%;
       object-fit: contain;
-      border-radius: 8px;
     }
 
     .lightbox-close {
       position: absolute;
       top: 20px;
       right: 20px;
-      font-size: 40px;
+      font-size: 32px;
       color: #fff;
       cursor: pointer;
-      opacity: 0.7;
-      transition: opacity 0.3s;
+      opacity: 0.8;
     }
 
     .lightbox-close:hover {
       opacity: 1;
     }
 
-    /* Toast notifications */
+    .lightbox-info {
+      position: absolute;
+      bottom: 20px;
+      left: 20px;
+      color: #fff;
+    }
+
+    .lightbox-info h3 {
+      font-size: 18px;
+      margin-bottom: 8px;
+    }
+
+    .lightbox-info p {
+      font-size: 14px;
+      opacity: 0.8;
+    }
+
+    /* Empty State */
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: #6b7280;
+    }
+
+    .empty-state-icon {
+      font-size: 64px;
+      margin-bottom: 16px;
+    }
+
+    .empty-state h3 {
+      font-size: 18px;
+      margin-bottom: 8px;
+      color: #1a1a2e;
+    }
+
+    /* Toast */
     .toast-container {
       position: fixed;
       bottom: 20px;
       right: 20px;
-      z-index: 1001;
+      z-index: 1002;
     }
 
     .toast {
-      padding: 16px 24px;
-      background: #333;
+      padding: 14px 20px;
+      background: #1a1a2e;
       color: #fff;
       border-radius: 8px;
       margin-top: 10px;
@@ -307,134 +600,157 @@
       gap: 10px;
     }
 
-    .toast.success {
-      background: #27ae60;
-    }
-
-    .toast.error {
-      background: #e74c3c;
-    }
+    .toast.success { background: #10b981; }
+    .toast.error { background: #ef4444; }
 
     @keyframes slideIn {
-      from {
-        transform: translateX(100%);
-        opacity: 0;
-      }
-      to {
-        transform: translateX(0);
-        opacity: 1;
-      }
-    }
-
-    /* Empty state */
-    .empty-state {
-      text-align: center;
-      padding: 60px 20px;
-      color: rgba(255, 255, 255, 0.5);
-    }
-
-    .empty-state-icon {
-      font-size: 64px;
-      margin-bottom: 20px;
-    }
-
-    /* Loading */
-    .loading {
-      text-align: center;
-      padding: 40px;
-      color: rgba(255, 255, 255, 0.5);
-    }
-
-    .spinner {
-      display: inline-block;
-      width: 40px;
-      height: 40px;
-      border: 3px solid rgba(255, 255, 255, 0.1);
-      border-top-color: #e94560;
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-    }
-
-    @keyframes spin {
-      to { transform: rotate(360deg); }
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
     }
 
     /* Responsive */
-    @media (max-width: 768px) {
-      .header {
-        flex-direction: column;
-        gap: 20px;
-        text-align: center;
+    @media (max-width: 900px) {
+      .main {
+        grid-template-columns: 1fr;
       }
-
-      .stats {
-        flex-wrap: wrap;
-        justify-content: center;
+      .sidebar {
+        position: static;
       }
+    }
 
-      .upload-section {
-        padding: 30px 20px;
-      }
-
+    @media (max-width: 600px) {
       .gallery {
-        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-        gap: 10px;
+        grid-template-columns: 1fr;
+      }
+      .header-content {
+        flex-direction: column;
+        gap: 12px;
       }
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <header class="header">
-      <div class="logo">📸 Image Library</div>
-      <div class="stats">
-        <div class="stat-item">
-          <span>Изображений:</span>
-          <span class="stat-value" id="totalImages">0</span>
-        </div>
-        <div class="stat-item">
-          <span>Размер:</span>
-          <span class="stat-value" id="totalSize">0 MB</span>
-        </div>
+  <header class="header">
+    <div class="header-content">
+      <div class="logo">
+        📸 Screenshot Library
       </div>
-    </header>
+      <button class="upload-btn" onclick="openUploadModal()">
+        <span>+</span> Загрузить скриншот
+      </button>
+    </div>
+  </header>
 
-    <section class="upload-section" id="dropZone">
-      <div class="upload-content">
-        <div class="upload-icon">☁️</div>
-        <h2 class="upload-title">Загрузить изображения</h2>
-        <p class="upload-subtitle">Перетащите файлы сюда или нажмите кнопку</p>
-        <button class="upload-btn" onclick="document.getElementById('fileInput').click()">
-          Выбрать файлы
-        </button>
-        <input type="file" id="fileInput" multiple accept="image/jpeg,image/png,image/gif,image/webp">
+  <main class="main">
+    <aside class="sidebar">
+      <div class="search-box">
+        <input type="text" class="search-input" placeholder="Поиск по названию..." id="searchInput" oninput="applyFilters()">
       </div>
-      <div class="progress-container" id="progressContainer">
-        <div class="progress-bar">
-          <div class="progress-fill" id="progressFill"></div>
-        </div>
-        <p class="progress-text" id="progressText">Загрузка...</p>
-      </div>
-    </section>
 
-    <section class="gallery-section">
-      <div class="gallery-header">
-        <h2 class="gallery-title">Галерея</h2>
-        <button class="refresh-btn" onclick="loadImages()">🔄 Обновить</button>
+      <div class="filter-section">
+        <div class="filter-title">Маркетплейс</div>
+        <div class="filter-group" id="marketplaceFilters">
+          <!-- Generated dynamically -->
+        </div>
+      </div>
+
+      <div class="filter-section">
+        <div class="filter-title">Страница</div>
+        <div class="filter-group" id="pageFilters">
+          <!-- Generated dynamically -->
+        </div>
+      </div>
+
+      <div class="filter-section">
+        <div class="filter-title">Дата</div>
+        <div class="date-inputs">
+          <input type="date" id="dateFrom" placeholder="От" onchange="applyFilters()">
+          <input type="date" id="dateTo" placeholder="До" onchange="applyFilters()">
+        </div>
+      </div>
+
+      <button class="clear-filters" onclick="clearFilters()">Сбросить фильтры</button>
+    </aside>
+
+    <section class="content">
+      <div class="content-header">
+        <div class="results-count" id="resultsCount">0 скриншотов</div>
+        <div class="view-toggle">
+          <button class="view-btn active" onclick="setView('grid')" id="gridViewBtn">▦</button>
+          <button class="view-btn" onclick="setView('list')" id="listViewBtn">☰</button>
+        </div>
       </div>
       <div class="gallery" id="gallery">
-        <div class="loading">
-          <div class="spinner"></div>
-          <p>Загрузка изображений...</p>
+        <div class="empty-state">
+          <div class="empty-state-icon">📭</div>
+          <h3>Библиотека пуста</h3>
+          <p>Загрузите первый скриншот</p>
         </div>
       </div>
     </section>
+  </main>
+
+  <!-- Upload Modal -->
+  <div class="modal-overlay" id="uploadModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 class="modal-title">Загрузить скриншот</h2>
+        <button class="modal-close" onclick="closeUploadModal()">×</button>
+      </div>
+      <div class="modal-body">
+        <form id="uploadForm" onsubmit="handleUpload(event)">
+          <div class="form-group">
+            <label class="form-label">Изображение</label>
+            <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()">
+              <div class="upload-zone-icon">📁</div>
+              <div class="upload-zone-text">Перетащите файл или <span>выберите</span></div>
+            </div>
+            <input type="file" id="fileInput" accept="image/*" style="display:none" onchange="handleFileSelect(event)">
+            <img id="previewImage" class="preview-image" style="display:none">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Маркетплейс</label>
+            <select class="form-select" id="marketplace" required>
+              <option value="">Выберите маркетплейс</option>
+              <option value="Ozon">Ozon</option>
+              <option value="Wildberries">Wildberries</option>
+              <option value="Яндекс.Маркет">Яндекс.Маркет</option>
+              <option value="AliExpress">AliExpress</option>
+              <option value="СберМегаМаркет">СберМегаМаркет</option>
+              <option value="Другой">Другой</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Страница / Раздел</label>
+            <input type="text" class="form-input" id="pageName" placeholder="Например: Карточка товара, Главная, Каталог" required>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Дата скриншота</label>
+            <input type="date" class="form-input" id="screenshotDate" required>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Описание (необязательно)</label>
+            <input type="text" class="form-input" id="description" placeholder="Краткое описание">
+          </div>
+
+          <button type="submit" class="submit-btn" id="submitBtn" disabled>Загрузить</button>
+        </form>
+      </div>
+    </div>
   </div>
 
   <!-- Lightbox -->
   <div class="lightbox" id="lightbox" onclick="closeLightbox()">
-    <span class="lightbox-close">&times;</span>
+    <span class="lightbox-close">×</span>
     <img id="lightboxImage" src="" alt="">
+    <div class="lightbox-info">
+      <h3 id="lightboxTitle"></h3>
+      <p id="lightboxMeta"></p>
+    </div>
   </div>
 
   <!-- Toast container -->
@@ -442,99 +758,107 @@
 
   <script>
     const API_URL = window.location.origin;
-    const gallery = document.getElementById('gallery');
-    const fileInput = document.getElementById('fileInput');
-    const dropZone = document.getElementById('dropZone');
-    const progressContainer = document.getElementById('progressContainer');
-    const progressFill = document.getElementById('progressFill');
-    const progressText = document.getElementById('progressText');
-    const lightbox = document.getElementById('lightbox');
-    const lightboxImage = document.getElementById('lightboxImage');
+    let allImages = [];
+    let selectedFile = null;
+    let currentView = 'grid';
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('screenshotDate').valueAsDate = new Date();
+      loadImages();
+      setupDragDrop();
+    });
 
     // Toast notification
     function showToast(message, type = 'info') {
       const container = document.getElementById('toastContainer');
       const toast = document.createElement('div');
       toast.className = `toast ${type}`;
-      toast.innerHTML = `${type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️'} ${message}`;
+      toast.textContent = message;
       container.appendChild(toast);
-      
-      setTimeout(() => {
-        toast.remove();
-      }, 3000);
+      setTimeout(() => toast.remove(), 3000);
     }
 
-    // Load images from API
-    async function loadImages() {
-      gallery.innerHTML = '<div class="loading"><div class="spinner"></div><p>Загрузка изображений...</p></div>';
+    // Modal functions
+    function openUploadModal() {
+      document.getElementById('uploadModal').classList.add('active');
+    }
+
+    function closeUploadModal() {
+      document.getElementById('uploadModal').classList.remove('active');
+      resetForm();
+    }
+
+    function resetForm() {
+      document.getElementById('uploadForm').reset();
+      document.getElementById('previewImage').style.display = 'none';
+      document.getElementById('submitBtn').disabled = true;
+      selectedFile = null;
+    }
+
+    // File handling
+    function setupDragDrop() {
+      const zone = document.getElementById('uploadZone');
       
-      try {
-        const response = await fetch(`${API_URL}/api/images`);
-        const data = await response.json();
-        
-        if (data.success && data.images.length > 0) {
-          renderGallery(data.images);
-          updateStats(data.images);
-        } else {
-          gallery.innerHTML = `
-            <div class="empty-state">
-              <div class="empty-state-icon">📭</div>
-              <h3>Библиотека пуста</h3>
-              <p>Загрузите первое изображение!</p>
-            </div>
-          `;
-          document.getElementById('totalImages').textContent = '0';
-          document.getElementById('totalSize').textContent = '0 MB';
+      zone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        zone.classList.add('dragover');
+      });
+
+      zone.addEventListener('dragleave', () => {
+        zone.classList.remove('dragover');
+      });
+
+      zone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        zone.classList.remove('dragover');
+        const file = e.dataTransfer.files[0];
+        if (file && file.type.startsWith('image/')) {
+          handleFile(file);
         }
-      } catch (error) {
-        console.error('Load error:', error);
-        gallery.innerHTML = `
-          <div class="empty-state">
-            <div class="empty-state-icon">⚠️</div>
-            <h3>Ошибка загрузки</h3>
-            <p>Проверьте подключение к серверу</p>
-          </div>
-        `;
-      }
+      });
     }
 
-    // Render gallery
-    function renderGallery(images) {
-      gallery.innerHTML = images.map(img => `
-        <div class="gallery-item" onclick="openLightbox('${img.url}')">
-          <img src="${img.url}" alt="${img.id}" loading="lazy">
-          <div class="overlay">
-            <div class="overlay-actions">
-              <button class="action-btn copy" onclick="event.stopPropagation(); copyUrl('${img.url}')">📋 Копировать</button>
-              <button class="action-btn delete" onclick="event.stopPropagation(); deleteImage('${img.id}')">🗑️ Удалить</button>
-            </div>
-          </div>
-        </div>
-      `).join('');
+    function handleFileSelect(e) {
+      const file = e.target.files[0];
+      if (file) handleFile(file);
     }
 
-    // Update stats
-    function updateStats(images) {
-      document.getElementById('totalImages').textContent = images.length;
-      const totalSize = images.reduce((acc, img) => acc + (img.size || 0), 0);
-      document.getElementById('totalSize').textContent = (totalSize / (1024 * 1024)).toFixed(2) + ' MB';
+    function handleFile(file) {
+      selectedFile = file;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const preview = document.getElementById('previewImage');
+        preview.src = e.target.result;
+        preview.style.display = 'block';
+        document.getElementById('uploadZone').style.display = 'none';
+      };
+      reader.readAsDataURL(file);
+      document.getElementById('submitBtn').disabled = false;
     }
 
-    // Upload files
-    async function uploadFiles(files) {
-      if (files.length === 0) return;
+    // Upload
+    async function handleUpload(e) {
+      e.preventDefault();
+      if (!selectedFile) return;
 
-      progressContainer.classList.add('active');
-      progressFill.style.width = '0%';
-      progressText.textContent = `Загрузка 0 из ${files.length}...`;
+      const btn = document.getElementById('submitBtn');
+      btn.disabled = true;
+      btn.textContent = 'Загрузка...';
+
+      const metadata = {
+        marketplace: document.getElementById('marketplace').value,
+        page: document.getElementById('pageName').value,
+        date: document.getElementById('screenshotDate').value,
+        description: document.getElementById('description').value
+      };
 
       const formData = new FormData();
-      for (const file of files) {
-        formData.append('images', file);
-      }
+      formData.append('image', selectedFile);
+      formData.append('metadata', JSON.stringify(metadata));
 
       try {
-        const response = await fetch(`${API_URL}/api/upload-multiple`, {
+        const response = await fetch(`${API_URL}/api/upload`, {
           method: 'POST',
           body: formData
         });
@@ -542,97 +866,214 @@
         const data = await response.json();
 
         if (data.success) {
-          progressFill.style.width = '100%';
-          progressText.textContent = 'Готово!';
-          showToast(`Загружено ${data.images.length} изображений`, 'success');
+          showToast('Скриншот загружен!', 'success');
+          closeUploadModal();
           loadImages();
         } else {
-          showToast('Ошибка при загрузке', 'error');
+          showToast('Ошибка загрузки', 'error');
         }
       } catch (error) {
-        console.error('Upload error:', error);
-        showToast('Ошибка при загрузке', 'error');
+        showToast('Ошибка загрузки', 'error');
       }
 
-      setTimeout(() => {
-        progressContainer.classList.remove('active');
-      }, 2000);
+      btn.disabled = false;
+      btn.textContent = 'Загрузить';
     }
 
-    // Delete image
-    async function deleteImage(id) {
-      if (!confirm('Удалить это изображение?')) return;
-
+    // Load images
+    async function loadImages() {
       try {
-        const response = await fetch(`${API_URL}/api/images/${id}`, {
-          method: 'DELETE'
-        });
-
+        const response = await fetch(`${API_URL}/api/images`);
         const data = await response.json();
 
         if (data.success) {
-          showToast('Изображение удалено', 'success');
-          loadImages();
-        } else {
-          showToast('Ошибка при удалении', 'error');
+          allImages = data.images;
+          updateFilters();
+          applyFilters();
         }
       } catch (error) {
-        console.error('Delete error:', error);
-        showToast('Ошибка при удалении', 'error');
+        console.error('Load error:', error);
       }
+    }
+
+    // Update filter options
+    function updateFilters() {
+      const marketplaces = {};
+      const pages = {};
+
+      allImages.forEach(img => {
+        const mp = img.metadata?.marketplace || 'Не указан';
+        const pg = img.metadata?.page || 'Не указана';
+        marketplaces[mp] = (marketplaces[mp] || 0) + 1;
+        pages[pg] = (pages[pg] || 0) + 1;
+      });
+
+      document.getElementById('marketplaceFilters').innerHTML = Object.entries(marketplaces)
+        .map(([name, count]) => `
+          <div class="filter-item">
+            <input type="checkbox" id="mp-${name}" value="${name}" onchange="applyFilters()">
+            <label for="mp-${name}">${name}</label>
+            <span class="filter-count">${count}</span>
+          </div>
+        `).join('');
+
+      document.getElementById('pageFilters').innerHTML = Object.entries(pages)
+        .map(([name, count]) => `
+          <div class="filter-item">
+            <input type="checkbox" id="pg-${name}" value="${name}" onchange="applyFilters()">
+            <label for="pg-${name}">${name}</label>
+            <span class="filter-count">${count}</span>
+          </div>
+        `).join('');
+    }
+
+    // Apply filters
+    function applyFilters() {
+      const search = document.getElementById('searchInput').value.toLowerCase();
+      const dateFrom = document.getElementById('dateFrom').value;
+      const dateTo = document.getElementById('dateTo').value;
+
+      const selectedMarketplaces = [...document.querySelectorAll('#marketplaceFilters input:checked')].map(el => el.value);
+      const selectedPages = [...document.querySelectorAll('#pageFilters input:checked')].map(el => el.value);
+
+      const filtered = allImages.filter(img => {
+        const mp = img.metadata?.marketplace || 'Не указан';
+        const pg = img.metadata?.page || 'Не указана';
+        const date = img.metadata?.date || '';
+        const desc = (img.metadata?.description || '').toLowerCase();
+
+        if (search && !desc.includes(search) && !mp.toLowerCase().includes(search) && !pg.toLowerCase().includes(search)) {
+          return false;
+        }
+
+        if (selectedMarketplaces.length > 0 && !selectedMarketplaces.includes(mp)) {
+          return false;
+        }
+
+        if (selectedPages.length > 0 && !selectedPages.includes(pg)) {
+          return false;
+        }
+
+        if (dateFrom && date < dateFrom) return false;
+        if (dateTo && date > dateTo) return false;
+
+        return true;
+      });
+
+      renderGallery(filtered);
+    }
+
+    // Clear filters
+    function clearFilters() {
+      document.getElementById('searchInput').value = '';
+      document.getElementById('dateFrom').value = '';
+      document.getElementById('dateTo').value = '';
+      document.querySelectorAll('.sidebar input[type="checkbox"]').forEach(el => el.checked = false);
+      applyFilters();
+    }
+
+    // Set view
+    function setView(view) {
+      currentView = view;
+      document.getElementById('gallery').classList.toggle('list-view', view === 'list');
+      document.getElementById('gridViewBtn').classList.toggle('active', view === 'grid');
+      document.getElementById('listViewBtn').classList.toggle('active', view === 'list');
+    }
+
+    // Render gallery
+    function renderGallery(images) {
+      const gallery = document.getElementById('gallery');
+      document.getElementById('resultsCount').textContent = `${images.length} скриншотов`;
+
+      if (images.length === 0) {
+        gallery.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">🔍</div>
+            <h3>Ничего не найдено</h3>
+            <p>Попробуйте изменить фильтры</p>
+          </div>
+        `;
+        return;
+      }
+
+      gallery.innerHTML = images.map(img => {
+        const mp = img.metadata?.marketplace || 'Другой';
+        const pg = img.metadata?.page || 'Не указана';
+        const date = img.metadata?.date || '';
+        const desc = img.metadata?.description || pg;
+        
+        const badgeClass = {
+          'Ozon': 'badge-ozon',
+          'Wildberries': 'badge-wildberries',
+          'Яндекс.Маркет': 'badge-yandex'
+        }[mp] || 'badge-other';
+
+        const formattedDate = date ? new Date(date).toLocaleDateString('ru-RU') : '';
+
+        return `
+          <div class="card" onclick="openLightbox('${img.url}', '${desc}', '${mp} • ${pg} • ${formattedDate}')">
+            <div class="card-image">
+              <img src="${img.url}" alt="${desc}" loading="lazy">
+              <span class="card-badge ${badgeClass}">${mp}</span>
+            </div>
+            <div class="card-body">
+              <div class="card-title">${desc}</div>
+              <div class="card-meta">
+                <span class="card-date">📅 ${formattedDate}</span>
+                <div class="card-actions">
+                  <button class="action-btn" onclick="event.stopPropagation(); copyUrl('${img.url}')" title="Копировать ссылку">📋</button>
+                  <button class="action-btn" onclick="event.stopPropagation(); deleteImage('${img.id}')" title="Удалить">🗑️</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // Lightbox
+    function openLightbox(url, title, meta) {
+      document.getElementById('lightboxImage').src = url;
+      document.getElementById('lightboxTitle').textContent = title;
+      document.getElementById('lightboxMeta').textContent = meta;
+      document.getElementById('lightbox').classList.add('active');
+    }
+
+    function closeLightbox() {
+      document.getElementById('lightbox').classList.remove('active');
     }
 
     // Copy URL
     function copyUrl(url) {
       navigator.clipboard.writeText(url).then(() => {
-        showToast('URL скопирован!', 'success');
-      }).catch(() => {
-        showToast('Не удалось скопировать', 'error');
+        showToast('Ссылка скопирована!', 'success');
       });
     }
 
-    // Lightbox
-    function openLightbox(url) {
-      lightboxImage.src = url;
-      lightbox.classList.add('active');
+    // Delete image
+    async function deleteImage(id) {
+      if (!confirm('Удалить этот скриншот?')) return;
+
+      try {
+        const response = await fetch(`${API_URL}/api/images/${id}`, { method: 'DELETE' });
+        const data = await response.json();
+
+        if (data.success) {
+          showToast('Скриншот удалён', 'success');
+          loadImages();
+        }
+      } catch (error) {
+        showToast('Ошибка удаления', 'error');
+      }
     }
 
-    function closeLightbox() {
-      lightbox.classList.remove('active');
-    }
-
-    // File input change
-    fileInput.addEventListener('change', (e) => {
-      uploadFiles(e.target.files);
-      fileInput.value = '';
-    });
-
-    // Drag and drop
-    dropZone.addEventListener('dragover', (e) => {
-      e.preventDefault();
-      dropZone.classList.add('dragover');
-    });
-
-    dropZone.addEventListener('dragleave', () => {
-      dropZone.classList.remove('dragover');
-    });
-
-    dropZone.addEventListener('drop', (e) => {
-      e.preventDefault();
-      dropZone.classList.remove('dragover');
-      const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
-      uploadFiles(files);
-    });
-
-    // Keyboard events
+    // Keyboard
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
         closeLightbox();
+        closeUploadModal();
       }
     });
-
-    // Initial load
-    loadImages();
   </script>
 </body>
 </html>

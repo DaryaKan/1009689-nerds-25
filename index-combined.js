@@ -57,6 +57,9 @@ function getExtension(mimetype) {
   return extensions[mimetype] || 'jpg';
 }
 
+// In-memory metadata store (for simplicity)
+const imageMetadata = new Map();
+
 // Upload single image
 app.post('/api/upload', upload.single('image'), async (req, res) => {
   try {
@@ -68,6 +71,14 @@ app.post('/api/upload', upload.single('image'), async (req, res) => {
     const ext = getExtension(file.mimetype);
     const fileName = `${uuidv4()}.${ext}`;
     const filePath = `images/${fileName}`;
+
+    // Parse metadata
+    let metadata = {};
+    try {
+      metadata = req.body.metadata ? JSON.parse(req.body.metadata) : {};
+    } catch (e) {
+      metadata = {};
+    }
 
     const { data, error } = await supabase.storage
       .from(BUCKET)
@@ -84,6 +95,14 @@ app.post('/api/upload', upload.single('image'), async (req, res) => {
       .from(BUCKET)
       .getPublicUrl(filePath);
 
+    // Store metadata
+    imageMetadata.set(fileName, {
+      marketplace: metadata.marketplace || '',
+      page: metadata.page || '',
+      date: metadata.date || new Date().toISOString().split('T')[0],
+      description: metadata.description || ''
+    });
+
     res.json({
       success: true,
       image: {
@@ -91,7 +110,8 @@ app.post('/api/upload', upload.single('image'), async (req, res) => {
         path: filePath,
         url: urlData.publicUrl,
         originalName: file.originalname,
-        size: file.size
+        size: file.size,
+        metadata: imageMetadata.get(fileName)
       }
     });
 
@@ -169,7 +189,13 @@ app.get('/api/images', async (req, res) => {
           id: file.name,
           url: urlData.publicUrl,
           size: file.metadata?.size,
-          createdAt: file.created_at
+          createdAt: file.created_at,
+          metadata: imageMetadata.get(file.name) || {
+            marketplace: 'Не указан',
+            page: 'Не указана',
+            date: file.created_at ? file.created_at.split('T')[0] : '',
+            description: ''
+          }
         };
       });
 
