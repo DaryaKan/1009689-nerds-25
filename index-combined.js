@@ -22,8 +22,9 @@ let visionModel = null;
 
 if (GEMINI_API_KEY) {
   genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-  visionModel = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
-  console.log('Gemini Vision AI initialized');
+  // Use gemini-pro-vision for image analysis
+  visionModel = genAI.getGenerativeModel({ model: 'gemini-pro-vision' });
+  console.log('Gemini Vision AI initialized (gemini-pro-vision)');
 }
 
 // Function to analyze screenshot with Gemini
