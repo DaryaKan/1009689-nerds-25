@@ -587,6 +587,107 @@ app.get('/api/test-gemini', async (req, res) => {
   }
 });
 
+// Normalize all marketplace names to unified format
+app.post('/api/normalize-marketplaces', async (req, res) => {
+  try {
+    const normalizeMap = {
+      // Lamoda variations
+      'lamoda': 'Lamoda',
+      'LAMODA': 'Lamoda',
+      'ламода': 'Lamoda',
+      'Ламода': 'Lamoda',
+      
+      // Megamarket variations
+      'мегамаркет': 'Мегамаркет',
+      'МегаМаркет': 'Мегамаркет',
+      'сбермегамаркет': 'Мегамаркет',
+      'СберМегаМаркет': 'Мегамаркет',
+      'Сбермегамаркет': 'Мегамаркет',
+      'SberMegaMarket': 'Мегамаркет',
+      
+      // Yandex Market variations
+      'яндекс.маркет': 'Яндекс Маркет',
+      'Яндекс.Маркет': 'Яндекс Маркет',
+      'яндекс маркет': 'Яндекс Маркет',
+      'Yandex Market': 'Яндекс Маркет',
+      'Yandex.Market': 'Яндекс Маркет',
+      
+      // Ozon variations
+      'ozon': 'Ozon',
+      'OZON': 'Ozon',
+      'озон': 'Ozon',
+      'Озон': 'Ozon',
+      
+      // Wildberries variations
+      'wildberries': 'Wildberries',
+      'WILDBERRIES': 'Wildberries',
+      'WB': 'Wildberries',
+      'wb': 'Wildberries',
+      'вайлдберриз': 'Wildberries',
+      'Вайлдберриз': 'Wildberries',
+      
+      // AliExpress variations
+      'aliexpress': 'AliExpress',
+      'ALIEXPRESS': 'AliExpress',
+      'Ali Express': 'AliExpress',
+      'алиэкспресс': 'AliExpress',
+      'Алиэкспресс': 'AliExpress',
+      
+      // Avito variations
+      'avito': 'Avito',
+      'AVITO': 'Avito',
+      'авито': 'Avito',
+      'Авито': 'Avito',
+      
+      // Amazon variations
+      'amazon': 'Amazon',
+      'AMAZON': 'Amazon',
+      'амазон': 'Amazon',
+      'Амазон': 'Amazon',
+      
+      // SHEIN variations
+      'shein': 'SHEIN',
+      'Shein': 'SHEIN',
+      'шейн': 'SHEIN',
+      'Шейн': 'SHEIN',
+    };
+    
+    let updated = 0;
+    const changes = [];
+    
+    for (const [id, meta] of imageMetadata.entries()) {
+      let changed = false;
+      const oldMp = meta.marketplace;
+      
+      // Check if marketplace needs normalization
+      if (oldMp && normalizeMap[oldMp]) {
+        meta.marketplace = normalizeMap[oldMp];
+        changed = true;
+      }
+      
+      if (changed) {
+        imageMetadata.set(id, meta);
+        changes.push({ id, from: oldMp, to: meta.marketplace });
+        updated++;
+      }
+    }
+    
+    if (updated > 0) {
+      await saveMetadata();
+    }
+    
+    res.json({
+      success: true,
+      message: `Normalized ${updated} marketplace names`,
+      changes
+    });
+    
+  } catch (error) {
+    console.error('Normalize error:', error);
+    res.status(500).json({ error: 'Normalization failed', details: error.message });
+  }
+});
+
 // Analyze ONE image with missing metadata
 app.post('/api/analyze-one', async (req, res) => {
   try {
