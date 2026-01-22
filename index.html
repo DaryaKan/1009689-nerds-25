@@ -935,20 +935,34 @@
 
           <div class="form-group">
             <label class="form-label">Маркетплейс</label>
-            <select class="form-select" id="marketplace" required>
-              <option value="">Выберите маркетплейс</option>
-              <option value="Ozon">Ozon</option>
-              <option value="Wildberries">Wildberries</option>
-              <option value="Яндекс.Маркет">Яндекс.Маркет</option>
-              <option value="AliExpress">AliExpress</option>
-              <option value="СберМегаМаркет">СберМегаМаркет</option>
-              <option value="Другой">Другой</option>
-            </select>
+            <input type="text" class="form-input" id="marketplace" list="uploadMarketplaceList" placeholder="Выберите или введите название" required>
+            <datalist id="uploadMarketplaceList">
+              <option value="Ozon">
+              <option value="Wildberries">
+              <option value="Яндекс.Маркет">
+              <option value="AliExpress">
+              <option value="СберМегаМаркет">
+              <option value="Amazon">
+              <option value="Lamoda">
+              <option value="Avito">
+            </datalist>
           </div>
 
           <div class="form-group">
             <label class="form-label">Страница / Раздел</label>
-            <input type="text" class="form-input" id="pageName" placeholder="Например: Карточка товара, Главная, Каталог" required>
+            <input type="text" class="form-input" id="pageName" list="uploadPageList" placeholder="Выберите или введите название" required>
+            <datalist id="uploadPageList">
+              <option value="Главная">
+              <option value="Каталог">
+              <option value="Карточка товара">
+              <option value="Корзина">
+              <option value="Поиск">
+              <option value="Заказы">
+              <option value="Профиль">
+              <option value="Акции">
+              <option value="Избранное">
+              <option value="Оформление заказа">
+            </datalist>
           </div>
 
           <div class="form-group">
@@ -994,35 +1008,33 @@
         <div class="detail-info">
           <div class="detail-row">
             <span class="detail-label">Маркетплейс</span>
-            <select class="detail-select" id="detailMarketplace" onchange="markDetailChanged()">
-              <option value="Ozon">Ozon</option>
-              <option value="Wildberries">Wildberries</option>
-              <option value="Яндекс.Маркет">Яндекс.Маркет</option>
-              <option value="AliExpress">AliExpress</option>
-              <option value="СберМегаМаркет">СберМегаМаркет</option>
-              <option value="Amazon">Amazon</option>
-              <option value="Lamoda">Lamoda</option>
-              <option value="Avito">Avito</option>
-              <option value="Другой">Другой</option>
-              <option value="Не указан">Не указан</option>
-            </select>
+            <input type="text" class="detail-select" id="detailMarketplace" list="marketplaceList" oninput="markDetailChanged()" placeholder="Выберите или введите...">
+            <datalist id="marketplaceList">
+              <option value="Ozon">
+              <option value="Wildberries">
+              <option value="Яндекс.Маркет">
+              <option value="AliExpress">
+              <option value="СберМегаМаркет">
+              <option value="Amazon">
+              <option value="Lamoda">
+              <option value="Avito">
+            </datalist>
           </div>
           <div class="detail-row">
             <span class="detail-label">Страница</span>
-            <select class="detail-select" id="detailPage" onchange="markDetailChanged()">
-              <option value="Главная">Главная</option>
-              <option value="Каталог">Каталог</option>
-              <option value="Карточка товара">Карточка товара</option>
-              <option value="Корзина">Корзина</option>
-              <option value="Поиск">Поиск</option>
-              <option value="Заказы">Заказы</option>
-              <option value="Профиль">Профиль</option>
-              <option value="Акции">Акции</option>
-              <option value="Избранное">Избранное</option>
-              <option value="Оформление заказа">Оформление заказа</option>
-              <option value="Другая">Другая</option>
-              <option value="Не указана">Не указана</option>
-            </select>
+            <input type="text" class="detail-select" id="detailPage" list="pageList" oninput="markDetailChanged()" placeholder="Выберите или введите...">
+            <datalist id="pageList">
+              <option value="Главная">
+              <option value="Каталог">
+              <option value="Карточка товара">
+              <option value="Корзина">
+              <option value="Поиск">
+              <option value="Заказы">
+              <option value="Профиль">
+              <option value="Акции">
+              <option value="Избранное">
+              <option value="Оформление заказа">
+            </datalist>
           </div>
           <div class="detail-row">
             <span class="detail-label">Дата</span>
@@ -1247,7 +1259,11 @@
       }
     });
 
-    // Update filter options
+    // Default options for datalists
+    const defaultMarketplaces = ['Ozon', 'Wildberries', 'Яндекс.Маркет', 'AliExpress', 'СберМегаМаркет', 'Amazon', 'Lamoda', 'Avito'];
+    const defaultPages = ['Главная', 'Каталог', 'Карточка товара', 'Корзина', 'Поиск', 'Заказы', 'Профиль', 'Акции', 'Избранное', 'Оформление заказа'];
+
+    // Update filter options and datalists
     function updateFilters() {
       const marketplaces = {};
       const pages = {};
@@ -1259,6 +1275,7 @@
         pages[pg] = (pages[pg] || 0) + 1;
       });
 
+      // Update filter dropdowns
       document.getElementById('marketplaceFilters').innerHTML = Object.entries(marketplaces)
         .map(([name, count]) => `
           <div class="filter-option">
@@ -1276,6 +1293,19 @@
             <span class="option-count">${count}</span>
           </div>
         `).join('');
+
+      // Update datalists with unique values from data + defaults
+      const allMarketplaces = [...new Set([...defaultMarketplaces, ...Object.keys(marketplaces)])].filter(m => m !== 'Не указан');
+      const allPages = [...new Set([...defaultPages, ...Object.keys(pages)])].filter(p => p !== 'Не указана');
+
+      const mpOptions = allMarketplaces.map(m => `<option value="${m}">`).join('');
+      const pgOptions = allPages.map(p => `<option value="${p}">`).join('');
+
+      // Update all datalists
+      document.getElementById('marketplaceList').innerHTML = mpOptions;
+      document.getElementById('uploadMarketplaceList').innerHTML = mpOptions;
+      document.getElementById('pageList').innerHTML = pgOptions;
+      document.getElementById('uploadPageList').innerHTML = pgOptions;
     }
 
     // Update dropdown button states
@@ -1394,31 +1424,18 @@
       currentDetailImage = img;
       detailChanged = false;
       
-      const mp = img.metadata?.marketplace || 'Не указан';
-      const pg = img.metadata?.page || 'Не указана';
+      const mp = img.metadata?.marketplace || '';
+      const pg = img.metadata?.page || '';
       const date = img.metadata?.date || '';
       const desc = img.metadata?.description || '';
-      const title = `${mp} • ${pg}`;
+      const title = `${mp || 'Не указан'} • ${pg || 'Не указана'}`;
       
       document.getElementById('detailModalTitle').textContent = title;
       document.getElementById('detailImage').src = img.url;
       
-      // Set select values
-      const mpSelect = document.getElementById('detailMarketplace');
-      const pgSelect = document.getElementById('detailPage');
-      
-      // Set marketplace - add option if not exists
-      if (![...mpSelect.options].find(o => o.value === mp)) {
-        mpSelect.add(new Option(mp, mp));
-      }
-      mpSelect.value = mp;
-      
-      // Set page - add option if not exists
-      if (![...pgSelect.options].find(o => o.value === pg)) {
-        pgSelect.add(new Option(pg, pg));
-      }
-      pgSelect.value = pg;
-      
+      // Set input values (datalist inputs)
+      document.getElementById('detailMarketplace').value = mp;
+      document.getElementById('detailPage').value = pg;
       document.getElementById('detailDate').value = date;
       document.getElementById('detailDescription').value = desc;
       document.getElementById('detailUrl').value = img.url;
