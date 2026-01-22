@@ -28,35 +28,86 @@ async function analyzeScreenshot(imageBuffer) {
     return { marketplace: null, page: null, description: '', confidence: false };
   }
 
-  const prompt = `Analyze this screenshot of a marketplace/e-commerce app or website.
+  const prompt = `You are an expert at identifying Russian e-commerce marketplace screenshots.
 
-TASK: Identify the marketplace and page type.
+TASK: Identify the marketplace name and page type from this screenshot.
 
-MARKETPLACE IDENTIFICATION - Look for these visual signs:
-1. ALIEXPRESS - Red/orange colors, "AliExpress" text anywhere on screen, Chinese products, prices in rubles with discounts
-2. OZON - Blue colors, "OZON" logo, blue buttons and interface
-3. WILDBERRIES - Purple/pink colors, "Wildberries" or "WB" logo
-4. ЯНДЕКС.МАРКЕТ - Yellow colors, Yandex logo, "Маркет" text
-5. СБЕРМЕГАМАРКЕТ - Green colors, "СберМегаМаркет" or "Мегамаркет" text
-6. AMAZON - Orange smile arrow logo, "Amazon" text
-7. LAMODA - Black and white minimalist design, "LAMODA" text
-8. AVITO - Green colors, "Avito" logo
+=== MARKETPLACE VISUAL SIGNATURES ===
 
-PAGE TYPE - Identify what kind of page this is:
-- Главная (main page with banners, categories, recommendations, promotions)
-- Каталог (product list, category page, filters)
-- Карточка товара (single product page with buy button)
-- Корзина (shopping cart)
-- Поиск (search results)
-- Заказы (order history)
-- Профиль (user profile, account)
+**OZON** (Озон):
+- Blue interface color (#005BFF)
+- "OZON" logo in blue
+- Blue "В корзину" (Add to cart) buttons
+- Blue header with search bar
+- "Ozon fresh", "Ozon Express" badges
+- Star ratings in blue/yellow
 
-IMPORTANT: If you see "AliExpress" text ANYWHERE on the image, the marketplace IS AliExpress.
+**WILDBERRIES** (Вайлдберриз):
+- Purple/magenta colors (#CB11AB)
+- "Wildberries" or "WB" logo
+- Purple buttons and accents
+- Pink/purple gradient elements
+- "WB" icon in app
 
-Respond ONLY with JSON (no markdown):
-{"marketplace": "NAME", "page": "PAGE_TYPE", "description": "brief description", "confidence": true}
+**ALIEXPRESS** (АлиЭкспресс):
+- Red/orange brand color (#FF4747, #E53935)
+- "AliExpress" text/logo
+- Chinese seller names
+- Long delivery times (15-45 days)
+- "Бесплатная доставка" badges
+- Multiple discount labels
+- "Выбор покупателей" sections
 
-Set confidence to true if you can identify the marketplace. Only set false if you truly cannot determine it.`;
+**ЯНДЕКС МАРКЕТ** (Yandex Market):
+- Yellow accent color (#FFCC00)
+- Yandex logo (red Y)
+- "Маркет" text
+- Yellow shopping cart icon
+- "Яндекс" branding anywhere
+
+**МЕГАМАРКЕТ** (СберМегаМаркет):
+- Green color (#21A038 - Sber green)
+- "Мегамаркет" or "СберМегаМаркет" text
+- Green interface elements
+- Sber ecosystem branding
+
+**LAMODA**:
+- Black and white minimalist design
+- "LAMODA" text in black
+- Fashion/clothing focus
+- Clean typography
+
+**AVITO**:
+- Green/teal colors
+- "Avito" logo
+- Classifieds-style listings
+- "Авито" text
+
+**AMAZON**:
+- Orange smile arrow logo
+- "Amazon" text
+- Yellow/orange buttons
+
+=== PAGE TYPES ===
+- Главная = main/home page (banners, promo, categories)
+- Каталог = catalog/category listing (multiple products grid/list)
+- Карточка товара = product detail page (single product, buy button, description)
+- Корзина = shopping cart
+- Поиск = search results
+- Избранное = favorites/wishlist
+- Заказы = orders history
+- Профиль = user profile/account
+
+=== RESPONSE FORMAT ===
+Respond with ONLY valid JSON, no markdown code blocks:
+{"marketplace": "MARKETPLACE_NAME", "page": "PAGE_TYPE", "description": "brief description in Russian", "confidence": true}
+
+CRITICAL RULES:
+1. Look for ANY text containing marketplace name - even small logos or watermarks
+2. Color scheme is a strong indicator
+3. If you see the marketplace name ANYWHERE, use it
+4. Always set confidence: true if you can identify marketplace
+5. Use Russian page type names exactly as listed above`;
 
   // Try different API endpoints - using available models
   const models = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-2.5-pro'];
@@ -116,20 +167,53 @@ Set confidence to true if you can identify the marketplace. Only set false if yo
           let marketplace = parsed.marketplace;
           if (marketplace) {
             marketplace = marketplace.trim();
-            if (marketplace.toLowerCase().includes('aliexpress') || marketplace.toLowerCase().includes('ali express')) {
+            const lower = marketplace.toLowerCase();
+            if (lower.includes('aliexpress') || lower.includes('ali express') || lower.includes('алиэкспресс')) {
               marketplace = 'AliExpress';
-            } else if (marketplace.toLowerCase().includes('ozon')) {
+            } else if (lower.includes('ozon') || lower.includes('озон')) {
               marketplace = 'Ozon';
-            } else if (marketplace.toLowerCase().includes('wildberries') || marketplace.toLowerCase() === 'wb') {
+            } else if (lower.includes('wildberries') || lower === 'wb' || lower.includes('вайлдберриз')) {
               marketplace = 'Wildberries';
-            } else if (marketplace.toLowerCase().includes('яндекс') || marketplace.toLowerCase().includes('yandex')) {
-              marketplace = 'Яндекс.Маркет';
+            } else if (lower.includes('яндекс') || lower.includes('yandex') || lower.includes('маркет')) {
+              marketplace = 'Яндекс Маркет';
+            } else if (lower.includes('мегамаркет') || lower.includes('сбер')) {
+              marketplace = 'Мегамаркет';
+            } else if (lower.includes('lamoda') || lower.includes('ламода')) {
+              marketplace = 'Lamoda';
+            } else if (lower.includes('avito') || lower.includes('авито')) {
+              marketplace = 'Avito';
+            } else if (lower.includes('amazon') || lower.includes('амазон')) {
+              marketplace = 'Amazon';
+            }
+          }
+          
+          // Also normalize page names
+          let page = parsed.page;
+          if (page) {
+            page = page.trim();
+            const lowerPage = page.toLowerCase();
+            if (lowerPage.includes('главн') || lowerPage.includes('home') || lowerPage.includes('main')) {
+              page = 'Главная';
+            } else if (lowerPage.includes('каталог') || lowerPage.includes('catalog') || lowerPage.includes('category')) {
+              page = 'Каталог';
+            } else if (lowerPage.includes('карточ') || lowerPage.includes('товар') || lowerPage.includes('product') || lowerPage.includes('detail')) {
+              page = 'Карточка товара';
+            } else if (lowerPage.includes('корзин') || lowerPage.includes('cart')) {
+              page = 'Корзина';
+            } else if (lowerPage.includes('поиск') || lowerPage.includes('search')) {
+              page = 'Поиск';
+            } else if (lowerPage.includes('избран') || lowerPage.includes('favorite') || lowerPage.includes('wish')) {
+              page = 'Избранное';
+            } else if (lowerPage.includes('заказ') || lowerPage.includes('order')) {
+              page = 'Заказы';
+            } else if (lowerPage.includes('профил') || lowerPage.includes('account') || lowerPage.includes('profile')) {
+              page = 'Профиль';
             }
           }
           
           return {
             marketplace: marketplace || null,
-            page: parsed.page || null,
+            page: page || null,
             description: parsed.description || '',
             confidence: parsed.confidence !== false
           };
