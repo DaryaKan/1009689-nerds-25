@@ -322,48 +322,6 @@
       color: var(--text-primary);
     }
 
-    .card-info {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-      margin-bottom: 8px;
-      flex-wrap: wrap;
-    }
-
-    .card-marketplace {
-      font-size: 11px;
-      font-weight: 600;
-      padding: 3px 8px;
-      border-radius: 4px;
-      background: var(--bg-secondary);
-      color: var(--text-secondary);
-    }
-
-    .card-marketplace.badge-ozon {
-      background: #005bff;
-      color: #fff;
-    }
-
-    .card-marketplace.badge-wildberries {
-      background: #cb11ab;
-      color: #fff;
-    }
-
-    .card-marketplace.badge-yandex {
-      background: #ffcc00;
-      color: #000;
-    }
-
-    .card-marketplace.badge-other {
-      background: var(--accent);
-      color: #fff;
-    }
-
-    .card-page {
-      font-size: 12px;
-      color: var(--text-secondary);
-    }
-
     .card-meta {
       display: flex;
       justify-content: space-between;
@@ -405,6 +363,10 @@
 
     .action-btn:hover {
       background: var(--accent);
+    }
+
+    .action-btn.delete-btn:hover {
+      background: #dc2626;
     }
 
     /* List View Card */
@@ -1298,13 +1260,6 @@
         const pg = img.metadata?.page || 'Не указана';
         const date = img.metadata?.date || '';
         const title = `${mp} • ${pg}`;
-        
-        const badgeClass = {
-          'Ozon': 'badge-ozon',
-          'Wildberries': 'badge-wildberries',
-          'Яндекс.Маркет': 'badge-yandex'
-        }[mp] || 'badge-other';
-
         const formattedDate = date ? new Date(date).toLocaleDateString('ru-RU') : '';
 
         return `
@@ -1314,16 +1269,9 @@
             </div>
             <div class="card-body">
               <div class="card-title">${title}</div>
-              <div class="card-info">
-                <span class="card-marketplace ${badgeClass}">${mp}</span>
-                <span class="card-page">${pg}</span>
-              </div>
               <div class="card-meta">
-                <span class="card-date">📅 ${formattedDate}</span>
-                <div class="card-actions">
-                  <button class="action-btn" onclick="event.stopPropagation(); copyUrl('${img.url}')" title="Копировать ссылку">📋</button>
-                  <button class="action-btn" onclick="event.stopPropagation(); deleteImage('${img.id}')" title="Удалить">🗑️</button>
-                </div>
+                <span class="card-date">${formattedDate}</span>
+                <button class="action-btn delete-btn" onclick="event.stopPropagation(); deleteImage('${img.id}')" title="Удалить">🗑️</button>
               </div>
             </div>
           </div>
