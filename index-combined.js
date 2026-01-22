@@ -710,6 +710,246 @@ app.post('/api/normalize-marketplaces', async (req, res) => {
   }
 });
 
+// Compare unrecognized image with known examples
+async function analyzeByComparison(unknownBuffer, examples) {
+  if (!GEMINI_API_KEY) {
+    return null;
+  }
+
+  // Build prompt with examples
+  let prompt = `You are analyzing e-commerce marketplace screenshots.
+
+I will show you ONE UNKNOWN screenshot and SEVERAL EXAMPLE screenshots from known marketplaces.
+Your task: Determine which marketplace the UNKNOWN screenshot belongs to by comparing visual style, colors, layout, and UI elements.
+
+=== KNOWN EXAMPLES ===
+`;
+
+  // Add example descriptions
+  examples.forEach((ex, i) => {
+    prompt += `\nExample ${i + 1}: ${ex.marketplace} - ${ex.page}`;
+  });
+
+  prompt += `
+
+=== YOUR TASK ===
+The FIRST image is the UNKNOWN screenshot.
+The following images are EXAMPLES from known marketplaces.
+
+Compare the UNKNOWN image with the examples and determine:
+1. Which marketplace does the UNKNOWN image belong to? (based on visual similarity: colors, layout, UI style, fonts, icons)
+2. What page type is it?
+
+Look for:
+- Similar color schemes (blue=Ozon, purple=Wildberries, green=Мегамаркет/Avito, yellow=Яндекс, red/orange=AliExpress)
+- Similar UI layouts and button styles
+- Similar navigation patterns
+- Similar product card designs
+- ANY text mentioning marketplace name
+
+Respond ONLY with JSON:
+{"marketplace": "NAME", "page": "PAGE_TYPE", "confidence": true, "reason": "brief explanation"}
+
+If you cannot determine, set confidence: false.`;
+
+  const model = 'gemini-2.5-flash';
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_API_KEY}`;
+
+  // Build parts array with all images
+  const parts = [{ text: prompt }];
+  
+  // First add unknown image
+  parts.push({
+    inline_data: {
+      mime_type: 'image/jpeg',
+      data: unknownBuffer.toString('base64')
+    }
+  });
+  
+  // Then add example images
+  for (const ex of examples) {
+    if (ex.buffer) {
+      parts.push({
+        inline_data: {
+          mime_type: 'image/jpeg',
+          data: ex.buffer.toString('base64')
+        }
+      });
+    }
+  }
+
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts }]
+      })
+    });
+
+    const data = await response.json();
+    
+    if (data.error) {
+      console.log('Comparison error:', data.error.message);
+      return null;
+    }
+
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (!text) return null;
+
+    console.log('Comparison result:', text);
+
+    const jsonMatch = text.match(/\{[\s\S]*?\}/);
+    if (jsonMatch) {
+      const parsed = JSON.parse(jsonMatch[0]);
+      if (parsed.confidence) {
+        return parsed;
+      }
+    }
+  } catch (err) {
+    console.error('Comparison error:', err.message);
+  }
+  
+  return null;
+}
+
+// Download image helper
+async function downloadImage(url) {
+  return new Promise((resolve, reject) => {
+    const protocol = url.startsWith('https') ? https : http;
+    protocol.get(url, (response) => {
+      const chunks = [];
+      response.on('data', (chunk) => chunks.push(chunk));
+      response.on('end', () => resolve(Buffer.concat(chunks)));
+      response.on('error', reject);
+    }).on('error', reject);
+  });
+}
+
+// Analyze one unrecognized image by comparing with known examples
+app.post('/api/analyze-by-comparison', async (req, res) => {
+  try {
+    if (!GEMINI_API_KEY) {
+      return res.status(400).json({ error: 'GEMINI_API_KEY not configured' });
+    }
+
+    // Get all images
+    const { data: files, error } = await supabase.storage
+      .from(BUCKET)
+      .list('images', { limit: 1000 });
+
+    if (error) {
+      return res.status(500).json({ error: 'Failed to list images' });
+    }
+
+    const images = files.filter(f => f.name !== '.emptyFolderPlaceholder');
+
+    // Find unrecognized images
+    const unrecognized = images.filter(img => {
+      const meta = imageMetadata.get(img.name);
+      if (!meta) return false;
+      return meta.marketplace && meta.marketplace.startsWith('AI:');
+    });
+
+    if (unrecognized.length === 0) {
+      return res.json({ success: true, message: 'No unrecognized images', remaining: 0 });
+    }
+
+    // Find recognized images as examples (one per marketplace)
+    const marketplaces = ['Ozon', 'Wildberries', 'AliExpress', 'Яндекс Маркет', 'Мегамаркет', 'Lamoda', 'Avito', 'Золотое Яблоко', 'SHEIN'];
+    const examples = [];
+
+    for (const mp of marketplaces) {
+      const example = images.find(img => {
+        const meta = imageMetadata.get(img.name);
+        return meta && meta.marketplace === mp;
+      });
+      
+      if (example) {
+        const { data: urlData } = supabase.storage
+          .from(BUCKET)
+          .getPublicUrl(`images/${example.name}`);
+        
+        try {
+          const buffer = await downloadImage(urlData.publicUrl);
+          const meta = imageMetadata.get(example.name);
+          examples.push({
+            marketplace: mp,
+            page: meta.page,
+            buffer
+          });
+          console.log(`Loaded example for ${mp}`);
+        } catch (e) {
+          console.log(`Failed to load example for ${mp}`);
+        }
+      }
+    }
+
+    if (examples.length === 0) {
+      return res.json({ success: false, error: 'No recognized examples available' });
+    }
+
+    console.log(`Using ${examples.length} examples for comparison`);
+
+    // Take first unrecognized image
+    const unknown = unrecognized[0];
+    const { data: unknownUrl } = supabase.storage
+      .from(BUCKET)
+      .getPublicUrl(`images/${unknown.name}`);
+
+    console.log(`Analyzing: ${unknown.name}`);
+    
+    const unknownBuffer = await downloadImage(unknownUrl.publicUrl);
+    
+    // Compare with examples
+    const result = await analyzeByComparison(unknownBuffer, examples);
+
+    if (result && result.marketplace) {
+      // Normalize marketplace name
+      let mp = result.marketplace;
+      const lower = mp.toLowerCase();
+      if (lower.includes('ozon') || lower.includes('озон')) mp = 'Ozon';
+      else if (lower.includes('wildberries') || lower === 'wb') mp = 'Wildberries';
+      else if (lower.includes('ali')) mp = 'AliExpress';
+      else if (lower.includes('яндекс') || lower.includes('маркет')) mp = 'Яндекс Маркет';
+      else if (lower.includes('мегамаркет') || lower.includes('сбер')) mp = 'Мегамаркет';
+      else if (lower.includes('lamoda')) mp = 'Lamoda';
+      else if (lower.includes('avito')) mp = 'Avito';
+      else if (lower.includes('золот')) mp = 'Золотое Яблоко';
+      else if (lower.includes('shein')) mp = 'SHEIN';
+
+      // Update metadata
+      const existingMeta = imageMetadata.get(unknown.name) || {};
+      imageMetadata.set(unknown.name, {
+        ...existingMeta,
+        marketplace: mp,
+        page: result.page || existingMeta.page
+      });
+      await saveMetadata();
+
+      return res.json({
+        success: true,
+        id: unknown.name,
+        marketplace: mp,
+        page: result.page,
+        reason: result.reason,
+        remaining: unrecognized.length - 1
+      });
+    } else {
+      return res.json({
+        success: false,
+        id: unknown.name,
+        error: 'Could not determine by comparison',
+        remaining: unrecognized.length - 1
+      });
+    }
+
+  } catch (error) {
+    console.error('Comparison analysis error:', error);
+    res.status(500).json({ error: 'Analysis failed', details: error.message });
+  }
+});
+
 // Reset "AI: не определён" marks for re-analysis
 app.post('/api/reset-unrecognized', async (req, res) => {
   try {
