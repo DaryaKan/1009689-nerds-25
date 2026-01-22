@@ -1214,7 +1214,19 @@
     }
 
     // Load images
-    async function loadImages() {
+    async function loadImages(preserveFilters = false) {
+      // Save current filter state if needed
+      let savedFilters = null;
+      if (preserveFilters) {
+        savedFilters = {
+          marketplaces: [...document.querySelectorAll('#marketplaceFilters input:checked')].map(el => el.value),
+          pages: [...document.querySelectorAll('#pageFilters input:checked')].map(el => el.value),
+          search: document.getElementById('searchInput').value,
+          dateFrom: document.getElementById('dateFrom').value,
+          dateTo: document.getElementById('dateTo').value
+        };
+      }
+
       try {
         const response = await fetch(`${API_URL}/api/images`);
         const data = await response.json();
@@ -1222,6 +1234,26 @@
         if (data.success) {
           allImages = data.images;
           updateFilters();
+          
+          // Restore filters if saved
+          if (savedFilters) {
+            document.getElementById('searchInput').value = savedFilters.search;
+            document.getElementById('dateFrom').value = savedFilters.dateFrom;
+            document.getElementById('dateTo').value = savedFilters.dateTo;
+            
+            savedFilters.marketplaces.forEach(val => {
+              const checkbox = document.querySelector(`#marketplaceFilters input[value="${val}"]`);
+              if (checkbox) checkbox.checked = true;
+            });
+            
+            savedFilters.pages.forEach(val => {
+              const checkbox = document.querySelector(`#pageFilters input[value="${val}"]`);
+              if (checkbox) checkbox.checked = true;
+            });
+            
+            updateDropdownButtons();
+          }
+          
           applyFilters();
         }
       } catch (error) {
@@ -1556,8 +1588,7 @@
           }
           currentDetailImage.metadata = metadata;
           
-          // Refresh gallery and filters
-          updateFilters();
+          // Only re-apply filters (don't rebuild filter options)
           applyFilters();
         } else {
           showToast('Ошибка сохранения', 'error');
@@ -1599,7 +1630,7 @@
         if (res.ok) {
           closeDetailModal();
           showToast('Удалено!', 'success');
-          loadImages();
+          loadImages(true); // Preserve filters
         } else {
           showToast('Ошибка удаления', 'error');
         }
@@ -1637,7 +1668,7 @@
 
         if (data.success) {
           showToast('Скриншот удалён', 'success');
-          loadImages();
+          loadImages(true); // Preserve filters
         }
       } catch (error) {
         showToast('Ошибка удаления', 'error');
