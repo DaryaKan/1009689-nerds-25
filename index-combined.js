@@ -29,39 +29,40 @@ if (GEMINI_API_KEY) {
 // Function to analyze screenshot with Gemini
 async function analyzeScreenshot(imageBuffer) {
   if (!visionModel) {
+    console.log('Vision model not initialized');
     return { marketplace: null, page: null, description: '', confidence: false };
   }
 
   try {
-    const prompt = `Ты эксперт по маркетплейсам. Внимательно проанализируй скриншот.
+    const prompt = `Analyze this screenshot of a marketplace/e-commerce app or website.
 
-ВАЖНО: Определи маркетплейс по визуальным признакам:
-- OZON: синий/голубой цвет, логотип "OZON", характерный дизайн с синими кнопками
-- WILDBERRIES: фиолетовый/розовый цвет, логотип "Wildberries" или "WB"
-- ЯНДЕКС.МАРКЕТ: жёлтый цвет, логотип Яндекса, "Маркет"
-- ALIEXPRESS: оранжевый/красный цвет, логотип AliExpress
-- СБЕРМЕГАМАРКЕТ: зелёный цвет, логотип СберМегаМаркет или "Мегамаркет"
-- AMAZON: оранжевая стрелка-улыбка, характерный дизайн
-- LAMODA: чёрно-белый минималистичный дизайн, логотип LAMODA
-- AVITO: зелёный цвет, логотип Avito
+TASK: Identify the marketplace and page type.
 
-Определи тип страницы:
-- Главная страница (баннеры, категории, рекомендации)
-- Каталог/Категория (список товаров, фильтры)
-- Карточка товара (один товар, цена, описание, кнопка купить)
-- Корзина (список товаров к покупке)
-- Оформление заказа (адрес, оплата)
-- Поиск (результаты поиска)
-- Личный кабинет/Профиль
-- Заказы (история заказов)
-- Акции/Скидки
-- Отзывы
+MARKETPLACE IDENTIFICATION - Look for these visual signs:
+1. ALIEXPRESS - Red/orange colors, "AliExpress" text anywhere on screen, Chinese products, prices in rubles with discounts
+2. OZON - Blue colors, "OZON" logo, blue buttons and interface
+3. WILDBERRIES - Purple/pink colors, "Wildberries" or "WB" logo
+4. ЯНДЕКС.МАРКЕТ - Yellow colors, Yandex logo, "Маркет" text
+5. СБЕРМЕГАМАРКЕТ - Green colors, "СберМегаМаркет" or "Мегамаркет" text
+6. AMAZON - Orange smile arrow logo, "Amazon" text
+7. LAMODA - Black and white minimalist design, "LAMODA" text
+8. AVITO - Green colors, "Avito" logo
 
-Ответь ТОЛЬКО в формате JSON (без markdown, без \`\`\`):
-{"marketplace": "НАЗВАНИЕ", "page": "ТИП СТРАНИЦЫ", "description": "что изображено", "confidence": true/false}
+PAGE TYPE - Identify what kind of page this is:
+- Главная (main page with banners, categories, recommendations, promotions)
+- Каталог (product list, category page, filters)
+- Карточка товара (single product page with buy button)
+- Корзина (shopping cart)
+- Поиск (search results)
+- Заказы (order history)
+- Профиль (user profile, account)
 
-confidence = true если ты УВЕРЕН в определении, false если не уверен.
-Если это НЕ маркетплейс - поставь marketplace: null`;
+IMPORTANT: If you see "AliExpress" text ANYWHERE on the image, the marketplace IS AliExpress.
+
+Respond ONLY with JSON (no markdown):
+{"marketplace": "NAME", "page": "PAGE_TYPE", "description": "brief description", "confidence": true}
+
+Set confidence to true if you can identify the marketplace. Only set false if you truly cannot determine it.`;
 
     const imagePart = {
       inlineData: {
@@ -74,23 +75,45 @@ confidence = true если ты УВЕРЕН в определении, false е
     const response = await result.response;
     const text = response.text();
     
-    console.log('Gemini response:', text);
+    console.log('Gemini raw response:', text);
     
     // Parse JSON from response
     const jsonMatch = text.match(/\{[\s\S]*?\}/);
     if (jsonMatch) {
-      const parsed = JSON.parse(jsonMatch[0]);
-      return {
-        marketplace: parsed.marketplace || null,
-        page: parsed.page || null,
-        description: parsed.description || '',
-        confidence: parsed.confidence === true
-      };
+      try {
+        const parsed = JSON.parse(jsonMatch[0]);
+        console.log('Parsed result:', parsed);
+        
+        // Normalize marketplace names
+        let marketplace = parsed.marketplace;
+        if (marketplace) {
+          marketplace = marketplace.trim();
+          // Normalize common variations
+          if (marketplace.toLowerCase().includes('aliexpress') || marketplace.toLowerCase().includes('ali express')) {
+            marketplace = 'AliExpress';
+          } else if (marketplace.toLowerCase().includes('ozon')) {
+            marketplace = 'Ozon';
+          } else if (marketplace.toLowerCase().includes('wildberries') || marketplace.toLowerCase() === 'wb') {
+            marketplace = 'Wildberries';
+          } else if (marketplace.toLowerCase().includes('яндекс') || marketplace.toLowerCase().includes('yandex')) {
+            marketplace = 'Яндекс.Маркет';
+          }
+        }
+        
+        return {
+          marketplace: marketplace || null,
+          page: parsed.page || null,
+          description: parsed.description || '',
+          confidence: parsed.confidence !== false
+        };
+      } catch (parseError) {
+        console.error('JSON parse error:', parseError.message);
+      }
     }
     
     return { marketplace: null, page: null, description: '', confidence: false };
   } catch (error) {
-    console.error('Gemini analysis error:', error.message);
+    console.error('Gemini analysis error:', error.message, error.stack);
     return { marketplace: null, page: null, description: '', confidence: false };
   }
 }
