@@ -190,8 +190,58 @@ function getExtension(mimetype) {
   return extensions[mimetype] || 'jpg';
 }
 
-// In-memory metadata store (for simplicity)
+// In-memory metadata store
 const imageMetadata = new Map();
+const METADATA_FILE = 'metadata.json';
+
+// Load metadata from Supabase Storage on startup
+async function loadMetadata() {
+  try {
+    const { data, error } = await supabase.storage
+      .from(BUCKET)
+      .download(METADATA_FILE);
+    
+    if (error) {
+      console.log('No existing metadata file, starting fresh');
+      return;
+    }
+    
+    const text = await data.text();
+    const metadata = JSON.parse(text);
+    
+    Object.entries(metadata).forEach(([key, value]) => {
+      imageMetadata.set(key, value);
+    });
+    
+    console.log(`Loaded metadata for ${imageMetadata.size} images`);
+  } catch (err) {
+    console.log('Error loading metadata:', err.message);
+  }
+}
+
+// Save metadata to Supabase Storage
+async function saveMetadata() {
+  try {
+    const metadata = Object.fromEntries(imageMetadata);
+    const jsonData = JSON.stringify(metadata, null, 2);
+    
+    const { error } = await supabase.storage
+      .from(BUCKET)
+      .upload(METADATA_FILE, jsonData, {
+        contentType: 'application/json',
+        upsert: true
+      });
+    
+    if (error) {
+      console.error('Error saving metadata:', error.message);
+    }
+  } catch (err) {
+    console.error('Error saving metadata:', err.message);
+  }
+}
+
+// Load metadata on startup
+loadMetadata();
 
 // Upload single image
 app.post('/api/upload', upload.single('image'), async (req, res) => {
@@ -235,6 +285,9 @@ app.post('/api/upload', upload.single('image'), async (req, res) => {
       date: metadata.date || new Date().toISOString().split('T')[0],
       description: metadata.description || ''
     });
+    
+    // Save metadata to storage
+    await saveMetadata();
 
     res.json({
       success: true,
@@ -351,6 +404,10 @@ app.delete('/api/images/:id', async (req, res) => {
     if (error) {
       return res.status(500).json({ error: 'Failed to delete' });
     }
+
+    // Remove metadata and save
+    imageMetadata.delete(id);
+    await saveMetadata();
 
     res.json({ success: true, message: 'Deleted' });
 
@@ -597,6 +654,7 @@ if (BOT_TOKEN && BOT_TOKEN.length > 10) {
           description: analysis.description || ''
         };
         imageMetadata.set(fileName, metadata);
+        await saveMetadata();
 
         const { data: urlData } = supabase.storage.from(BUCKET).getPublicUrl(`images/${fileName}`);
 
@@ -720,6 +778,9 @@ if (BOT_TOKEN && BOT_TOKEN.length > 10) {
           failCount++;
         }
       }
+
+      // Save all metadata after batch upload
+      await saveMetadata();
 
       // Send summary
       let summaryText = `✅ *Загружено ${successCount} из ${photos.length} скриншотов*\n\n`;
@@ -860,6 +921,9 @@ if (BOT_TOKEN && BOT_TOKEN.length > 10) {
           failCount++;
         }
       }
+
+      // Save all metadata after batch upload
+      await saveMetadata();
 
       // Send summary
       let summaryText = `✅ *Загружено ${successCount} из ${documents.length} файлов*\n\n`;
