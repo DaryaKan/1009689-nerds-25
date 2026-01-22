@@ -390,6 +390,10 @@ if (BOT_TOKEN && BOT_TOKEN.length > 10) {
 
     // Store pending uploads waiting for user input
     const pendingUploads = new Map();
+    
+    // Store media groups (albums) for batch processing
+    const mediaGroups = new Map();
+    const MEDIA_GROUP_TIMEOUT = 1000; // Wait 1 second to collect all photos in album
 
     async function downloadFile(fileUrl) {
       return new Promise((resolve, reject) => {
@@ -431,11 +435,13 @@ if (BOT_TOKEN && BOT_TOKEN.length > 10) {
       bot.sendMessage(msg.chat.id, `
 📸 *Screenshot Library Bot*
 
-Отправьте мне скриншот маркетплейса — я автоматически определю:
-• Маркетплейс (Ozon, Wildberries, и др.)
+Отправьте мне скриншоты маркетплейсов — я автоматически определю:
+• Маркетплейс (Ozon, Wildberries, AliExpress и др.)
 • Тип страницы (Карточка товара, Каталог, и др.)
 
-Если не смогу определить — спрошу у вас!
+✨ *Можно отправлять сразу несколько фото!*
+
+Если не смогу определить — спрошу у вас.
 
 *Команды:*
 /list — последние скриншоты
@@ -653,23 +659,140 @@ if (BOT_TOKEN && BOT_TOKEN.length > 10) {
       }
     });
 
-    // Handle photo upload
+    // Process album (multiple photos)
+    async function processAlbum(chatId, photos) {
+      const statusMsg = await bot.sendMessage(chatId, `📸 *Обрабатываю ${photos.length} скриншотов...*`, { parse_mode: 'Markdown' });
+      
+      let successCount = 0;
+      let failCount = 0;
+      const results = [];
+
+      for (let i = 0; i < photos.length; i++) {
+        try {
+          await bot.editMessageText(
+            `🔍 *Анализирую скриншот ${i + 1} из ${photos.length}...*`,
+            { chat_id: chatId, message_id: statusMsg.message_id, parse_mode: 'Markdown' }
+          );
+
+          const photo = photos[i];
+          const file = await bot.getFile(photo.file_id);
+          const fileUrl = `https://api.telegram.org/file/bot${BOT_TOKEN}/${file.file_path}`;
+          const fileBuffer = await downloadFile(fileUrl);
+
+          // Analyze with AI
+          const analysis = await analyzeScreenshot(fileBuffer);
+
+          const ext = file.file_path.split('.').pop() || 'jpg';
+          const fileName = `${uuidv4()}.${ext}`;
+          const mimeType = `image/${ext === 'jpg' ? 'jpeg' : ext}`;
+
+          // Upload to Supabase
+          const { error } = await supabase.storage
+            .from(BUCKET)
+            .upload(`images/${fileName}`, fileBuffer, {
+              contentType: mimeType
+            });
+
+          if (error) throw error;
+
+          // Save metadata
+          const metadata = {
+            marketplace: analysis.marketplace || 'Не определён',
+            page: analysis.page || 'Не определена',
+            date: new Date().toISOString().split('T')[0],
+            description: analysis.description || ''
+          };
+          imageMetadata.set(fileName, metadata);
+
+          const { data: urlData } = supabase.storage.from(BUCKET).getPublicUrl(`images/${fileName}`);
+          
+          results.push({
+            success: true,
+            marketplace: metadata.marketplace,
+            page: metadata.page,
+            url: urlData.publicUrl
+          });
+          successCount++;
+
+        } catch (e) {
+          console.error(`Photo ${i + 1} upload error:`, e);
+          results.push({ success: false });
+          failCount++;
+        }
+      }
+
+      // Send summary
+      let summaryText = `✅ *Загружено ${successCount} из ${photos.length} скриншотов*\n\n`;
+      
+      results.forEach((r, i) => {
+        if (r.success) {
+          summaryText += `${i + 1}. ${r.marketplace} • ${r.page}\n`;
+        } else {
+          summaryText += `${i + 1}. ❌ Ошибка\n`;
+        }
+      });
+
+      if (successCount > 0) {
+        summaryText += `\n📁 Все скриншоты доступны в веб-галерее`;
+      }
+
+      await bot.editMessageText(summaryText, {
+        chat_id: chatId,
+        message_id: statusMsg.message_id,
+        parse_mode: 'Markdown'
+      });
+    }
+
+    // Handle photo upload (single or album)
     bot.on('photo', async (msg) => {
       const chatId = msg.chat.id;
+      const mediaGroupId = msg.media_group_id;
 
       try {
-        const statusMsg = await bot.sendMessage(chatId, '🔍 *Анализирую скриншот...*', { parse_mode: 'Markdown' });
-
         const photo = msg.photo[msg.photo.length - 1];
-        const file = await bot.getFile(photo.file_id);
-        const fileUrl = `https://api.telegram.org/file/bot${BOT_TOKEN}/${file.file_path}`;
-        const fileBuffer = await downloadFile(fileUrl);
 
-        const ext = file.file_path.split('.').pop() || 'jpg';
-        const fileName = `${uuidv4()}.${ext}`;
-        const mimeType = `image/${ext === 'jpg' ? 'jpeg' : ext}`;
+        if (mediaGroupId) {
+          // This is part of an album
+          if (!mediaGroups.has(mediaGroupId)) {
+            mediaGroups.set(mediaGroupId, {
+              chatId,
+              photos: [],
+              timeout: null
+            });
+          }
 
-        await processImage(chatId, fileBuffer, fileName, mimeType, statusMsg.message_id);
+          const group = mediaGroups.get(mediaGroupId);
+          group.photos.push(photo);
+
+          // Clear previous timeout and set new one
+          if (group.timeout) {
+            clearTimeout(group.timeout);
+          }
+
+          // Wait for more photos, then process
+          group.timeout = setTimeout(async () => {
+            const groupData = mediaGroups.get(mediaGroupId);
+            mediaGroups.delete(mediaGroupId);
+            
+            if (groupData && groupData.photos.length > 0) {
+              await processAlbum(groupData.chatId, groupData.photos);
+            }
+          }, MEDIA_GROUP_TIMEOUT);
+
+        } else {
+          // Single photo
+          const statusMsg = await bot.sendMessage(chatId, '🔍 *Анализирую скриншот...*', { parse_mode: 'Markdown' });
+
+          const file = await bot.getFile(photo.file_id);
+          const fileUrl = `https://api.telegram.org/file/bot${BOT_TOKEN}/${file.file_path}`;
+          const fileBuffer = await downloadFile(fileUrl);
+
+          const ext = file.file_path.split('.').pop() || 'jpg';
+          const fileName = `${uuidv4()}.${ext}`;
+          const mimeType = `image/${ext === 'jpg' ? 'jpeg' : ext}`;
+
+          await processImage(chatId, fileBuffer, fileName, mimeType, statusMsg.message_id);
+        }
 
       } catch (e) {
         console.error('Photo upload error:', e);
@@ -677,28 +800,141 @@ if (BOT_TOKEN && BOT_TOKEN.length > 10) {
       }
     });
 
+    // Store document groups for batch processing
+    const documentGroups = new Map();
+
+    // Process document album
+    async function processDocumentAlbum(chatId, documents) {
+      const statusMsg = await bot.sendMessage(chatId, `📸 *Обрабатываю ${documents.length} файлов...*`, { parse_mode: 'Markdown' });
+      
+      let successCount = 0;
+      let failCount = 0;
+      const results = [];
+
+      for (let i = 0; i < documents.length; i++) {
+        try {
+          await bot.editMessageText(
+            `🔍 *Анализирую файл ${i + 1} из ${documents.length}...*`,
+            { chat_id: chatId, message_id: statusMsg.message_id, parse_mode: 'Markdown' }
+          );
+
+          const doc = documents[i];
+          const file = await bot.getFile(doc.file_id);
+          const fileUrl = `https://api.telegram.org/file/bot${BOT_TOKEN}/${file.file_path}`;
+          const fileBuffer = await downloadFile(fileUrl);
+
+          // Analyze with AI
+          const analysis = await analyzeScreenshot(fileBuffer);
+
+          const ext = file.file_path.split('.').pop() || 'jpg';
+          const fileName = `${uuidv4()}.${ext}`;
+
+          // Upload to Supabase
+          const { error } = await supabase.storage
+            .from(BUCKET)
+            .upload(`images/${fileName}`, fileBuffer, {
+              contentType: doc.mime_type
+            });
+
+          if (error) throw error;
+
+          // Save metadata
+          const metadata = {
+            marketplace: analysis.marketplace || 'Не определён',
+            page: analysis.page || 'Не определена',
+            date: new Date().toISOString().split('T')[0],
+            description: analysis.description || ''
+          };
+          imageMetadata.set(fileName, metadata);
+
+          results.push({
+            success: true,
+            marketplace: metadata.marketplace,
+            page: metadata.page
+          });
+          successCount++;
+
+        } catch (e) {
+          console.error(`Document ${i + 1} upload error:`, e);
+          results.push({ success: false });
+          failCount++;
+        }
+      }
+
+      // Send summary
+      let summaryText = `✅ *Загружено ${successCount} из ${documents.length} файлов*\n\n`;
+      
+      results.forEach((r, i) => {
+        if (r.success) {
+          summaryText += `${i + 1}. ${r.marketplace} • ${r.page}\n`;
+        } else {
+          summaryText += `${i + 1}. ❌ Ошибка\n`;
+        }
+      });
+
+      await bot.editMessageText(summaryText, {
+        chat_id: chatId,
+        message_id: statusMsg.message_id,
+        parse_mode: 'Markdown'
+      });
+    }
+
     // Handle document (file) upload
     bot.on('document', async (msg) => {
       const chatId = msg.chat.id;
       const doc = msg.document;
+      const mediaGroupId = msg.media_group_id;
 
       // Check if it's an image
       if (!doc.mime_type || !doc.mime_type.startsWith('image/')) {
-        bot.sendMessage(chatId, '⚠️ Пожалуйста, отправьте изображение (JPEG, PNG, GIF, WebP)');
+        if (!mediaGroupId) {
+          bot.sendMessage(chatId, '⚠️ Пожалуйста, отправьте изображение (JPEG, PNG, GIF, WebP)');
+        }
         return;
       }
 
       try {
-        const statusMsg = await bot.sendMessage(chatId, '🔍 *Анализирую скриншот...*', { parse_mode: 'Markdown' });
+        if (mediaGroupId) {
+          // This is part of an album
+          if (!documentGroups.has(mediaGroupId)) {
+            documentGroups.set(mediaGroupId, {
+              chatId,
+              documents: [],
+              timeout: null
+            });
+          }
 
-        const file = await bot.getFile(doc.file_id);
-        const fileUrl = `https://api.telegram.org/file/bot${BOT_TOKEN}/${file.file_path}`;
-        const fileBuffer = await downloadFile(fileUrl);
+          const group = documentGroups.get(mediaGroupId);
+          group.documents.push(doc);
 
-        const ext = file.file_path.split('.').pop() || 'jpg';
-        const fileName = `${uuidv4()}.${ext}`;
+          // Clear previous timeout and set new one
+          if (group.timeout) {
+            clearTimeout(group.timeout);
+          }
 
-        await processImage(chatId, fileBuffer, fileName, doc.mime_type, statusMsg.message_id);
+          // Wait for more documents, then process
+          group.timeout = setTimeout(async () => {
+            const groupData = documentGroups.get(mediaGroupId);
+            documentGroups.delete(mediaGroupId);
+            
+            if (groupData && groupData.documents.length > 0) {
+              await processDocumentAlbum(groupData.chatId, groupData.documents);
+            }
+          }, MEDIA_GROUP_TIMEOUT);
+
+        } else {
+          // Single document
+          const statusMsg = await bot.sendMessage(chatId, '🔍 *Анализирую скриншот...*', { parse_mode: 'Markdown' });
+
+          const file = await bot.getFile(doc.file_id);
+          const fileUrl = `https://api.telegram.org/file/bot${BOT_TOKEN}/${file.file_path}`;
+          const fileBuffer = await downloadFile(fileUrl);
+
+          const ext = file.file_path.split('.').pop() || 'jpg';
+          const fileName = `${uuidv4()}.${ext}`;
+
+          await processImage(chatId, fileBuffer, fileName, doc.mime_type, statusMsg.message_id);
+        }
 
       } catch (e) {
         console.error('Document upload error:', e);
