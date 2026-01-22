@@ -503,15 +503,12 @@ app.get('/api/test-gemini', async (req, res) => {
   }
 });
 
-// Analyze images with missing metadata
-app.post('/api/analyze-missing', async (req, res) => {
+// Analyze ONE image with missing metadata
+app.post('/api/analyze-one', async (req, res) => {
   try {
     // Check if Gemini is configured
     if (!GEMINI_API_KEY) {
-      return res.status(400).json({ 
-        error: 'GEMINI_API_KEY not configured',
-        hint: 'Set GEMINI_API_KEY environment variable in Railway'
-      });
+      return res.status(400).json({ error: 'GEMINI_API_KEY not configured' });
     }
     
     // Get all images
@@ -536,91 +533,98 @@ app.post('/api/analyze-missing', async (req, res) => {
     });
     
     if (toAnalyze.length === 0) {
-      return res.json({ success: true, message: 'All images have valid metadata', analyzed: 0 });
+      return res.json({ success: true, message: 'All images have valid metadata', remaining: 0 });
     }
     
-    console.log(`Analyzing ${toAnalyze.length} images with missing metadata...`);
+    // Take only first image
+    const img = toAnalyze[0];
+    console.log(`Analyzing image: ${img.name} (${toAnalyze.length} remaining)`);
     
-    let updated = 0;
-    let failed = 0;
-    const results = [];
-    
-    for (const img of toAnalyze) {
-      try {
-        // Get public URL
-        const { data: urlData } = supabase.storage
-          .from(BUCKET)
-          .getPublicUrl(`images/${img.name}`);
+    try {
+      // Get public URL
+      const { data: urlData } = supabase.storage
+        .from(BUCKET)
+        .getPublicUrl(`images/${img.name}`);
+      
+      console.log(`Downloading: ${urlData.publicUrl}`);
+      
+      // Download image
+      const imageBuffer = await new Promise((resolve, reject) => {
+        const protocol = urlData.publicUrl.startsWith('https') ? https : http;
+        protocol.get(urlData.publicUrl, (response) => {
+          const chunks = [];
+          response.on('data', (chunk) => chunks.push(chunk));
+          response.on('end', () => resolve(Buffer.concat(chunks)));
+          response.on('error', reject);
+        }).on('error', reject);
+      });
+      
+      console.log(`Downloaded ${imageBuffer.length} bytes, analyzing...`);
+      
+      // Analyze with AI
+      const analysis = await analyzeScreenshot(imageBuffer);
+      
+      console.log('Analysis result:', analysis);
+      
+      if (analysis && analysis.marketplace) {
+        // Normalize marketplace name
+        let normalizedMp = analysis.marketplace;
+        const lower = normalizedMp.toLowerCase();
         
-        // Download image
-        const imageBuffer = await new Promise((resolve, reject) => {
-          const protocol = urlData.publicUrl.startsWith('https') ? https : http;
-          protocol.get(urlData.publicUrl, (response) => {
-            const chunks = [];
-            response.on('data', (chunk) => chunks.push(chunk));
-            response.on('end', () => resolve(Buffer.concat(chunks)));
-            response.on('error', reject);
-          }).on('error', reject);
-        });
-        
-        // Analyze with AI
-        const analysis = await analyzeScreenshot(imageBuffer);
-        
-        if (analysis && analysis.marketplace) {
-          // Normalize marketplace name
-          let normalizedMp = analysis.marketplace;
-          const lower = normalizedMp.toLowerCase();
-          
-          if (lower.includes('мегамаркет') || lower.includes('сбер')) {
-            normalizedMp = 'Мегамаркет';
-          } else if (lower.includes('яндекс') && lower.includes('маркет')) {
-            normalizedMp = 'Яндекс Маркет';
-          }
-          
-          // Get existing metadata
-          const existingMeta = imageMetadata.get(img.name) || {};
-          
-          // Update metadata
-          const newMeta = {
-            marketplace: normalizedMp,
-            page: analysis.page || existingMeta.page || 'Не указана',
-            date: existingMeta.date || new Date().toISOString().split('T')[0],
-            description: analysis.description || existingMeta.description || ''
-          };
-          
-          imageMetadata.set(img.name, newMeta);
-          results.push({ id: img.name, success: true, marketplace: normalizedMp, page: analysis.page });
-          updated++;
-        } else {
-          results.push({ id: img.name, success: false });
-          failed++;
+        if (lower.includes('мегамаркет') || lower.includes('сбер')) {
+          normalizedMp = 'Мегамаркет';
+        } else if (lower.includes('яндекс') && lower.includes('маркет')) {
+          normalizedMp = 'Яндекс Маркет';
+        } else if (lower.includes('ozon') || lower === 'озон') {
+          normalizedMp = 'Ozon';
+        } else if (lower.includes('wildberries') || lower === 'wb') {
+          normalizedMp = 'Wildberries';
+        } else if (lower.includes('aliexpress') || lower.includes('али')) {
+          normalizedMp = 'AliExpress';
         }
         
-        // Delay to avoid rate limiting (20 requests per minute = 3 seconds per request)
-        await new Promise(r => setTimeout(r, 3500));
+        // Get existing metadata
+        const existingMeta = imageMetadata.get(img.name) || {};
         
-      } catch (err) {
-        console.error(`Error analyzing ${img.name}:`, err.message);
-        results.push({ id: img.name, success: false, error: err.message });
-        failed++;
+        // Update metadata
+        const newMeta = {
+          marketplace: normalizedMp,
+          page: analysis.page || existingMeta.page || 'Не указана',
+          date: existingMeta.date || new Date().toISOString().split('T')[0],
+          description: analysis.description || existingMeta.description || ''
+        };
+        
+        imageMetadata.set(img.name, newMeta);
+        await saveMetadata();
+        
+        return res.json({
+          success: true,
+          id: img.name,
+          marketplace: normalizedMp,
+          page: analysis.page,
+          remaining: toAnalyze.length - 1
+        });
+      } else {
+        return res.json({
+          success: false,
+          id: img.name,
+          error: 'AI could not analyze image',
+          remaining: toAnalyze.length - 1
+        });
       }
+      
+    } catch (err) {
+      console.error(`Error analyzing ${img.name}:`, err.message);
+      return res.json({
+        success: false,
+        id: img.name,
+        error: err.message,
+        remaining: toAnalyze.length - 1
+      });
     }
-    
-    // Save metadata
-    if (updated > 0) {
-      await saveMetadata();
-    }
-    
-    res.json({
-      success: true,
-      total: toAnalyze.length,
-      updated,
-      failed,
-      results
-    });
     
   } catch (error) {
-    console.error('Analyze missing error:', error);
+    console.error('Analyze one error:', error);
     res.status(500).json({ error: 'Analysis failed', details: error.message });
   }
 });
