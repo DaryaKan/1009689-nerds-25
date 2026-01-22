@@ -949,7 +949,7 @@
   <div class="modal-overlay" id="detailModal">
     <div class="modal detail-modal">
       <div class="modal-header">
-        <h2 class="modal-title">Детали скриншота</h2>
+        <h2 class="modal-title" id="detailModalTitle">Детали скриншота</h2>
         <button class="modal-close" onclick="closeDetailModal()">×</button>
       </div>
       <div class="modal-body">
@@ -1272,7 +1272,7 @@
         const mp = img.metadata?.marketplace || 'Другой';
         const pg = img.metadata?.page || 'Не указана';
         const date = img.metadata?.date || '';
-        const desc = img.metadata?.description || pg;
+        const title = `${mp} • ${pg}`;
         
         const badgeClass = {
           'Ozon': 'badge-ozon',
@@ -1285,11 +1285,11 @@
         return `
           <div class="card" onclick="openDetailModal('${img.id}')">
             <div class="card-image">
-              <img src="${img.url}" alt="${desc}" loading="lazy">
+              <img src="${img.url}" alt="${title}" loading="lazy">
               <span class="card-badge ${badgeClass}">${mp}</span>
             </div>
             <div class="card-body">
-              <div class="card-title">${desc}</div>
+              <div class="card-title">${title}</div>
               <div class="card-meta">
                 <span class="card-date">📅 ${formattedDate}</span>
                 <div class="card-actions">
@@ -1315,7 +1315,9 @@
       const date = img.metadata?.date || '';
       const desc = img.metadata?.description || '';
       const formattedDate = date ? new Date(date).toLocaleDateString('ru-RU') : 'Не указана';
+      const title = `${mp} • ${pg}`;
       
+      document.getElementById('detailModalTitle').textContent = title;
       document.getElementById('detailImage').src = img.url;
       document.getElementById('detailMarketplace').textContent = mp;
       document.getElementById('detailPage').textContent = pg;
