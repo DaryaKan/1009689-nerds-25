@@ -696,9 +696,15 @@
       white-space: nowrap;
     }
 
+    .combo-select {
+      display: flex;
+      gap: 8px;
+      flex: 1;
+      max-width: 220px;
+    }
+
     .detail-select {
       flex: 1;
-      max-width: 200px;
       padding: 8px 12px;
       border: 1px solid var(--border);
       border-radius: 6px;
@@ -711,6 +717,10 @@
     .detail-select:focus {
       outline: none;
       border-color: var(--accent);
+    }
+
+    .combo-input {
+      flex: 1;
     }
 
     .detail-date-input,
@@ -935,34 +945,20 @@
 
           <div class="form-group">
             <label class="form-label">Маркетплейс</label>
-            <input type="text" class="form-input" id="marketplace" list="uploadMarketplaceList" placeholder="Выберите или введите название" required>
-            <datalist id="uploadMarketplaceList">
-              <option value="Ozon">
-              <option value="Wildberries">
-              <option value="Яндекс.Маркет">
-              <option value="AliExpress">
-              <option value="СберМегаМаркет">
-              <option value="Amazon">
-              <option value="Lamoda">
-              <option value="Avito">
-            </datalist>
+            <div class="combo-select">
+              <select class="form-select" id="marketplace" onchange="handleComboSelect(this, 'marketplaceCustom')" required>
+              </select>
+              <input type="text" class="form-input combo-input" id="marketplaceCustom" placeholder="Введите название..." style="display:none">
+            </div>
           </div>
 
           <div class="form-group">
             <label class="form-label">Страница / Раздел</label>
-            <input type="text" class="form-input" id="pageName" list="uploadPageList" placeholder="Выберите или введите название" required>
-            <datalist id="uploadPageList">
-              <option value="Главная">
-              <option value="Каталог">
-              <option value="Карточка товара">
-              <option value="Корзина">
-              <option value="Поиск">
-              <option value="Заказы">
-              <option value="Профиль">
-              <option value="Акции">
-              <option value="Избранное">
-              <option value="Оформление заказа">
-            </datalist>
+            <div class="combo-select">
+              <select class="form-select" id="pageName" onchange="handleComboSelect(this, 'pageNameCustom')" required>
+              </select>
+              <input type="text" class="form-input combo-input" id="pageNameCustom" placeholder="Введите название..." style="display:none">
+            </div>
           </div>
 
           <div class="form-group">
@@ -1008,33 +1004,19 @@
         <div class="detail-info">
           <div class="detail-row">
             <span class="detail-label">Маркетплейс</span>
-            <input type="text" class="detail-select" id="detailMarketplace" list="marketplaceList" oninput="markDetailChanged()" placeholder="Выберите или введите...">
-            <datalist id="marketplaceList">
-              <option value="Ozon">
-              <option value="Wildberries">
-              <option value="Яндекс.Маркет">
-              <option value="AliExpress">
-              <option value="СберМегаМаркет">
-              <option value="Amazon">
-              <option value="Lamoda">
-              <option value="Avito">
-            </datalist>
+            <div class="combo-select">
+              <select class="detail-select" id="detailMarketplace" onchange="handleComboSelect(this, 'detailMarketplaceCustom'); markDetailChanged()">
+              </select>
+              <input type="text" class="detail-select combo-input" id="detailMarketplaceCustom" placeholder="Введите название..." style="display:none" oninput="markDetailChanged()">
+            </div>
           </div>
           <div class="detail-row">
             <span class="detail-label">Страница</span>
-            <input type="text" class="detail-select" id="detailPage" list="pageList" oninput="markDetailChanged()" placeholder="Выберите или введите...">
-            <datalist id="pageList">
-              <option value="Главная">
-              <option value="Каталог">
-              <option value="Карточка товара">
-              <option value="Корзина">
-              <option value="Поиск">
-              <option value="Заказы">
-              <option value="Профиль">
-              <option value="Акции">
-              <option value="Избранное">
-              <option value="Оформление заказа">
-            </datalist>
+            <div class="combo-select">
+              <select class="detail-select" id="detailPage" onchange="handleComboSelect(this, 'detailPageCustom'); markDetailChanged()">
+              </select>
+              <input type="text" class="detail-select combo-input" id="detailPageCustom" placeholder="Введите название..." style="display:none" oninput="markDetailChanged()">
+            </div>
           </div>
           <div class="detail-row">
             <span class="detail-label">Дата</span>
@@ -1134,8 +1116,17 @@
     function resetForm() {
       document.getElementById('uploadForm').reset();
       document.getElementById('previewImage').style.display = 'none';
+      document.getElementById('uploadZone').style.display = 'block';
       document.getElementById('submitBtn').disabled = true;
       selectedFile = null;
+      
+      // Reset combo selects
+      document.getElementById('marketplace').style.display = 'block';
+      document.getElementById('marketplaceCustom').style.display = 'none';
+      document.getElementById('marketplaceCustom').value = '';
+      document.getElementById('pageName').style.display = 'block';
+      document.getElementById('pageNameCustom').style.display = 'none';
+      document.getElementById('pageNameCustom').value = '';
     }
 
     // File handling
@@ -1189,8 +1180,8 @@
       btn.textContent = 'Загрузка...';
 
       const metadata = {
-        marketplace: document.getElementById('marketplace').value,
-        page: document.getElementById('pageName').value,
+        marketplace: getComboValue('marketplace', 'marketplaceCustom'),
+        page: getComboValue('pageName', 'pageNameCustom'),
         date: document.getElementById('screenshotDate').value,
         description: document.getElementById('description').value
       };
@@ -1259,11 +1250,74 @@
       }
     });
 
-    // Default options for datalists
+    // Default options
     const defaultMarketplaces = ['Ozon', 'Wildberries', 'Яндекс.Маркет', 'AliExpress', 'СберМегаМаркет', 'Amazon', 'Lamoda', 'Avito'];
     const defaultPages = ['Главная', 'Каталог', 'Карточка товара', 'Корзина', 'Поиск', 'Заказы', 'Профиль', 'Акции', 'Избранное', 'Оформление заказа'];
 
-    // Update filter options and datalists
+    // Handle combo select (dropdown + custom input)
+    function handleComboSelect(selectEl, inputId) {
+      const inputEl = document.getElementById(inputId);
+      if (selectEl.value === '__custom__') {
+        selectEl.style.display = 'none';
+        inputEl.style.display = 'block';
+        inputEl.focus();
+      }
+    }
+
+    // Get combo value (from select or custom input)
+    function getComboValue(selectId, inputId) {
+      const selectEl = document.getElementById(selectId);
+      const inputEl = document.getElementById(inputId);
+      if (selectEl.value === '__custom__' || selectEl.style.display === 'none') {
+        return inputEl.value.trim();
+      }
+      return selectEl.value;
+    }
+
+    // Set combo value
+    function setComboValue(selectId, inputId, value) {
+      const selectEl = document.getElementById(selectId);
+      const inputEl = document.getElementById(inputId);
+      
+      // Check if value exists in options
+      const optionExists = [...selectEl.options].some(o => o.value === value);
+      
+      if (optionExists && value !== '__custom__') {
+        selectEl.value = value;
+        selectEl.style.display = 'block';
+        inputEl.style.display = 'none';
+        inputEl.value = '';
+      } else if (value) {
+        // Custom value - show input
+        selectEl.value = '__custom__';
+        selectEl.style.display = 'none';
+        inputEl.style.display = 'block';
+        inputEl.value = value;
+      } else {
+        // Empty value
+        selectEl.value = '';
+        selectEl.style.display = 'block';
+        inputEl.style.display = 'none';
+        inputEl.value = '';
+      }
+    }
+
+    // Populate select with options
+    function populateSelect(selectId, options, placeholder) {
+      const select = document.getElementById(selectId);
+      const currentValue = select.value;
+      
+      select.innerHTML = `<option value="">${placeholder}</option>` +
+        options.map(o => `<option value="${o}">${o}</option>`).join('') +
+        `<option value="__custom__">+ Добавить свой...</option>`;
+      
+      // Restore value if it exists
+      if (currentValue && [...select.options].some(o => o.value === currentValue)) {
+        select.value = currentValue;
+      }
+    }
+
+    // Update filter options and selects
     function updateFilters() {
       const marketplaces = {};
       const pages = {};
@@ -1294,18 +1348,15 @@
           </div>
         `).join('');
 
-      // Update datalists with unique values from data + defaults
-      const allMarketplaces = [...new Set([...defaultMarketplaces, ...Object.keys(marketplaces)])].filter(m => m !== 'Не указан');
-      const allPages = [...new Set([...defaultPages, ...Object.keys(pages)])].filter(p => p !== 'Не указана');
+      // Merge defaults with values from data
+      const allMarketplaces = [...new Set([...defaultMarketplaces, ...Object.keys(marketplaces)])].filter(m => m && m !== 'Не указан');
+      const allPages = [...new Set([...defaultPages, ...Object.keys(pages)])].filter(p => p && p !== 'Не указана');
 
-      const mpOptions = allMarketplaces.map(m => `<option value="${m}">`).join('');
-      const pgOptions = allPages.map(p => `<option value="${p}">`).join('');
-
-      // Update all datalists
-      document.getElementById('marketplaceList').innerHTML = mpOptions;
-      document.getElementById('uploadMarketplaceList').innerHTML = mpOptions;
-      document.getElementById('pageList').innerHTML = pgOptions;
-      document.getElementById('uploadPageList').innerHTML = pgOptions;
+      // Update all selects
+      populateSelect('marketplace', allMarketplaces, 'Выберите маркетплейс');
+      populateSelect('detailMarketplace', allMarketplaces, 'Выберите маркетплейс');
+      populateSelect('pageName', allPages, 'Выберите страницу');
+      populateSelect('detailPage', allPages, 'Выберите страницу');
     }
 
     // Update dropdown button states
@@ -1433,9 +1484,9 @@
       document.getElementById('detailModalTitle').textContent = title;
       document.getElementById('detailImage').src = img.url;
       
-      // Set input values (datalist inputs)
-      document.getElementById('detailMarketplace').value = mp;
-      document.getElementById('detailPage').value = pg;
+      // Set combo values
+      setComboValue('detailMarketplace', 'detailMarketplaceCustom', mp);
+      setComboValue('detailPage', 'detailPageCustom', pg);
       document.getElementById('detailDate').value = date;
       document.getElementById('detailDescription').value = desc;
       document.getElementById('detailUrl').value = img.url;
@@ -1458,8 +1509,8 @@
       document.getElementById('detailSaveBtn').style.display = 'block';
       
       // Update title preview
-      const mp = document.getElementById('detailMarketplace').value;
-      const pg = document.getElementById('detailPage').value;
+      const mp = getComboValue('detailMarketplace', 'detailMarketplaceCustom') || 'Не указан';
+      const pg = getComboValue('detailPage', 'detailPageCustom') || 'Не указана';
       document.getElementById('detailModalTitle').textContent = `${mp} • ${pg}`;
     }
 
@@ -1471,8 +1522,8 @@
       saveBtn.textContent = 'Сохранение...';
       
       const metadata = {
-        marketplace: document.getElementById('detailMarketplace').value,
-        page: document.getElementById('detailPage').value,
+        marketplace: getComboValue('detailMarketplace', 'detailMarketplaceCustom'),
+        page: getComboValue('detailPage', 'detailPageCustom'),
         date: document.getElementById('detailDate').value,
         description: document.getElementById('detailDescription').value
       };
