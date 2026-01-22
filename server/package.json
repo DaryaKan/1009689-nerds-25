@@ -4,7 +4,8 @@
   "description": "Image library with Supabase storage, web upload and Telegram bot",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js",
+    "start": "node index-local.js",
+    "start:cloud": "node index.js",
     "bot": "node bot.js",
     "dev": "node index.js & node bot.js"
   },
