@@ -457,8 +457,50 @@ app.get('/api/health', (req, res) => {
   res.json({
     status: 'ok',
     timestamp: new Date().toISOString(),
-    bot: process.env.TELEGRAM_BOT_TOKEN ? 'enabled' : 'disabled'
+    bot: process.env.TELEGRAM_BOT_TOKEN ? 'enabled' : 'disabled',
+    gemini: GEMINI_API_KEY ? 'configured' : 'not configured'
   });
+});
+
+// Test Gemini API
+app.get('/api/test-gemini', async (req, res) => {
+  if (!GEMINI_API_KEY) {
+    return res.json({ success: false, error: 'GEMINI_API_KEY not configured' });
+  }
+  
+  try {
+    const models = ['gemini-1.5-flash', 'gemini-1.5-pro'];
+    const results = [];
+    
+    for (const model of models) {
+      try {
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_API_KEY}`;
+        
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: 'Say "Hello"' }] }]
+          })
+        });
+        
+        const data = await response.json();
+        
+        if (data.error) {
+          results.push({ model, success: false, error: data.error.message });
+        } else {
+          const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+          results.push({ model, success: true, response: text?.substring(0, 50) });
+        }
+      } catch (e) {
+        results.push({ model, success: false, error: e.message });
+      }
+    }
+    
+    res.json({ success: true, results });
+  } catch (error) {
+    res.json({ success: false, error: error.message });
+  }
 });
 
 // Analyze images with missing metadata
