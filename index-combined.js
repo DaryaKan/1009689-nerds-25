@@ -235,14 +235,9 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// Serve library page
+// Serve library page (now index.html)
 app.get('/library', (req, res) => {
-  res.sendFile(path.join(__dirname, './library.html'));
-});
-
-// Root redirect
-app.get('/', (req, res) => {
-  res.redirect('/library');
+  res.sendFile(path.join(__dirname, './index.html'));
 });
 
 // Start server
