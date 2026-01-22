@@ -1319,6 +1319,10 @@
 
     // Update filter options and selects
     function updateFilters() {
+      // Save current filter selections before rebuilding
+      const selectedMarketplaces = [...document.querySelectorAll('#marketplaceFilters input:checked')].map(el => el.value);
+      const selectedPages = [...document.querySelectorAll('#pageFilters input:checked')].map(el => el.value);
+
       const marketplaces = {};
       const pages = {};
 
@@ -1333,7 +1337,7 @@
       document.getElementById('marketplaceFilters').innerHTML = Object.entries(marketplaces)
         .map(([name, count]) => `
           <div class="filter-option">
-            <input type="checkbox" id="mp-${name}" value="${name}" onchange="applyFilters(); updateDropdownButtons()">
+            <input type="checkbox" id="mp-${name}" value="${name}" ${selectedMarketplaces.includes(name) ? 'checked' : ''} onchange="applyFilters(); updateDropdownButtons()">
             <label for="mp-${name}">${name}</label>
             <span class="option-count">${count}</span>
           </div>
@@ -1342,11 +1346,14 @@
       document.getElementById('pageFilters').innerHTML = Object.entries(pages)
         .map(([name, count]) => `
           <div class="filter-option">
-            <input type="checkbox" id="pg-${name}" value="${name}" onchange="applyFilters(); updateDropdownButtons()">
+            <input type="checkbox" id="pg-${name}" value="${name}" ${selectedPages.includes(name) ? 'checked' : ''} onchange="applyFilters(); updateDropdownButtons()">
             <label for="pg-${name}">${name}</label>
             <span class="option-count">${count}</span>
           </div>
         `).join('');
+
+      // Update dropdown buttons to reflect restored selections
+      updateDropdownButtons();
 
       // Merge defaults with values from data
       const allMarketplaces = [...new Set([...defaultMarketplaces, ...Object.keys(marketplaces)])].filter(m => m && m !== 'Не указан');
