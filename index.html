@@ -1311,9 +1311,45 @@
       }
     });
 
-    // Default options
-    const defaultMarketplaces = ['Ozon', 'Wildberries', 'Яндекс.Маркет', 'AliExpress', 'СберМегаМаркет', 'Amazon', 'Lamoda', 'Avito'];
+    // Default options with logos
+    const marketplaceLogos = {
+      'Ozon': '🔵',
+      'Wildberries': '🟣',
+      'Яндекс Маркет': '🟡',
+      'AliExpress': '🟠',
+      'Мегамаркет': '🟢',
+      'Amazon': '📦',
+      'Lamoda': '⚫',
+      'Avito': '🟢'
+    };
+    
+    const defaultMarketplaces = ['Ozon', 'Wildberries', 'Яндекс Маркет', 'AliExpress', 'Мегамаркет', 'Amazon', 'Lamoda', 'Avito'];
     const defaultPages = ['Главная', 'Каталог', 'Карточка товара', 'Корзина', 'Поиск', 'Заказы', 'Профиль', 'Акции', 'Избранное', 'Оформление заказа'];
+
+    // Normalize marketplace name (merge variations)
+    function normalizeMarketplace(name) {
+      if (!name) return '';
+      const lower = name.toLowerCase();
+      
+      // Merge СберМегаМаркет, Мегамаркет, Мега маркет variations
+      if (lower.includes('мегамаркет') || lower.includes('мега маркет') || lower.includes('сбермегамаркет')) {
+        return 'Мегамаркет';
+      }
+      // Normalize Яндекс.Маркет variations
+      if (lower.includes('яндекс') && lower.includes('маркет')) {
+        return 'Яндекс Маркет';
+      }
+      // Filter out unknown/invalid values
+      if (lower === 'unknown' || lower === 'не указан' || lower === 'не определён' || lower === '') {
+        return '';
+      }
+      return name;
+    }
+
+    // Get logo for marketplace
+    function getMarketplaceLogo(name) {
+      return marketplaceLogos[name] || '🏪';
+    }
 
     // Handle combo select (dropdown + custom input)
     function handleComboSelect(selectEl, inputId) {
@@ -1364,13 +1400,23 @@
     }
 
     // Populate select with options
-    function populateSelect(selectId, options, placeholder) {
+    function populateSelect(selectId, options, placeholder, isMarketplace = false) {
       const select = document.getElementById(selectId);
       const currentValue = select.value;
       
-      select.innerHTML = `<option value="">${placeholder}</option>` +
-        options.map(o => `<option value="${o}">${o}</option>`).join('') +
-        `<option value="__custom__">+ Добавить свой...</option>`;
+      let optionsHtml = '';
+      if (isMarketplace) {
+        // Marketplace select with logos, no placeholder
+        optionsHtml = options.map(o => `<option value="${o}">${getMarketplaceLogo(o)} ${o}</option>`).join('') +
+          `<option value="__custom__">➕ Добавить свой...</option>`;
+      } else {
+        // Regular select with placeholder
+        optionsHtml = `<option value="">${placeholder}</option>` +
+          options.map(o => `<option value="${o}">${o}</option>`).join('') +
+          `<option value="__custom__">+ Добавить свой...</option>`;
+      }
+      
+      select.innerHTML = optionsHtml;
       
       // Restore value if it exists
       if (currentValue && [...select.options].some(o => o.value === currentValue)) {
@@ -1388,18 +1434,26 @@
       const pages = {};
 
       allImages.forEach(img => {
-        const mp = img.metadata?.marketplace || 'Не указан';
+        // Normalize marketplace name
+        let mp = normalizeMarketplace(img.metadata?.marketplace) || 'Не указан';
         const pg = img.metadata?.page || 'Не указана';
-        marketplaces[mp] = (marketplaces[mp] || 0) + 1;
+        
+        // Skip unknown/empty values in counts
+        if (mp && mp !== 'Не указан') {
+          marketplaces[mp] = (marketplaces[mp] || 0) + 1;
+        } else {
+          marketplaces['Не указан'] = (marketplaces['Не указан'] || 0) + 1;
+        }
         pages[pg] = (pages[pg] || 0) + 1;
       });
 
-      // Update filter dropdowns
+      // Update filter dropdowns with logos
       document.getElementById('marketplaceFilters').innerHTML = Object.entries(marketplaces)
+        .filter(([name]) => name !== 'unknown') // Filter out unknown
         .map(([name, count]) => `
           <div class="filter-option">
             <input type="checkbox" id="mp-${name}" value="${name}" ${selectedMarketplaces.includes(name) ? 'checked' : ''} onchange="applyFilters(); updateDropdownButtons()">
-            <label for="mp-${name}">${name}</label>
+            <label for="mp-${name}">${getMarketplaceLogo(name)} ${name}</label>
             <span class="option-count">${count}</span>
           </div>
         `).join('');
@@ -1416,13 +1470,15 @@
       // Update dropdown buttons to reflect restored selections
       updateDropdownButtons();
 
-      // Merge defaults with values from data
-      const allMarketplaces = [...new Set([...defaultMarketplaces, ...Object.keys(marketplaces)])].filter(m => m && m !== 'Не указан');
-      const allPages = [...new Set([...defaultPages, ...Object.keys(pages)])].filter(p => p && p !== 'Не указана');
+      // Merge defaults with values from data, filter out invalid
+      const allMarketplaces = [...new Set([...defaultMarketplaces, ...Object.keys(marketplaces)])]
+        .filter(m => m && m !== 'Не указан' && m !== 'unknown' && m !== 'Не определён');
+      const allPages = [...new Set([...defaultPages, ...Object.keys(pages)])]
+        .filter(p => p && p !== 'Не указана' && p !== 'Не определена');
 
-      // Update all selects
-      populateSelect('marketplace', allMarketplaces, 'Выберите маркетплейс');
-      populateSelect('detailMarketplace', allMarketplaces, 'Выберите маркетплейс');
+      // Update all selects (marketplace selects with logos)
+      populateSelect('marketplace', allMarketplaces, '', true);
+      populateSelect('detailMarketplace', allMarketplaces, '', true);
       populateSelect('pageName', allPages, 'Выберите страницу');
       populateSelect('detailPage', allPages, 'Выберите страницу');
     }
@@ -1457,7 +1513,8 @@
       const selectedPages = [...document.querySelectorAll('#pageFilters input:checked')].map(el => el.value);
 
       const filtered = allImages.filter(img => {
-        const mp = img.metadata?.marketplace || 'Не указан';
+        // Normalize marketplace for filtering
+        const mp = normalizeMarketplace(img.metadata?.marketplace) || 'Не указан';
         const pg = img.metadata?.page || 'Не указана';
         const date = img.metadata?.date || '';
         const desc = (img.metadata?.description || '').toLowerCase();
@@ -1510,16 +1567,17 @@
       }
 
       gallery.innerHTML = images.map((img, index) => {
-        const mp = img.metadata?.marketplace || 'Другой';
+        const mp = normalizeMarketplace(img.metadata?.marketplace) || 'Не указан';
         const pg = img.metadata?.page || 'Не указана';
         const date = img.metadata?.date || '';
-        const title = `${mp} • ${pg}`;
+        const logo = getMarketplaceLogo(mp);
+        const title = `${logo} ${mp} • ${pg}`;
         const formattedDate = date ? new Date(date).toLocaleDateString('ru-RU') : '';
 
         return `
           <div class="card" onclick="openDetailModal('${img.id}')">
             <div class="card-image">
-              <img src="${img.url}" alt="${title}" loading="lazy">
+              <img src="${img.url}" alt="${mp} - ${pg}" loading="lazy">
             </div>
             <div class="card-body">
               <div class="card-title">${title}</div>
@@ -1543,16 +1601,18 @@
       currentDetailImage = img;
       detailChanged = false;
       
-      const mp = img.metadata?.marketplace || '';
+      // Normalize marketplace
+      const mp = normalizeMarketplace(img.metadata?.marketplace) || '';
       const pg = img.metadata?.page || '';
       const date = img.metadata?.date || '';
       const desc = img.metadata?.description || '';
-      const title = `${mp || 'Не указан'} • ${pg || 'Не указана'}`;
+      const logo = mp ? getMarketplaceLogo(mp) : '';
+      const title = `${logo} ${mp || 'Не указан'} • ${pg || 'Не указана'}`;
       
       document.getElementById('detailModalTitle').textContent = title;
       document.getElementById('detailImage').src = img.url;
       
-      // Set combo values
+      // Set combo values with normalized marketplace
       setComboValue('detailMarketplace', 'detailMarketplaceCustom', mp);
       setComboValue('detailPage', 'detailPageCustom', pg);
       document.getElementById('detailDate').value = date;
@@ -1576,10 +1636,11 @@
       detailChanged = true;
       document.getElementById('detailSaveBtn').style.display = 'block';
       
-      // Update title preview
+      // Update title preview with logo
       const mp = getComboValue('detailMarketplace', 'detailMarketplaceCustom') || 'Не указан';
       const pg = getComboValue('detailPage', 'detailPageCustom') || 'Не указана';
-      document.getElementById('detailModalTitle').textContent = `${mp} • ${pg}`;
+      const logo = getMarketplaceLogo(mp);
+      document.getElementById('detailModalTitle').textContent = `${logo} ${mp} • ${pg}`;
     }
 
     async function saveDetailChanges() {
