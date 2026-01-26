@@ -115,8 +115,8 @@ async function analyzeWithOCR(imageBuffer) {
       // Мегамаркет
       { patterns: ['мегамаркет', 'megamarket', 'сбермегамаркет', 'мегамарк', 'сбермега', 'mega market', 'мега маркет'], mp: 'Мегамаркет' },
       
-      // Lamoda
-      { patterns: ['lamoda', 'ламода', 'la moda', 'лямода', 'lamоda', '1amoda', 'lamоdа'], mp: 'Lamoda' },
+      // Lamoda - including short "la" logo text
+      { patterns: ['lamoda', 'ламода', 'la moda', 'лямода', 'lamоda', '1amoda', 'lamоdа', 'la\nглавная', 'la главная', 'laглавная'], mp: 'Lamoda' },
       
       // Avito
       { patterns: ['avito', 'авито', 'avit0', 'av1to', 'авит', 'abito', 'avlto'], mp: 'Avito' },
