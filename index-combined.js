@@ -22,7 +22,218 @@ if (GEMINI_API_KEY) {
   console.log('Gemini API key configured');
 }
 
-// Function to analyze screenshot with Gemini using direct HTTP API
+// Pipeline function: 3-stage marketplace detection
+async function analyzeScreenshotPipeline(imageBuffer) {
+  console.log('=== Starting 3-stage analysis pipeline ===');
+  
+  // Stage 1: OCR-based local analysis (no AI)
+  console.log('Stage 1: OCR analysis...');
+  const ocrResult = await analyzeWithOCR(imageBuffer);
+  if (ocrResult.marketplace && ocrResult.confidence) {
+    console.log(`Stage 1 SUCCESS: ${ocrResult.marketplace}`);
+    return ocrResult;
+  }
+  console.log('Stage 1: No match found');
+  
+  // Stage 2: AI analysis by visual features (logos, colors, UI)
+  console.log('Stage 2: AI visual analysis...');
+  const aiResult = await analyzeScreenshot(imageBuffer);
+  if (aiResult.marketplace && aiResult.confidence) {
+    console.log(`Stage 2 SUCCESS: ${aiResult.marketplace}`);
+    return aiResult;
+  }
+  console.log('Stage 2: No confident match');
+  
+  // Stage 3: AI comparison with known examples
+  console.log('Stage 3: AI comparison analysis...');
+  const comparisonResult = await analyzeByComparisonInternal(imageBuffer);
+  if (comparisonResult.marketplace && comparisonResult.confidence) {
+    console.log(`Stage 3 SUCCESS: ${comparisonResult.marketplace}`);
+    return comparisonResult;
+  }
+  console.log('Stage 3: No match found');
+  
+  // All stages failed
+  console.log('=== Pipeline complete: No marketplace identified ===');
+  return { 
+    marketplace: null, 
+    page: null, 
+    description: '', 
+    confidence: false 
+  };
+}
+
+// Stage 1: OCR-based analysis (local, no AI)
+async function analyzeWithOCR(imageBuffer) {
+  try {
+    const result = await Tesseract.recognize(imageBuffer, 'rus+eng', {
+      logger: m => {}
+    });
+    
+    let text = result.data.text.toLowerCase();
+    text = text.replace(/\s+/g, ' ');
+    text = text.replace(/[|1l]/g, 'i');
+    text = text.replace(/[0о]/g, 'o');
+    const textNoSpaces = text.replace(/\s/g, '');
+    
+    console.log('OCR text (100 chars):', text.substring(0, 100));
+    
+    // Marketplace keywords
+    const keywords = {
+      'ozon': 'Ozon', 'озон': 'Ozon', 'o3on': 'Ozon',
+      'wildberries': 'Wildberries', 'wb': 'Wildberries', 'вайлдберриз': 'Wildberries',
+      'вайлдберис': 'Wildberries', 'коледино': 'Wildberries', 'берриз': 'Wildberries',
+      'aliexpress': 'AliExpress', 'алиэкспресс': 'AliExpress', 'ali': 'AliExpress', 'tmall': 'AliExpress',
+      'яндекс': 'Яндекс Маркет', 'yandex': 'Яндекс Маркет', 'маркет': 'Яндекс Маркет',
+      'мегамаркет': 'Мегамаркет', 'сбермегамаркет': 'Мегамаркет', 'megamarket': 'Мегамаркет',
+      'lamoda': 'Lamoda', 'ламода': 'Lamoda',
+      'avito': 'Avito', 'авито': 'Avito',
+      'shein': 'SHEIN', 'шеин': 'SHEIN',
+      'золотое яблоко': 'Золотое Яблоко', 'золотое': 'Золотое Яблоко', 'goldapple': 'Золотое Яблоко',
+      'вкусвилл': 'ВкусВилл', 'vkusvill': 'ВкусВилл',
+      'lazada': 'Lazada', 'amazon': 'Amazon'
+    };
+    
+    // Page keywords
+    const pageKeywords = {
+      'главная': 'Главная', 'home': 'Главная',
+      'каталог': 'Каталог', 'catalog': 'Каталог', 'категории': 'Каталог',
+      'корзина': 'Корзина', 'cart': 'Корзина',
+      'профиль': 'Профиль', 'profile': 'Профиль', 'аккаунт': 'Профиль',
+      'заказы': 'Заказы', 'orders': 'Заказы',
+      'избранное': 'Избранное', 'favorites': 'Избранное'
+    };
+    
+    // Find marketplace (longer keywords first)
+    const sortedKeywords = Object.entries(keywords).sort((a, b) => b[0].length - a[0].length);
+    let foundMarketplace = null;
+    for (const [kw, mp] of sortedKeywords) {
+      if (text.includes(kw) || textNoSpaces.includes(kw.replace(/\s/g, ''))) {
+        foundMarketplace = mp;
+        break;
+      }
+    }
+    
+    // Find page
+    let foundPage = null;
+    for (const [kw, pg] of Object.entries(pageKeywords)) {
+      if (text.includes(kw)) {
+        foundPage = pg;
+        break;
+      }
+    }
+    
+    if (foundMarketplace) {
+      return { marketplace: foundMarketplace, page: foundPage, description: 'OCR detected', confidence: true };
+    }
+    
+    return { marketplace: null, page: null, description: '', confidence: false };
+    
+  } catch (err) {
+    console.error('OCR error:', err.message);
+    return { marketplace: null, page: null, description: '', confidence: false };
+  }
+}
+
+// Stage 3: Comparison with known examples (internal function)
+async function analyzeByComparisonInternal(unknownBuffer) {
+  if (!GEMINI_API_KEY) {
+    return { marketplace: null, page: null, description: '', confidence: false };
+  }
+  
+  try {
+    // Get example images from storage
+    const { data: files } = await supabase.storage.from(BUCKET).list('images', { limit: 100 });
+    if (!files) return { marketplace: null, page: null, description: '', confidence: false };
+    
+    // Find examples (one per marketplace)
+    const marketplaces = ['Ozon', 'Wildberries', 'AliExpress', 'Яндекс Маркет', 'Мегамаркет', 'Lamoda', 'Avito', 'Золотое Яблоко', 'SHEIN'];
+    const examples = [];
+    
+    for (const mp of marketplaces) {
+      const example = files.find(f => {
+        const meta = imageMetadata.get(f.name);
+        return meta && meta.marketplace === mp;
+      });
+      
+      if (example && examples.length < 3) { // Limit to 3 examples to save quota
+        const { data: urlData } = supabase.storage.from(BUCKET).getPublicUrl(`images/${example.name}`);
+        try {
+          const buffer = await new Promise((resolve, reject) => {
+            const protocol = urlData.publicUrl.startsWith('https') ? https : http;
+            protocol.get(urlData.publicUrl, (response) => {
+              const chunks = [];
+              response.on('data', (chunk) => chunks.push(chunk));
+              response.on('end', () => resolve(Buffer.concat(chunks)));
+              response.on('error', reject);
+            }).on('error', reject);
+          });
+          
+          examples.push({ marketplace: mp, page: imageMetadata.get(example.name)?.page, buffer });
+        } catch (e) {
+          // Skip failed downloads
+        }
+      }
+    }
+    
+    if (examples.length === 0) {
+      return { marketplace: null, page: null, description: '', confidence: false };
+    }
+    
+    // Build comparison prompt
+    const prompt = `Compare the FIRST image (unknown) with the following example images.
+Examples: ${examples.map((e, i) => `Image ${i+2}: ${e.marketplace}`).join(', ')}
+
+Which marketplace does the first image belong to based on visual similarity (colors, layout, UI style)?
+Respond with JSON only: {"marketplace": "NAME", "page": "PAGE_TYPE", "confidence": true}
+If unsure, set confidence: false.`;
+
+    const model = 'gemini-2.5-flash';
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_API_KEY}`;
+    
+    const parts = [{ text: prompt }];
+    parts.push({ inline_data: { mime_type: 'image/jpeg', data: unknownBuffer.toString('base64') } });
+    for (const ex of examples) {
+      parts.push({ inline_data: { mime_type: 'image/jpeg', data: ex.buffer.toString('base64') } });
+    }
+    
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ contents: [{ parts }] })
+    });
+    
+    const data = await response.json();
+    if (data.error) {
+      console.log('Comparison API error:', data.error.message);
+      return { marketplace: null, page: null, description: '', confidence: false };
+    }
+    
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (!text) return { marketplace: null, page: null, description: '', confidence: false };
+    
+    const jsonMatch = text.match(/\{[\s\S]*?\}/);
+    if (jsonMatch) {
+      const parsed = JSON.parse(jsonMatch[0]);
+      if (parsed.confidence) {
+        return { 
+          marketplace: parsed.marketplace, 
+          page: parsed.page, 
+          description: 'Comparison match', 
+          confidence: true 
+        };
+      }
+    }
+    
+    return { marketplace: null, page: null, description: '', confidence: false };
+    
+  } catch (err) {
+    console.error('Comparison error:', err.message);
+    return { marketplace: null, page: null, description: '', confidence: false };
+  }
+}
+
+// Stage 2: Function to analyze screenshot with Gemini using direct HTTP API
 async function analyzeScreenshot(imageBuffer) {
   if (!GEMINI_API_KEY) {
     console.log('Gemini API key not configured');
@@ -1604,14 +1815,14 @@ if (BOT_TOKEN && BOT_TOKEN.length > 10) {
     // Process and upload image
     async function processImage(chatId, fileBuffer, fileName, mimeType, statusMsgId) {
       try {
-        // Analyze with Gemini AI
-        await bot.editMessageText('🤖 *AI анализирует изображение...*', { 
+        // Analyze with 3-stage pipeline
+        await bot.editMessageText('🔍 *Анализирую скриншот...*\n\n1️⃣ OCR проверка\n2️⃣ AI анализ\n3️⃣ Сравнение с примерами', { 
           chat_id: chatId, 
           message_id: statusMsgId, 
           parse_mode: 'Markdown' 
         });
 
-        const analysis = await analyzeScreenshot(fileBuffer);
+        const analysis = await analyzeScreenshotPipeline(fileBuffer);
         
         console.log('Analysis result:', analysis);
 
@@ -1861,8 +2072,8 @@ if (BOT_TOKEN && BOT_TOKEN.length > 10) {
           const fileUrl = `https://api.telegram.org/file/bot${BOT_TOKEN}/${file.file_path}`;
           const fileBuffer = await downloadFile(fileUrl);
 
-          // Analyze with AI
-          const analysis = await analyzeScreenshot(fileBuffer);
+          // Analyze with 3-stage pipeline (OCR -> AI -> Comparison)
+          const analysis = await analyzeScreenshotPipeline(fileBuffer);
 
           const ext = file.file_path.split('.').pop() || 'jpg';
           const fileName = `${uuidv4()}.${ext}`;
