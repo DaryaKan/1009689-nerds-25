@@ -95,43 +95,43 @@ async function analyzeWithOCR(imageBuffer) {
     
     console.log('OCR text (150 chars):', text.substring(0, 150));
     
-    // Extended marketplace patterns with OCR error tolerance
+    // Extended marketplace patterns - ORDER MATTERS! More specific patterns first
     const marketplacePatterns = [
-      // Золотое Яблоко - many OCR variations
-      { patterns: ['золотое', 'золотоеяблоко', 'золотое яблоко', 'олотое', 'олотоея', 'золото', 'яблоко', 'яблок', 'goldapple', 'gold apple', 'золот'], mp: 'Золотое Яблоко' },
-      
-      // Ozon
-      { patterns: ['ozon', 'озон', 'o3on', 'oz0n', '0zon', 'озо', 'ozo'], mp: 'Ozon' },
+      // AliExpress - check first, has many variations
+      { patterns: ['aliexpress', 'aliexpres', 'алиэкспресс', 'алиэкспрес', 'ali express', 'a]iexpress', 'allexpress', 'tmall', 'найти на aliexpress', 'на aliexpress', 'aiexpress', 'a1iexpress', 'al1express', 'программа лояльности ali'], mp: 'AliExpress' },
       
       // Wildberries  
-      { patterns: ['wildberries', 'wildberry', 'вайлдберриз', 'вайлдберри', 'вайлдбери', 'wildber', 'wbberries', 'коледино', 'берриз', 'berrles', 'wildber', 'w1ldberr'], mp: 'Wildberries' },
+      { patterns: ['wildberries', 'wildberry', 'вайлдберриз', 'вайлдберри', 'вайлдбери', 'wbberries', 'коледино wb', 'коледино'], mp: 'Wildberries' },
       
-      // AliExpress
-      { patterns: ['aliexpress', 'aliexpres', 'алиэкспресс', 'алиэкспрес', 'aliexp', 'ali express', 'a]iexpress', 'allexpress', 'tmall', 'найти на ali', 'найти на aliexpress', 'на aliexpress', 'на ali', 'aiexpress', 'a1iexpress', 'al1express'], mp: 'AliExpress' },
+      // Ozon
+      { patterns: ['ozon', 'озон', 'o3on', 'oz0n', '0zon'], mp: 'Ozon' },
       
       // Яндекс Маркет
-      { patterns: ['яндекс', 'yandex', 'яндек', 'янлекс', 'яндексмаркет', 'я.маркет', 'ymarket', 'яндекс маркет', 'маркет'], mp: 'Яндекс Маркет' },
+      { patterns: ['яндекс маркет', 'яндексмаркет', 'yandex market', 'я.маркет', 'яндекс'], mp: 'Яндекс Маркет' },
       
       // Мегамаркет
-      { patterns: ['мегамаркет', 'megamarket', 'сбермегамаркет', 'мегамарк', 'сбермега', 'mega market', 'мега маркет'], mp: 'Мегамаркет' },
+      { patterns: ['мегамаркет', 'megamarket', 'сбермегамаркет', 'мега маркет', 'сбермега'], mp: 'Мегамаркет' },
       
-      // Lamoda - including short "la" logo text
-      { patterns: ['lamoda', 'ламода', 'la moda', 'лямода', 'lamоda', '1amoda', 'lamоdа', 'la\nглавная', 'la главная', 'laглавная'], mp: 'Lamoda' },
+      // Lamoda
+      { patterns: ['lamoda', 'ламода', 'la moda', 'лямода', '1amoda'], mp: 'Lamoda' },
       
       // Avito
-      { patterns: ['avito', 'авито', 'avit0', 'av1to', 'авит', 'abito', 'avlto'], mp: 'Avito' },
+      { patterns: ['avito', 'авито', 'avit0', 'av1to'], mp: 'Avito' },
       
       // SHEIN
-      { patterns: ['shein', 'shеin', 'she1n', 'шеин', 'shien', 'shе1n', 'shei', 'sheln'], mp: 'SHEIN' },
+      { patterns: ['shein', 'shеin', 'she1n', 'шеин'], mp: 'SHEIN' },
+      
+      // Золотое Яблоко - more specific patterns only
+      { patterns: ['золотое яблоко', 'золотоеяблоко', 'золотоея', 'олотоея', 'goldapple', 'gold apple'], mp: 'Золотое Яблоко' },
       
       // ВкусВилл
-      { patterns: ['вкусвилл', 'vkusvill', 'вкусвил', 'вкус вилл', 'вкусви', 'vkusvil'], mp: 'ВкусВилл' },
+      { patterns: ['вкусвилл', 'vkusvill', 'вкусвил'], mp: 'ВкусВилл' },
       
       // Lazada
-      { patterns: ['lazada', '1azada', 'lаzada'], mp: 'Lazada' },
+      { patterns: ['lazada', '1azada'], mp: 'Lazada' },
       
       // Amazon
-      { patterns: ['amazon', 'амазон', 'amaz0n'], mp: 'Amazon' }
+      { patterns: ['amazon', 'амазон'], mp: 'Amazon' }
     ];
     
     // Page keywords
@@ -144,25 +144,37 @@ async function analyzeWithOCR(imageBuffer) {
       'избранное': 'Избранное', 'favorites': 'Избранное'
     };
     
-    // Find marketplace using patterns and fuzzy matching
+    // Find marketplace using patterns - exact matching only for reliability
     let foundMarketplace = null;
     
     for (const { patterns, mp } of marketplacePatterns) {
       for (const pattern of patterns) {
-        // Exact match first
+        // Check in text with spaces and without
         if (text.includes(pattern) || textNoSpaces.includes(pattern.replace(/\s/g, ''))) {
           foundMarketplace = mp;
-          console.log(`OCR exact match: "${pattern}" -> ${mp}`);
+          console.log(`OCR match: "${pattern}" -> ${mp}`);
           break;
         }
-        // Fuzzy match for longer patterns
-        if (pattern.length >= 5 && fuzzyMatch(textNoSpaces, pattern.replace(/\s/g, ''), 0.7)) {
+      }
+      if (foundMarketplace) break;
+    }
+    
+    // If no match, try fuzzy matching for specific long patterns only
+    if (!foundMarketplace) {
+      const fuzzyPatterns = [
+        { pattern: 'aliexpress', mp: 'AliExpress' },
+        { pattern: 'wildberries', mp: 'Wildberries' },
+        { pattern: 'золотоеяблоко', mp: 'Золотое Яблоко' },
+        { pattern: 'мегамаркет', mp: 'Мегамаркет' }
+      ];
+      
+      for (const { pattern, mp } of fuzzyPatterns) {
+        if (fuzzyMatch(textNoSpaces, pattern, 0.75)) {
           foundMarketplace = mp;
           console.log(`OCR fuzzy match: "${pattern}" -> ${mp}`);
           break;
         }
       }
-      if (foundMarketplace) break;
     }
     
     // Find page
