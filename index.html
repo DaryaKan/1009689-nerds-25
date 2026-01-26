@@ -1034,6 +1034,16 @@
               <span class="detail-label">Страница</span>
               <div class="combo-select">
                 <select class="detail-select" id="detailPage" onchange="handleComboSelect(this, 'detailPageCustom'); markDetailChanged()">
+                  <option value="">Выберите страницу</option>
+                  <option value="Главная">Главная</option>
+                  <option value="Каталог">Каталог</option>
+                  <option value="Карточка товара">Карточка товара</option>
+                  <option value="Корзина">Корзина</option>
+                  <option value="Поиск">Поиск</option>
+                  <option value="Профиль">Профиль</option>
+                  <option value="Заказы">Заказы</option>
+                  <option value="Избранное">Избранное</option>
+                  <option value="__custom__">+ Добавить свой...</option>
                 </select>
                 <input type="text" class="detail-select combo-input" id="detailPageCustom" placeholder="Введите название..." style="display:none" oninput="markDetailChanged()">
               </div>
@@ -1402,7 +1412,13 @@
     // Populate select with options
     function populateSelect(selectId, options, placeholder, isMarketplace = false) {
       const select = document.getElementById(selectId);
+      if (!select) return;
       const currentValue = select.value;
+      
+      // Ensure options is not empty
+      if (!options || options.length === 0) {
+        options = isMarketplace ? defaultMarketplaces : defaultPages;
+      }
       
       let optionsHtml = '';
       if (isMarketplace) {
