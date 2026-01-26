@@ -1817,12 +1817,15 @@ app.post('/api/analyze-pages', async (req, res) => {
         !mp.startsWith('ai:') &&
         !mp.startsWith('ocr:');
       
+      // Skip if already checked by AI
+      if (pg.startsWith('ai:') || pg.startsWith('pipeline:')) {
+        return false;
+      }
+      
       // Page is missing or unrecognized
       const needsPageAnalysis = !pg || 
         pg === 'не определена' || 
-        pg === 'не указана' ||
-        pg.startsWith('ai:') ||
-        pg.startsWith('pipeline:');
+        pg === 'не указана';
       
       return hasMarketplace && needsPageAnalysis;
     });
