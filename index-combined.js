@@ -18,6 +18,9 @@ const Tesseract = require('tesseract.js');
 // Initialize Gemini AI
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
+// Initialize OpenRouter AI (backup)
+const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY || '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';
+
 if (GEMINI_API_KEY) {
   console.log('Gemini API key configured');
 }
@@ -52,6 +55,15 @@ async function analyzeScreenshotPipeline(imageBuffer) {
     return comparisonResult;
   }
   console.log('Stage 3: No match found');
+  
+  // Stage 4: OpenRouter AI (backup)
+  console.log('Stage 4: OpenRouter AI analysis...');
+  const openRouterResult = await analyzeWithOpenRouter(imageBuffer);
+  if (openRouterResult.marketplace && openRouterResult.confidence) {
+    console.log(`Stage 4 SUCCESS: ${openRouterResult.marketplace}`);
+    return openRouterResult;
+  }
+  console.log('Stage 4: No match found');
   
   // All stages failed
   console.log('=== Pipeline complete: No marketplace identified ===');
@@ -292,6 +304,95 @@ If unsure, set confidence: false.`;
     
   } catch (err) {
     console.error('Comparison error:', err.message);
+    return { marketplace: null, page: null, description: '', confidence: false };
+  }
+}
+
+// Stage 4: Analyze with OpenRouter (backup AI)
+async function analyzeWithOpenRouter(imageBuffer) {
+  if (!OPENROUTER_API_KEY) {
+    return { marketplace: null, page: null, description: '', confidence: false };
+  }
+
+  try {
+    const base64Image = imageBuffer.toString('base64');
+    
+    const prompt = `Analyze this screenshot of a Russian e-commerce marketplace app.
+
+Identify:
+1. MARKETPLACE - look for: Ozon (blue), Wildberries (purple), AliExpress (red/orange), Яндекс Маркет (yellow), Мегамаркет (green), Lamoda (black/white), Avito (green), SHEIN, Золотое Яблоко (yellow-green)
+
+2. PAGE TYPE - one of: Главная, Каталог, Карточка товара, Корзина, Профиль, Заказы, Избранное, Поиск
+
+Respond with JSON only:
+{"marketplace": "NAME", "page": "PAGE_TYPE", "confidence": true}`;
+
+    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
+        'Content-Type': 'application/json',
+        'HTTP-Referer': 'https://screenshot-library.app',
+        'X-Title': 'Screenshot Library'
+      },
+      body: JSON.stringify({
+        model: 'google/gemini-flash-1.5-8b',
+        messages: [{
+          role: 'user',
+          content: [
+            { type: 'text', text: prompt },
+            { type: 'image_url', image_url: { url: `data:image/jpeg;base64,${base64Image}` } }
+          ]
+        }]
+      })
+    });
+
+    const data = await response.json();
+    
+    if (data.error) {
+      console.log('OpenRouter error:', data.error.message || data.error);
+      return { marketplace: null, page: null, description: '', confidence: false };
+    }
+
+    const text = data.choices?.[0]?.message?.content;
+    if (!text) {
+      console.log('OpenRouter: No response text');
+      return { marketplace: null, page: null, description: '', confidence: false };
+    }
+
+    console.log('OpenRouter response:', text.substring(0, 200));
+
+    // Parse JSON from response
+    const jsonMatch = text.match(/\{[\s\S]*?\}/);
+    if (jsonMatch) {
+      const parsed = JSON.parse(jsonMatch[0]);
+      if (parsed.confidence && parsed.marketplace) {
+        // Normalize marketplace name
+        let mp = parsed.marketplace;
+        const lower = mp.toLowerCase();
+        if (lower.includes('ozon') || lower.includes('озон')) mp = 'Ozon';
+        else if (lower.includes('wildberries') || lower.includes('wb')) mp = 'Wildberries';
+        else if (lower.includes('ali')) mp = 'AliExpress';
+        else if (lower.includes('яндекс') || lower.includes('маркет')) mp = 'Яндекс Маркет';
+        else if (lower.includes('мегамаркет') || lower.includes('сбер')) mp = 'Мегамаркет';
+        else if (lower.includes('lamoda') || lower.includes('ламода')) mp = 'Lamoda';
+        else if (lower.includes('avito') || lower.includes('авито')) mp = 'Avito';
+        else if (lower.includes('shein')) mp = 'SHEIN';
+        else if (lower.includes('золот') || lower.includes('яблок')) mp = 'Золотое Яблоко';
+        
+        return {
+          marketplace: mp,
+          page: parsed.page || null,
+          description: 'OpenRouter detected',
+          confidence: true
+        };
+      }
+    }
+
+    return { marketplace: null, page: null, description: '', confidence: false };
+
+  } catch (err) {
+    console.error('OpenRouter error:', err.message);
     return { marketplace: null, page: null, description: '', confidence: false };
   }
 }
