@@ -393,6 +393,88 @@ Respond with JSON only:
   }
 }
 
+// Function to analyze ONLY page type (not marketplace)
+async function analyzePageOnly(imageBuffer) {
+  if (!GEMINI_API_KEY_BACKUP) {
+    return { page: null, confidence: false };
+  }
+
+  const prompt = `Analyze this screenshot of a Russian e-commerce app.
+
+Your ONLY task is to identify the PAGE TYPE. Look at:
+- Bottom navigation bar (which icon is active/highlighted)
+- Top tabs or headers
+- Content shown on screen
+
+PAGE TYPES to identify:
+- "Главная" (Home) - main feed, recommendations, banners
+- "Каталог" (Catalog) - product listings, category browse
+- "Карточка товара" (Product page) - single product details, price, buy button
+- "Корзина" (Cart) - shopping cart with items to purchase
+- "Профиль" (Profile) - user account, settings
+- "Заказы" (Orders) - order history, tracking
+- "Избранное" (Favorites) - wishlist, saved items
+- "Поиск" (Search) - search results, search bar active
+- "Чат" (Chat) - messages, support chat
+- "Акции" (Promotions) - sales, discounts page
+- "Уведомления" (Notifications) - notification center
+
+Respond with JSON only:
+{"page": "PAGE_TYPE", "confidence": true}
+
+If you cannot determine the page type with confidence, respond:
+{"page": null, "confidence": false}`;
+
+  try {
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY_BACKUP}`;
+    
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{
+          parts: [
+            { text: prompt },
+            { inline_data: { mime_type: 'image/jpeg', data: imageBuffer.toString('base64') } }
+          ]
+        }]
+      })
+    });
+
+    const data = await response.json();
+    
+    if (data.error) {
+      console.log('Page analysis error:', data.error.message);
+      return { page: null, confidence: false };
+    }
+
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (!text) {
+      console.log('Page analysis: No response');
+      return { page: null, confidence: false };
+    }
+
+    console.log('Page analysis response:', text.substring(0, 150));
+
+    const jsonMatch = text.match(/\{[\s\S]*?\}/);
+    if (jsonMatch) {
+      const parsed = JSON.parse(jsonMatch[0]);
+      if (parsed.confidence && parsed.page) {
+        return {
+          page: parsed.page,
+          confidence: true
+        };
+      }
+    }
+
+    return { page: null, confidence: false };
+
+  } catch (err) {
+    console.error('Page analysis error:', err.message);
+    return { page: null, confidence: false };
+  }
+}
+
 // Stage 2: Function to analyze screenshot with Gemini using direct HTTP API
 async function analyzeScreenshot(imageBuffer) {
   if (!GEMINI_API_KEY) {
@@ -1702,6 +1784,115 @@ app.post('/api/analyze-pipeline', async (req, res) => {
   } catch (error) {
     console.error('Pipeline analysis error:', error);
     res.status(500).json({ error: 'Pipeline failed', details: error.message });
+  }
+});
+
+// Analyze pages only for images with marketplace but no page
+app.post('/api/analyze-pages', async (req, res) => {
+  try {
+    // Get all images
+    const { data: files, error } = await supabase.storage
+      .from(BUCKET)
+      .list('images', { limit: 1000 });
+
+    if (error) {
+      return res.status(500).json({ error: 'Failed to list images' });
+    }
+
+    const images = files.filter(f => f.name !== '.emptyFolderPlaceholder');
+
+    // Find images with marketplace but without page
+    const needsPage = images.filter(img => {
+      const meta = imageMetadata.get(img.name);
+      if (!meta) return false;
+      
+      const mp = (meta.marketplace || '').toLowerCase();
+      const pg = (meta.page || '').toLowerCase();
+      
+      // Has valid marketplace
+      const hasMarketplace = mp && 
+        !mp.includes('не определён') && 
+        !mp.includes('не указан') && 
+        !mp.startsWith('pipeline:') &&
+        !mp.startsWith('ai:') &&
+        !mp.startsWith('ocr:');
+      
+      // Page is missing or unrecognized
+      const needsPageAnalysis = !pg || 
+        pg === 'не определена' || 
+        pg === 'не указана' ||
+        pg.startsWith('ai:') ||
+        pg.startsWith('pipeline:');
+      
+      return hasMarketplace && needsPageAnalysis;
+    });
+
+    if (needsPage.length === 0) {
+      return res.json({ success: true, message: 'No images need page analysis', remaining: 0 });
+    }
+
+    const img = needsPage[0];
+    console.log(`Page analyzing: ${img.name} (${needsPage.length} remaining)`);
+
+    const { data: urlData } = supabase.storage
+      .from(BUCKET)
+      .getPublicUrl(`images/${img.name}`);
+
+    // Download image
+    const imageBuffer = await new Promise((resolve, reject) => {
+      const protocol = urlData.publicUrl.startsWith('https') ? https : http;
+      protocol.get(urlData.publicUrl, (response) => {
+        const chunks = [];
+        response.on('data', (chunk) => chunks.push(chunk));
+        response.on('end', () => resolve(Buffer.concat(chunks)));
+        response.on('error', reject);
+      }).on('error', reject);
+    });
+
+    // Analyze page only
+    const startTime = Date.now();
+    const result = await analyzePageOnly(imageBuffer);
+    const elapsed = Date.now() - startTime;
+
+    const existingMeta = imageMetadata.get(img.name) || {};
+    
+    if (result.page && result.confidence) {
+      // Success - update page
+      imageMetadata.set(img.name, {
+        ...existingMeta,
+        page: result.page
+      });
+      await saveMetadata();
+
+      return res.json({
+        success: true,
+        id: img.name,
+        marketplace: existingMeta.marketplace,
+        page: result.page,
+        elapsed: `${elapsed}ms`,
+        remaining: needsPage.length - 1
+      });
+    } else {
+      // Failed - mark as AI checked
+      imageMetadata.set(img.name, {
+        ...existingMeta,
+        page: 'AI: не определена'
+      });
+      await saveMetadata();
+
+      return res.json({
+        success: false,
+        id: img.name,
+        marketplace: existingMeta.marketplace,
+        error: 'Could not determine page',
+        elapsed: `${elapsed}ms`,
+        remaining: needsPage.length - 1
+      });
+    }
+
+  } catch (error) {
+    console.error('Page analysis error:', error);
+    res.status(500).json({ error: 'Page analysis failed', details: error.message });
   }
 });
 
