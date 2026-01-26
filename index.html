@@ -1386,6 +1386,19 @@
       const selectEl = document.getElementById(selectId);
       const inputEl = document.getElementById(inputId);
       
+      // Normalize undefined/empty values
+      const invalidValues = ['не определена', 'не определён', 'не указана', 'не указан', '', 'n/a', 'unknown'];
+      const normalizedValue = value ? value.toLowerCase() : '';
+      
+      if (invalidValues.includes(normalizedValue)) {
+        // Show select with empty value for undefined pages/marketplaces
+        selectEl.value = '';
+        selectEl.style.display = 'block';
+        inputEl.style.display = 'none';
+        inputEl.value = '';
+        return;
+      }
+      
       // Check if value exists in options
       const optionExists = [...selectEl.options].some(o => o.value === value);
       
