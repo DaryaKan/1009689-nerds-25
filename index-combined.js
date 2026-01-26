@@ -1401,6 +1401,55 @@ app.post('/api/analyze-ocr', async (req, res) => {
   }
 });
 
+// Debug OCR - show what text is recognized
+app.get('/api/debug-ocr/:id', async (req, res) => {
+  try {
+    const imageId = req.params.id;
+    
+    const { data: urlData } = supabase.storage
+      .from(BUCKET)
+      .getPublicUrl(`images/${imageId}`);
+    
+    console.log('Debug OCR for:', urlData.publicUrl);
+    
+    // Download image
+    const imageBuffer = await new Promise((resolve, reject) => {
+      const protocol = urlData.publicUrl.startsWith('https') ? https : http;
+      protocol.get(urlData.publicUrl, (response) => {
+        const chunks = [];
+        response.on('data', (chunk) => chunks.push(chunk));
+        response.on('end', () => resolve(Buffer.concat(chunks)));
+        response.on('error', reject);
+      }).on('error', reject);
+    });
+    
+    // Run OCR with detailed output
+    const result = await Tesseract.recognize(imageBuffer, 'rus+eng', {
+      logger: m => console.log(m)
+    });
+    
+    const rawText = result.data.text;
+    const normalizedText = rawText.toLowerCase().replace(/\s+/g, ' ');
+    
+    // Check for keywords
+    const keywords = ['золотое', 'яблоко', 'ozon', 'wildberries', 'wb', 'aliexpress', 'ali', 'shein', 'lamoda', 'avito', 'мегамаркет', 'яндекс'];
+    const found = keywords.filter(kw => normalizedText.includes(kw));
+    
+    res.json({
+      imageId,
+      url: urlData.publicUrl,
+      rawText: rawText.substring(0, 1000),
+      normalizedText: normalizedText.substring(0, 500),
+      foundKeywords: found,
+      confidence: result.data.confidence
+    });
+    
+  } catch (error) {
+    console.error('Debug OCR error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Test 3-stage pipeline on one unrecognized image
 app.post('/api/analyze-pipeline', async (req, res) => {
   try {
