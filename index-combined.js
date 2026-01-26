@@ -19,7 +19,7 @@ const Tesseract = require('tesseract.js');
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
 // Initialize OpenRouter AI (backup)
-const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY || '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';
+const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY || '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';
 
 if (GEMINI_API_KEY) {
   console.log('Gemini API key configured');
@@ -337,6 +337,7 @@ Respond with JSON only:
       },
       body: JSON.stringify({
         model: 'google/gemini-2.5-flash',
+        max_tokens: 500,
         messages: [{
           role: 'user',
           content: [
