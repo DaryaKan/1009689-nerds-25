@@ -1897,6 +1897,228 @@ app.post('/api/analyze-pages', async (req, res) => {
   }
 });
 
+// Compare same page across different marketplaces - UX/UI expert analysis
+app.post('/api/compare-page', async (req, res) => {
+  try {
+    const { page } = req.body;
+    
+    if (!page) {
+      return res.status(400).json({ error: 'Page parameter required' });
+    }
+
+    // Get all images
+    const { data: files, error } = await supabase.storage
+      .from(BUCKET)
+      .list('images', { limit: 1000 });
+
+    if (error) {
+      return res.status(500).json({ error: 'Failed to list images' });
+    }
+
+    // Find images for this page from different marketplaces
+    const pageImages = [];
+    const seenMarketplaces = new Set();
+
+    for (const file of files) {
+      if (file.name === '.emptyFolderPlaceholder') continue;
+      
+      const meta = imageMetadata.get(file.name);
+      if (!meta) continue;
+      
+      const imgPage = (meta.page || '').toLowerCase();
+      const imgMp = meta.marketplace || '';
+      
+      if (imgPage === page.toLowerCase() && imgMp && !seenMarketplaces.has(imgMp)) {
+        seenMarketplaces.add(imgMp);
+        
+        const { data: urlData } = supabase.storage
+          .from(BUCKET)
+          .getPublicUrl(`images/${file.name}`);
+        
+        pageImages.push({
+          id: file.name,
+          marketplace: imgMp,
+          url: urlData.publicUrl
+        });
+      }
+    }
+
+    if (pageImages.length < 2) {
+      return res.status(400).json({ 
+        error: 'Need at least 2 different marketplaces for comparison',
+        found: pageImages.length
+      });
+    }
+
+    // Limit to 6 images to avoid API limits
+    const imagesToCompare = pageImages.slice(0, 6);
+
+    // Download images
+    const imageBuffers = [];
+    for (const img of imagesToCompare) {
+      const buffer = await new Promise((resolve, reject) => {
+        const protocol = img.url.startsWith('https') ? https : http;
+        protocol.get(img.url, (response) => {
+          const chunks = [];
+          response.on('data', (chunk) => chunks.push(chunk));
+          response.on('end', () => resolve(Buffer.concat(chunks)));
+          response.on('error', reject);
+        }).on('error', reject);
+      });
+      imageBuffers.push({ ...img, buffer });
+    }
+
+    // Build prompt for UX/UI expert analysis
+    const marketplaceList = imagesToCompare.map(i => i.marketplace).join(', ');
+    
+    const prompt = `Ты - эксперт по продуктовому дизайну и UX/UI мобильных приложений e-commerce.
+
+Я показываю тебе скриншоты страницы "${page}" из ${imagesToCompare.length} разных маркетплейсов: ${marketplaceList}.
+
+Проведи детальный сравнительный анализ:
+
+## 1. ВИЗУАЛЬНЫЙ ДИЗАЙН
+- Цветовые схемы и акценты
+- Типографика и читаемость
+- Иконки и визуальные элементы
+- Общий стиль (минимализм/насыщенность)
+
+## 2. ИНФОРМАЦИОННАЯ АРХИТЕКТУРА  
+- Иерархия информации
+- Группировка элементов
+- Что выделено, что скрыто
+
+## 3. UX ПАТТЕРНЫ
+- Навигация и CTA (call-to-action)
+- Как пользователь достигает цели
+- Удобство взаимодействия
+
+## 4. УНИКАЛЬНЫЕ РЕШЕНИЯ
+- Что каждый маркетплейс делает по-своему?
+- Какие интересные находки?
+
+## 5. ЛУЧШИЕ ПРАКТИКИ
+- Кто делает лучше всего и почему?
+- Что можно улучшить?
+
+## 6. РЕКОМЕНДАЦИИ
+- Какие решения стоит перенять?
+- Общие тренды
+
+Пиши на русском языке. Будь конкретен, приводи примеры из скриншотов.`;
+
+    // Call Gemini API with multiple images
+    const parts = [{ text: prompt }];
+    
+    for (const img of imageBuffers) {
+      parts.push({
+        text: `\n--- Скриншот: ${img.marketplace} ---`
+      });
+      parts.push({
+        inline_data: {
+          mime_type: 'image/jpeg',
+          data: img.buffer.toString('base64')
+        }
+      });
+    }
+
+    const apiKey = GEMINI_API_KEY_BACKUP || GEMINI_API_KEY;
+    if (!apiKey) {
+      return res.status(400).json({ error: 'No Gemini API key configured' });
+    }
+
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+    
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts }],
+        generationConfig: {
+          maxOutputTokens: 4000
+        }
+      })
+    });
+
+    const data = await response.json();
+    
+    if (data.error) {
+      return res.status(500).json({ 
+        error: 'Gemini API error', 
+        details: data.error.message,
+        marketplaces: imagesToCompare.map(i => i.marketplace)
+      });
+    }
+
+    const analysisText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    
+    if (!analysisText) {
+      return res.status(500).json({ error: 'No analysis received from AI' });
+    }
+
+    res.json({
+      success: true,
+      page: page,
+      marketplaces: imagesToCompare.map(i => ({ id: i.id, name: i.marketplace })),
+      analysis: analysisText
+    });
+
+  } catch (error) {
+    console.error('Compare page error:', error);
+    res.status(500).json({ error: 'Comparison failed', details: error.message });
+  }
+});
+
+// Get available pages for comparison
+app.get('/api/compare-options', async (req, res) => {
+  try {
+    const { data: files, error } = await supabase.storage
+      .from(BUCKET)
+      .list('images', { limit: 1000 });
+
+    if (error) {
+      return res.status(500).json({ error: 'Failed to list images' });
+    }
+
+    // Group by pages
+    const pages = {};
+    
+    for (const file of files) {
+      if (file.name === '.emptyFolderPlaceholder') continue;
+      
+      const meta = imageMetadata.get(file.name);
+      if (!meta) continue;
+      
+      const pg = meta.page || '';
+      const mp = meta.marketplace || '';
+      
+      if (pg && !pg.toLowerCase().includes('не определена') && !pg.toLowerCase().startsWith('ai:') && mp) {
+        if (!pages[pg]) {
+          pages[pg] = { count: 0, marketplaces: new Set() };
+        }
+        pages[pg].count++;
+        pages[pg].marketplaces.add(mp);
+      }
+    }
+
+    // Convert to array and filter pages with 2+ marketplaces
+    const options = Object.entries(pages)
+      .filter(([_, data]) => data.marketplaces.size >= 2)
+      .map(([page, data]) => ({
+        page,
+        count: data.count,
+        marketplaces: Array.from(data.marketplaces).sort()
+      }))
+      .sort((a, b) => b.marketplaces.length - a.marketplaces.length);
+
+    res.json({ options });
+
+  } catch (error) {
+    console.error('Compare options error:', error);
+    res.status(500).json({ error: 'Failed to get options' });
+  }
+});
+
 // Reset ALL images for full re-analysis
 app.post('/api/reset-all', async (req, res) => {
   try {

@@ -104,6 +104,24 @@
       transition: background 0.2s;
       white-space: nowrap;
     }
+    
+    .compare-btn {
+      background: transparent;
+      color: var(--accent);
+      border: 1px solid var(--accent);
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+    
+    .compare-btn:hover {
+      background: var(--accent);
+      color: #fff;
+    }
 
     .upload-btn:hover {
       background: var(--accent-hover);
@@ -893,6 +911,9 @@
       <div class="header-search">
         <input type="text" class="search-input" placeholder="Поиск..." id="searchInput" oninput="applyFilters()">
       </div>
+      <button class="compare-btn" onclick="openCompareModal()">
+        📊 Сравнить
+      </button>
       <button class="upload-btn" onclick="openUploadModal()">
         <span>+</span> Загрузить
       </button>
@@ -948,6 +969,42 @@
       </div>
     </div>
   </main>
+
+  <!-- Compare Modal -->
+  <div class="modal-overlay" id="compareModal">
+    <div class="modal" style="max-width: 900px; max-height: 90vh;">
+      <div class="modal-header">
+        <h2 class="modal-title">📊 Сравнительный UX/UI анализ</h2>
+        <button class="modal-close" onclick="closeCompareModal()">×</button>
+      </div>
+      <div class="modal-body" style="overflow-y: auto; max-height: calc(90vh - 120px);">
+        <div id="compareSelect" style="margin-bottom: 20px;">
+          <label class="form-label">Выберите страницу для сравнения:</label>
+          <select id="comparePageSelect" class="detail-select" style="width: 100%; padding: 12px; font-size: 16px;">
+            <option value="">Загрузка...</option>
+          </select>
+          <div id="compareMarketplaces" style="margin-top: 10px; color: var(--text-secondary); font-size: 14px;"></div>
+        </div>
+        
+        <button id="compareStartBtn" class="btn-save" onclick="runComparison()" style="width: 100%; margin-bottom: 20px;">
+          🚀 Запустить AI анализ
+        </button>
+        
+        <div id="compareLoading" style="display: none; text-align: center; padding: 40px;">
+          <div style="font-size: 48px; margin-bottom: 16px;">🔄</div>
+          <div style="color: var(--text-secondary);">AI анализирует скриншоты...</div>
+          <div style="color: var(--text-secondary); font-size: 12px; margin-top: 8px;">Это может занять 30-60 секунд</div>
+        </div>
+        
+        <div id="compareResult" style="display: none;">
+          <div id="compareImages" style="display: flex; gap: 12px; overflow-x: auto; padding-bottom: 16px; margin-bottom: 20px;"></div>
+          <div id="compareAnalysis" style="background: var(--card-bg); border-radius: 12px; padding: 20px; white-space: pre-wrap; line-height: 1.6;"></div>
+        </div>
+        
+        <div id="compareError" style="display: none; color: #ff4444; background: rgba(255,68,68,0.1); padding: 16px; border-radius: 8px;"></div>
+      </div>
+    </div>
+  </div>
 
   <!-- Upload Modal -->
   <div class="modal-overlay" id="uploadModal">
@@ -1143,6 +1200,112 @@
     }
 
     // Modal functions
+    // Compare Modal functions
+    async function openCompareModal() {
+      document.getElementById('compareModal').classList.add('active');
+      document.getElementById('compareResult').style.display = 'none';
+      document.getElementById('compareError').style.display = 'none';
+      document.getElementById('compareLoading').style.display = 'none';
+      document.getElementById('compareSelect').style.display = 'block';
+      document.getElementById('compareStartBtn').style.display = 'block';
+      
+      // Load compare options
+      try {
+        const response = await fetch(`${API_BASE}/api/compare-options`);
+        const data = await response.json();
+        
+        const select = document.getElementById('comparePageSelect');
+        select.innerHTML = '<option value="">Выберите страницу...</option>';
+        
+        for (const opt of data.options) {
+          const option = document.createElement('option');
+          option.value = opt.page;
+          option.textContent = `${opt.page} (${opt.marketplaces.length} маркетплейсов, ${opt.count} скриншотов)`;
+          option.dataset.marketplaces = opt.marketplaces.join(', ');
+          select.appendChild(option);
+        }
+        
+        select.onchange = function() {
+          const selected = select.options[select.selectedIndex];
+          const mps = selected.dataset.marketplaces || '';
+          document.getElementById('compareMarketplaces').textContent = mps ? `Маркетплейсы: ${mps}` : '';
+        };
+      } catch (err) {
+        console.error('Failed to load compare options:', err);
+      }
+    }
+    
+    function closeCompareModal() {
+      document.getElementById('compareModal').classList.remove('active');
+    }
+    
+    async function runComparison() {
+      const page = document.getElementById('comparePageSelect').value;
+      if (!page) {
+        alert('Выберите страницу для сравнения');
+        return;
+      }
+      
+      document.getElementById('compareSelect').style.display = 'none';
+      document.getElementById('compareStartBtn').style.display = 'none';
+      document.getElementById('compareLoading').style.display = 'block';
+      document.getElementById('compareResult').style.display = 'none';
+      document.getElementById('compareError').style.display = 'none';
+      
+      try {
+        const response = await fetch(`${API_BASE}/api/compare-page`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ page })
+        });
+        
+        const data = await response.json();
+        
+        document.getElementById('compareLoading').style.display = 'none';
+        
+        if (data.error) {
+          document.getElementById('compareError').textContent = data.error + (data.details ? `: ${data.details}` : '');
+          document.getElementById('compareError').style.display = 'block';
+          document.getElementById('compareSelect').style.display = 'block';
+          document.getElementById('compareStartBtn').style.display = 'block';
+          return;
+        }
+        
+        // Show images
+        const imagesDiv = document.getElementById('compareImages');
+        imagesDiv.innerHTML = '';
+        for (const mp of data.marketplaces) {
+          const img = allImages.find(i => i.id === mp.id);
+          if (img) {
+            const div = document.createElement('div');
+            div.style.cssText = 'flex-shrink: 0; text-align: center;';
+            div.innerHTML = `
+              <img src="${img.url}" style="height: 150px; border-radius: 8px; border: 1px solid var(--border);">
+              <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">${mp.name}</div>
+            `;
+            imagesDiv.appendChild(div);
+          }
+        }
+        
+        // Show analysis with markdown-like formatting
+        const analysis = data.analysis
+          .replace(/^## (.+)$/gm, '<h3 style="color: var(--accent); margin-top: 20px; margin-bottom: 10px;">$1</h3>')
+          .replace(/^### (.+)$/gm, '<h4 style="color: var(--text); margin-top: 16px; margin-bottom: 8px;">$1</h4>')
+          .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+          .replace(/^- (.+)$/gm, '• $1');
+        
+        document.getElementById('compareAnalysis').innerHTML = analysis;
+        document.getElementById('compareResult').style.display = 'block';
+        
+      } catch (err) {
+        document.getElementById('compareLoading').style.display = 'none';
+        document.getElementById('compareError').textContent = 'Ошибка: ' + err.message;
+        document.getElementById('compareError').style.display = 'block';
+        document.getElementById('compareSelect').style.display = 'block';
+        document.getElementById('compareStartBtn').style.display = 'block';
+      }
+    }
+
     function openUploadModal() {
       document.getElementById('uploadModal').classList.add('active');
     }
