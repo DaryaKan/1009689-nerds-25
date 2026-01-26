@@ -1608,6 +1608,34 @@ app.post('/api/analyze-pipeline', async (req, res) => {
   }
 });
 
+// Reset ALL images for full re-analysis
+app.post('/api/reset-all', async (req, res) => {
+  try {
+    let reset = 0;
+    
+    for (const [id, meta] of imageMetadata.entries()) {
+      meta.marketplace = 'Не определён';
+      meta.page = 'Не определена';
+      imageMetadata.set(id, meta);
+      reset++;
+    }
+    
+    if (reset > 0) {
+      await saveMetadata();
+    }
+    
+    res.json({
+      success: true,
+      message: `Reset all ${reset} images for re-analysis`,
+      count: reset
+    });
+    
+  } catch (error) {
+    console.error('Reset all error:', error);
+    res.status(500).json({ error: 'Reset failed', details: error.message });
+  }
+});
+
 // Reset "AI: не определён" marks for re-analysis
 app.post('/api/reset-unrecognized', async (req, res) => {
   try {
