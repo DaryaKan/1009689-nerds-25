@@ -844,12 +844,15 @@ app.post('/api/analyze-by-comparison', async (req, res) => {
 
     const images = files.filter(f => f.name !== '.emptyFolderPlaceholder');
 
-    // Find unrecognized images
+    // Find unrecognized images (exclude already checked ones)
     const unrecognized = images.filter(img => {
       const meta = imageMetadata.get(img.name);
       if (!meta) return true;
       const mp = (meta.marketplace || '').toLowerCase();
-      return mp === 'не указан' || mp === 'не определён' || mp === 'не определен' || mp === '' || mp.startsWith('ai:') || mp.startsWith('сравнение:');
+      // Include: не указан, не определён, empty, ai: prefix
+      // Exclude: требует проверки, сравнение: (already checked)
+      if (mp === 'требует проверки' || mp.startsWith('сравнение:')) return false;
+      return mp === 'не указан' || mp === 'не определён' || mp === 'не определен' || mp === '' || mp.startsWith('ai:');
     });
 
     if (unrecognized.length === 0) {
@@ -937,11 +940,11 @@ app.post('/api/analyze-by-comparison', async (req, res) => {
         remaining: unrecognized.length - 1
       });
     } else {
-      // Mark as checked so we don't retry
+      // Mark as checked so we don't retry - use prefix that won't be picked up again
       const existingMeta = imageMetadata.get(unknown.name) || {};
       imageMetadata.set(unknown.name, {
         ...existingMeta,
-        marketplace: 'Сравнение: не определён',
+        marketplace: 'Требует проверки',
         page: existingMeta.page || 'Не указана'
       });
       await saveMetadata();
@@ -949,7 +952,7 @@ app.post('/api/analyze-by-comparison', async (req, res) => {
       return res.json({
         success: false,
         id: unknown.name,
-        error: 'Could not determine by comparison - marked',
+        error: 'Could not determine by comparison - marked for manual review',
         remaining: unrecognized.length - 1
       });
     }
