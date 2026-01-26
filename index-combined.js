@@ -970,10 +970,11 @@ app.post('/api/reset-unrecognized', async (req, res) => {
     const resetIds = [];
     
     for (const [id, meta] of imageMetadata.entries()) {
-      // Reset both AI: and Сравнение: prefixed marketplaces
-      if (meta.marketplace && (meta.marketplace.startsWith('AI:') || meta.marketplace.startsWith('Сравнение:'))) {
-        meta.marketplace = 'Не указан';
-        meta.page = 'Не указана';
+      // Reset AI:, Сравнение:, and Требует проверки
+      const mp = meta.marketplace || '';
+      if (mp.startsWith('AI:') || mp.startsWith('Сравнение:') || mp === 'Требует проверки') {
+        meta.marketplace = 'Не определён';
+        meta.page = 'Не определена';
         imageMetadata.set(id, meta);
         resetIds.push(id);
         reset++;
