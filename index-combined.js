@@ -336,7 +336,7 @@ Respond with JSON only:
         'X-Title': 'Screenshot Library'
       },
       body: JSON.stringify({
-        model: 'google/gemini-flash-1.5-8b',
+        model: 'google/gemini-2.5-flash',
         messages: [{
           role: 'user',
           content: [
@@ -349,8 +349,15 @@ Respond with JSON only:
 
     const data = await response.json();
     
+    console.log('OpenRouter response status:', response.status);
+    
     if (data.error) {
-      console.log('OpenRouter error:', data.error.message || data.error);
+      console.log('OpenRouter error:', JSON.stringify(data.error));
+      return { marketplace: null, page: null, description: '', confidence: false };
+    }
+    
+    if (!data.choices || data.choices.length === 0) {
+      console.log('OpenRouter: No choices in response', JSON.stringify(data).substring(0, 200));
       return { marketplace: null, page: null, description: '', confidence: false };
     }
 
