@@ -849,7 +849,7 @@ app.post('/api/analyze-by-comparison', async (req, res) => {
       const meta = imageMetadata.get(img.name);
       if (!meta) return true;
       const mp = (meta.marketplace || '').toLowerCase();
-      return mp === 'не указан' || mp === '' || mp.startsWith('ai:');
+      return mp === 'не указан' || mp === 'не определён' || mp === 'не определен' || mp === '' || mp.startsWith('ai:') || mp.startsWith('сравнение:');
     });
 
     if (unrecognized.length === 0) {
