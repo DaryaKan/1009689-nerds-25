@@ -844,12 +844,12 @@ app.post('/api/analyze-by-comparison', async (req, res) => {
 
     const images = files.filter(f => f.name !== '.emptyFolderPlaceholder');
 
-    // Find unrecognized images (AI: or Сравнение: prefixes mean failed analysis)
+    // Find unrecognized images
     const unrecognized = images.filter(img => {
       const meta = imageMetadata.get(img.name);
-      if (!meta) return false;
-      const mp = meta.marketplace || '';
-      return mp.startsWith('AI:') && !mp.includes('Сравнение:');
+      if (!meta) return true;
+      const mp = (meta.marketplace || '').toLowerCase();
+      return mp === 'не указан' || mp === '' || mp.startsWith('ai:');
     });
 
     if (unrecognized.length === 0) {
@@ -967,7 +967,8 @@ app.post('/api/reset-unrecognized', async (req, res) => {
     const resetIds = [];
     
     for (const [id, meta] of imageMetadata.entries()) {
-      if (meta.marketplace && meta.marketplace.startsWith('AI:')) {
+      // Reset both AI: and Сравнение: prefixed marketplaces
+      if (meta.marketplace && (meta.marketplace.startsWith('AI:') || meta.marketplace.startsWith('Сравнение:'))) {
         meta.marketplace = 'Не указан';
         meta.page = 'Не указана';
         imageMetadata.set(id, meta);
