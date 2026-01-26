@@ -107,7 +107,7 @@ async function analyzeWithOCR(imageBuffer) {
       { patterns: ['wildberries', 'wildberry', 'вайлдберриз', 'вайлдберри', 'вайлдбери', 'wildber', 'wbberries', 'коледино', 'берриз', 'berrles', 'wildber', 'w1ldberr'], mp: 'Wildberries' },
       
       // AliExpress
-      { patterns: ['aliexpress', 'aliexpres', 'алиэкспресс', 'алиэкспрес', 'aliexp', 'ali express', 'a]iexpress', 'allexpress', 'tmall'], mp: 'AliExpress' },
+      { patterns: ['aliexpress', 'aliexpres', 'алиэкспресс', 'алиэкспрес', 'aliexp', 'ali express', 'a]iexpress', 'allexpress', 'tmall', 'найти на ali', 'найти на aliexpress', 'на aliexpress', 'на ali', 'aiexpress', 'a1iexpress', 'al1express'], mp: 'AliExpress' },
       
       // Яндекс Маркет
       { patterns: ['яндекс', 'yandex', 'яндек', 'янлекс', 'яндексмаркет', 'я.маркет', 'ymarket', 'яндекс маркет', 'маркет'], mp: 'Яндекс Маркет' },
