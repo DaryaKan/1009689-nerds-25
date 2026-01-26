@@ -13,6 +13,7 @@ const path = require('path');
 const TelegramBot = require('node-telegram-bot-api');
 const https = require('https');
 const http = require('http');
+const Tesseract = require('tesseract.js');
 
 // Initialize Gemini AI
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
@@ -960,6 +961,174 @@ app.post('/api/analyze-by-comparison', async (req, res) => {
   } catch (error) {
     console.error('Comparison analysis error:', error);
     res.status(500).json({ error: 'Analysis failed', details: error.message });
+  }
+});
+
+// OCR-based analysis - find marketplace names in image text
+app.post('/api/analyze-ocr', async (req, res) => {
+  try {
+    // Get all images
+    const { data: files, error } = await supabase.storage
+      .from(BUCKET)
+      .list('images', { limit: 1000 });
+
+    if (error) {
+      return res.status(500).json({ error: 'Failed to list images' });
+    }
+
+    const images = files.filter(f => f.name !== '.emptyFolderPlaceholder');
+
+    // Find unrecognized images
+    const unrecognized = images.filter(img => {
+      const meta = imageMetadata.get(img.name);
+      if (!meta) return true;
+      const mp = (meta.marketplace || '').toLowerCase();
+      if (mp === 'требует проверки' || mp.startsWith('сравнение:') || mp.startsWith('ocr:')) return false;
+      return mp === 'не указан' || mp === 'не определён' || mp === 'не определен' || mp === '';
+    });
+
+    if (unrecognized.length === 0) {
+      return res.json({ success: true, message: 'No images to analyze', remaining: 0 });
+    }
+
+    // Take first image
+    const img = unrecognized[0];
+    console.log(`OCR analyzing: ${img.name} (${unrecognized.length} remaining)`);
+
+    const { data: urlData } = supabase.storage
+      .from(BUCKET)
+      .getPublicUrl(`images/${img.name}`);
+
+    // Marketplace keywords to search for
+    const marketplaceKeywords = {
+      'ozon': 'Ozon',
+      'озон': 'Ozon',
+      'wildberries': 'Wildberries',
+      'вайлдберриз': 'Wildberries',
+      'aliexpress': 'AliExpress',
+      'алиэкспресс': 'AliExpress',
+      'яндекс': 'Яндекс Маркет',
+      'yandex': 'Яндекс Маркет',
+      'маркет': 'Яндекс Маркет',
+      'мегамаркет': 'Мегамаркет',
+      'сбермегамаркет': 'Мегамаркет',
+      'сбер': 'Мегамаркет',
+      'lamoda': 'Lamoda',
+      'ламода': 'Lamoda',
+      'avito': 'Avito',
+      'авито': 'Avito',
+      'shein': 'SHEIN',
+      'золотое яблоко': 'Золотое Яблоко',
+      'золотоеяблоко': 'Золотое Яблоко',
+      'вкусвилл': 'ВкусВилл',
+      'lazada': 'Lazada'
+    };
+
+    const pageKeywords = {
+      'главная': 'Главная',
+      'home': 'Главная',
+      'каталог': 'Каталог',
+      'catalog': 'Каталог',
+      'категории': 'Каталог',
+      'корзина': 'Корзина',
+      'cart': 'Корзина',
+      'профиль': 'Профиль',
+      'profile': 'Профиль',
+      'аккаунт': 'Профиль',
+      'account': 'Профиль',
+      'заказы': 'Заказы',
+      'orders': 'Заказы',
+      'избранное': 'Избранное',
+      'favorites': 'Избранное',
+      'wishlist': 'Избранное'
+    };
+
+    try {
+      // Run OCR
+      console.log('Running OCR...');
+      const result = await Tesseract.recognize(urlData.publicUrl, 'rus+eng', {
+        logger: m => {} // Silent
+      });
+
+      const text = result.data.text.toLowerCase();
+      console.log('OCR text (first 200 chars):', text.substring(0, 200));
+
+      // Find marketplace
+      let foundMarketplace = null;
+      for (const [keyword, marketplace] of Object.entries(marketplaceKeywords)) {
+        if (text.includes(keyword)) {
+          foundMarketplace = marketplace;
+          console.log(`Found marketplace: ${marketplace} (keyword: ${keyword})`);
+          break;
+        }
+      }
+
+      // Find page
+      let foundPage = null;
+      for (const [keyword, page] of Object.entries(pageKeywords)) {
+        if (text.includes(keyword)) {
+          foundPage = page;
+          break;
+        }
+      }
+
+      if (foundMarketplace) {
+        const existingMeta = imageMetadata.get(img.name) || {};
+        imageMetadata.set(img.name, {
+          ...existingMeta,
+          marketplace: foundMarketplace,
+          page: foundPage || existingMeta.page || 'Не указана'
+        });
+        await saveMetadata();
+
+        return res.json({
+          success: true,
+          id: img.name,
+          marketplace: foundMarketplace,
+          page: foundPage,
+          remaining: unrecognized.length - 1
+        });
+      } else {
+        // Mark as OCR checked
+        const existingMeta = imageMetadata.get(img.name) || {};
+        imageMetadata.set(img.name, {
+          ...existingMeta,
+          marketplace: 'OCR: не найден',
+          page: existingMeta.page || 'Не указана'
+        });
+        await saveMetadata();
+
+        return res.json({
+          success: false,
+          id: img.name,
+          error: 'No marketplace found in text',
+          remaining: unrecognized.length - 1
+        });
+      }
+
+    } catch (ocrError) {
+      console.error('OCR error:', ocrError.message);
+      
+      // Mark as checked
+      const existingMeta = imageMetadata.get(img.name) || {};
+      imageMetadata.set(img.name, {
+        ...existingMeta,
+        marketplace: 'OCR: ошибка',
+        page: existingMeta.page || 'Не указана'
+      });
+      await saveMetadata();
+
+      return res.json({
+        success: false,
+        id: img.name,
+        error: ocrError.message,
+        remaining: unrecognized.length - 1
+      });
+    }
+
+  } catch (error) {
+    console.error('OCR analysis error:', error);
+    res.status(500).json({ error: 'OCR analysis failed', details: error.message });
   }
 });
 
