@@ -1000,28 +1000,69 @@ app.post('/api/analyze-ocr', async (req, res) => {
       .getPublicUrl(`images/${img.name}`);
 
     // Marketplace keywords to search for
+    // Extended keywords with OCR error tolerance
     const marketplaceKeywords = {
-      'ozon': 'Ozon',
-      'озон': 'Ozon',
-      'wildberries': 'Wildberries',
-      'вайлдберриз': 'Wildberries',
-      'aliexpress': 'AliExpress',
-      'алиэкспресс': 'AliExpress',
-      'яндекс': 'Яндекс Маркет',
-      'yandex': 'Яндекс Маркет',
-      'маркет': 'Яндекс Маркет',
-      'мегамаркет': 'Мегамаркет',
-      'сбермегамаркет': 'Мегамаркет',
-      'сбер': 'Мегамаркет',
-      'lamoda': 'Lamoda',
-      'ламода': 'Lamoda',
-      'avito': 'Avito',
-      'авито': 'Avito',
-      'shein': 'SHEIN',
-      'золотое яблоко': 'Золотое Яблоко',
-      'золотоеяблоко': 'Золотое Яблоко',
-      'вкусвилл': 'ВкусВилл',
-      'lazada': 'Lazada'
+      // Ozon variations
+      'ozon': 'Ozon', 'озон': 'Ozon', 'o3on': 'Ozon', 'оzon': 'Ozon', 'oz0n': 'Ozon',
+      '0zon': 'Ozon', 'озо|': 'Ozon', 'озо': 'Ozon',
+      
+      // Wildberries variations  
+      'wildberries': 'Wildberries', 'вайлдберриз': 'Wildberries', 'wb': 'Wildberries',
+      'вайлдберис': 'Wildberries', 'wildberris': 'Wildberries', 'вайлдбериз': 'Wildberries',
+      'wild berries': 'Wildberries', 'вайлд': 'Wildberries', 'берриз': 'Wildberries',
+      'wildber': 'Wildberries', 'wldberries': 'Wildberries', 'w1ldberries': 'Wildberries',
+      'коледино wb': 'Wildberries', 'коледино': 'Wildberries',
+      
+      // AliExpress variations
+      'aliexpress': 'AliExpress', 'алиэкспресс': 'AliExpress', 'ali': 'AliExpress',
+      'aliexp': 'AliExpress', 'ali express': 'AliExpress', 'алиэкс': 'AliExpress',
+      'алиэксп': 'AliExpress', 'aliexpres': 'AliExpress', 'al1express': 'AliExpress',
+      'a]iexpress': 'AliExpress', 'aliexpre': 'AliExpress', 'алик': 'AliExpress',
+      'tmall': 'AliExpress',
+      
+      // Яндекс Маркет variations
+      'яндекс': 'Яндекс Маркет', 'yandex': 'Яндекс Маркет', 'маркет': 'Яндекс Маркет',
+      'я.маркет': 'Яндекс Маркет', 'яндексмаркет': 'Яндекс Маркет', 'ymarket': 'Яндекс Маркет',
+      'яндекс.маркет': 'Яндекс Маркет', 'я маркет': 'Яндекс Маркет', 'янд': 'Яндекс Маркет',
+      'яндек': 'Яндекс Маркет', 'yandex market': 'Яндекс Маркет',
+      
+      // Мегамаркет variations
+      'мегамаркет': 'Мегамаркет', 'сбермегамаркет': 'Мегамаркет', 'megamarket': 'Мегамаркет',
+      'мега маркет': 'Мегамаркет', 'сбер мега': 'Мегамаркет', 'mega market': 'Мегамаркет',
+      'sbermegamarket': 'Мегамаркет', 'сбермега': 'Мегамаркет',
+      
+      // Lamoda variations
+      'lamoda': 'Lamoda', 'ламода': 'Lamoda', 'la moda': 'Lamoda', 'лямода': 'Lamoda',
+      'лaмода': 'Lamoda', 'lamоda': 'Lamoda', '1amoda': 'Lamoda',
+      
+      // Avito variations
+      'avito': 'Avito', 'авито': 'Avito', 'avit0': 'Avito', 'av1to': 'Avito',
+      'авит0': 'Avito', 'abito': 'Avito', 'авита': 'Avito',
+      
+      // SHEIN variations
+      'shein': 'SHEIN', 'she1n': 'SHEIN', 'shien': 'SHEIN', 'шеин': 'SHEIN',
+      'shе1n': 'SHEIN', 'shеin': 'SHEIN', 'shei': 'SHEIN',
+      
+      // Золотое Яблоко variations
+      'золотое яблоко': 'Золотое Яблоко', 'золотоеяблоко': 'Золотое Яблоко',
+      'золотое': 'Золотое Яблоко', 'яблоко': 'Золотое Яблоко', 'золотой': 'Золотое Яблоко',
+      'zolotoe': 'Золотое Яблоко', 'goldapple': 'Золотое Яблоко', 'gold apple': 'Золотое Яблоко',
+      
+      // ВкусВилл variations
+      'вкусвилл': 'ВкусВилл', 'вкусвил': 'ВкусВилл', 'vkusvill': 'ВкусВилл',
+      'вкус вилл': 'ВкусВилл', 'вкусви': 'ВкусВилл',
+      
+      // Lazada
+      'lazada': 'Lazada', '1azada': 'Lazada',
+      
+      // Amazon
+      'amazon': 'Amazon', 'амазон': 'Amazon',
+      
+      // Joom
+      'joom': 'Joom', 'джум': 'Joom',
+      
+      // KazanExpress
+      'kazanexpress': 'KazanExpress', 'казань экспресс': 'KazanExpress', 'kazanexp': 'KazanExpress'
     };
 
     const pageKeywords = {
@@ -1044,20 +1085,37 @@ app.post('/api/analyze-ocr', async (req, res) => {
     };
 
     try {
-      // Run OCR
+      // Run OCR with better settings
       console.log('Running OCR...');
       const result = await Tesseract.recognize(urlData.publicUrl, 'rus+eng', {
         logger: m => {} // Silent
       });
 
-      const text = result.data.text.toLowerCase();
-      console.log('OCR text (first 200 chars):', text.substring(0, 200));
+      // Normalize text: lowercase, remove extra spaces, fix common OCR errors
+      let text = result.data.text.toLowerCase();
+      text = text.replace(/\s+/g, ' '); // Normalize spaces
+      text = text.replace(/[|1l]/g, 'i'); // Common OCR confusion
+      text = text.replace(/[0о]/g, 'o'); // 0 and о
+      text = text.replace(/[3з]/g, 'з');
+      text = text.replace(/[бb]/g, 'b');
+      
+      // Also create version without spaces for compound words
+      const textNoSpaces = text.replace(/\s/g, '');
+      
+      console.log('OCR text (first 300 chars):', text.substring(0, 300));
 
-      // Find marketplace
+      // Find marketplace - check both with and without spaces
       let foundMarketplace = null;
-      for (const [keyword, marketplace] of Object.entries(marketplaceKeywords)) {
-        if (text.includes(keyword)) {
+      let foundKeyword = null;
+      
+      // Sort keywords by length (longer first) to match more specific ones first
+      const sortedKeywords = Object.entries(marketplaceKeywords)
+        .sort((a, b) => b[0].length - a[0].length);
+      
+      for (const [keyword, marketplace] of sortedKeywords) {
+        if (text.includes(keyword) || textNoSpaces.includes(keyword.replace(/\s/g, ''))) {
           foundMarketplace = marketplace;
+          foundKeyword = keyword;
           console.log(`Found marketplace: ${marketplace} (keyword: ${keyword})`);
           break;
         }
@@ -1139,9 +1197,9 @@ app.post('/api/reset-unrecognized', async (req, res) => {
     const resetIds = [];
     
     for (const [id, meta] of imageMetadata.entries()) {
-      // Reset AI:, Сравнение:, and Требует проверки
+      // Reset AI:, Сравнение:, OCR:, and Требует проверки
       const mp = meta.marketplace || '';
-      if (mp.startsWith('AI:') || mp.startsWith('Сравнение:') || mp === 'Требует проверки') {
+      if (mp.startsWith('AI:') || mp.startsWith('Сравнение:') || mp.startsWith('OCR:') || mp === 'Требует проверки') {
         meta.marketplace = 'Не определён';
         meta.page = 'Не определена';
         imageMetadata.set(id, meta);
