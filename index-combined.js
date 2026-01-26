@@ -18,6 +18,9 @@ const Tesseract = require('tesseract.js');
 // Initialize Gemini AI
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
+// Backup Gemini API key (second Google account)
+const GEMINI_API_KEY_BACKUP = process.env.GEMINI_API_KEY_BACKUP || 'AIzaSyCJUrsE_ANXpnlrp6i40Z0j1XoTtXcgb3w';
+
 // Initialize OpenRouter AI (backup)
 const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY || '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';
 
@@ -56,12 +59,12 @@ async function analyzeScreenshotPipeline(imageBuffer) {
   }
   console.log('Stage 3: No match found');
   
-  // Stage 4: OpenRouter AI (backup)
-  console.log('Stage 4: OpenRouter AI analysis...');
-  const openRouterResult = await analyzeWithOpenRouter(imageBuffer);
-  if (openRouterResult.marketplace && openRouterResult.confidence) {
-    console.log(`Stage 4 SUCCESS: ${openRouterResult.marketplace}`);
-    return openRouterResult;
+  // Stage 4: Backup Gemini API (second account)
+  console.log('Stage 4: Backup Gemini AI analysis...');
+  const backupResult = await analyzeWithBackupGemini(imageBuffer);
+  if (backupResult.marketplace && backupResult.confidence) {
+    console.log(`Stage 4 SUCCESS: ${backupResult.marketplace}`);
+    return backupResult;
   }
   console.log('Stage 4: No match found');
   
@@ -308,16 +311,13 @@ If unsure, set confidence: false.`;
   }
 }
 
-// Stage 4: Analyze with OpenRouter (backup AI)
-async function analyzeWithOpenRouter(imageBuffer) {
-  if (!OPENROUTER_API_KEY) {
+// Stage 4: Analyze with backup Gemini API key
+async function analyzeWithBackupGemini(imageBuffer) {
+  if (!GEMINI_API_KEY_BACKUP) {
     return { marketplace: null, page: null, description: '', confidence: false };
   }
 
-  try {
-    const base64Image = imageBuffer.toString('base64');
-    
-    const prompt = `Analyze this screenshot of a Russian e-commerce marketplace app.
+  const prompt = `Analyze this screenshot of a Russian e-commerce marketplace app.
 
 Identify:
 1. MARKETPLACE - look for: Ozon (blue), Wildberries (purple), AliExpress (red/orange), Яндекс Маркет (yellow), Мегамаркет (green), Lamoda (black/white), Avito (green), SHEIN, Золотое Яблоко (yellow-green)
@@ -327,22 +327,17 @@ Identify:
 Respond with JSON only:
 {"marketplace": "NAME", "page": "PAGE_TYPE", "confidence": true}`;
 
-    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+  try {
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY_BACKUP}`;
+    
+    const response = await fetch(url, {
       method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
-        'Content-Type': 'application/json',
-        'HTTP-Referer': 'https://screenshot-library.app',
-        'X-Title': 'Screenshot Library'
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
-        max_tokens: 500,
-        messages: [{
-          role: 'user',
-          content: [
-            { type: 'text', text: prompt },
-            { type: 'image_url', image_url: { url: `data:image/jpeg;base64,${base64Image}` } }
+        contents: [{
+          parts: [
+            { text: prompt },
+            { inline_data: { mime_type: 'image/jpeg', data: imageBuffer.toString('base64') } }
           ]
         }]
       })
@@ -350,25 +345,18 @@ Respond with JSON only:
 
     const data = await response.json();
     
-    console.log('OpenRouter response status:', response.status);
-    
     if (data.error) {
-      console.log('OpenRouter error:', JSON.stringify(data.error));
-      return { marketplace: null, page: null, description: '', confidence: false };
-    }
-    
-    if (!data.choices || data.choices.length === 0) {
-      console.log('OpenRouter: No choices in response', JSON.stringify(data).substring(0, 200));
+      console.log('Backup Gemini error:', data.error.message);
       return { marketplace: null, page: null, description: '', confidence: false };
     }
 
-    const text = data.choices?.[0]?.message?.content;
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
     if (!text) {
-      console.log('OpenRouter: No response text');
+      console.log('Backup Gemini: No response text');
       return { marketplace: null, page: null, description: '', confidence: false };
     }
 
-    console.log('OpenRouter response:', text.substring(0, 200));
+    console.log('Backup Gemini response:', text.substring(0, 200));
 
     // Parse JSON from response
     const jsonMatch = text.match(/\{[\s\S]*?\}/);
@@ -391,7 +379,7 @@ Respond with JSON only:
         return {
           marketplace: mp,
           page: parsed.page || null,
-          description: 'OpenRouter detected',
+          description: 'Backup Gemini detected',
           confidence: true
         };
       }
@@ -400,7 +388,7 @@ Respond with JSON only:
     return { marketplace: null, page: null, description: '', confidence: false };
 
   } catch (err) {
-    console.error('OpenRouter error:', err.message);
+    console.error('Backup Gemini error:', err.message);
     return { marketplace: null, page: null, description: '', confidence: false };
   }
 }
