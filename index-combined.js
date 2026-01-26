@@ -399,31 +399,29 @@ async function analyzePageOnly(imageBuffer) {
     return { page: null, confidence: false };
   }
 
-  const prompt = `Analyze this screenshot of a Russian e-commerce app.
+  const prompt = `Look at this mobile app screenshot and tell me what PAGE/SCREEN is shown.
 
-Your ONLY task is to identify the PAGE TYPE. Look at:
-- Bottom navigation bar (which icon is active/highlighted)
-- Top tabs or headers
-- Content shown on screen
+Pick ONE from this list based on what you see:
+- "Главная" - home screen with banners, recommendations, promotions
+- "Каталог" - product listings, multiple products in grid/list
+- "Карточка товара" - single product detail page with price, description, buy button
+- "Корзина" - shopping cart showing items to buy
+- "Профиль" - user profile, account settings, personal info
+- "Заказы" - order history, order tracking, delivery status
+- "Избранное" - favorites, wishlist, saved items with hearts
+- "Поиск" - search results or search bar focused
+- "Акции" - promotions, sales, discount banners
+- "Уведомления" - notifications list
 
-PAGE TYPES to identify:
-- "Главная" (Home) - main feed, recommendations, banners
-- "Каталог" (Catalog) - product listings, category browse
-- "Карточка товара" (Product page) - single product details, price, buy button
-- "Корзина" (Cart) - shopping cart with items to purchase
-- "Профиль" (Profile) - user account, settings
-- "Заказы" (Orders) - order history, tracking
-- "Избранное" (Favorites) - wishlist, saved items
-- "Поиск" (Search) - search results, search bar active
-- "Чат" (Chat) - messages, support chat
-- "Акции" (Promotions) - sales, discounts page
-- "Уведомления" (Notifications) - notification center
+Look at:
+1. Bottom navigation - which tab is highlighted?
+2. Screen title at top
+3. Main content area
 
-Respond with JSON only:
-{"page": "PAGE_TYPE", "confidence": true}
+Always try to pick the BEST match. If showing products in a grid = "Каталог". If one product with buy button = "Карточка товара".
 
-If you cannot determine the page type with confidence, respond:
-{"page": null, "confidence": false}`;
+Reply ONLY with JSON:
+{"page": "PAGE_NAME", "confidence": true}`;
 
   try {
     const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY_BACKUP}`;
@@ -1923,6 +1921,36 @@ app.post('/api/reset-all', async (req, res) => {
     
   } catch (error) {
     console.error('Reset all error:', error);
+    res.status(500).json({ error: 'Reset failed', details: error.message });
+  }
+});
+
+// Reset only pages (not marketplaces) for re-analysis
+app.post('/api/reset-pages', async (req, res) => {
+  try {
+    let reset = 0;
+    
+    for (const [id, meta] of imageMetadata.entries()) {
+      const pg = meta.page || '';
+      if (pg.startsWith('AI:') || pg.startsWith('Pipeline:') || pg === 'Не определена') {
+        meta.page = 'Не определена';
+        imageMetadata.set(id, meta);
+        reset++;
+      }
+    }
+    
+    if (reset > 0) {
+      await saveMetadata();
+    }
+    
+    res.json({
+      success: true,
+      message: `Reset ${reset} pages for re-analysis`,
+      count: reset
+    });
+    
+  } catch (error) {
+    console.error('Reset pages error:', error);
     res.status(500).json({ error: 'Reset failed', details: error.message });
   }
 });
