@@ -1401,6 +1401,101 @@ app.post('/api/analyze-ocr', async (req, res) => {
   }
 });
 
+// Test 3-stage pipeline on one unrecognized image
+app.post('/api/analyze-pipeline', async (req, res) => {
+  try {
+    // Get all images
+    const { data: files, error } = await supabase.storage
+      .from(BUCKET)
+      .list('images', { limit: 1000 });
+
+    if (error) {
+      return res.status(500).json({ error: 'Failed to list images' });
+    }
+
+    const images = files.filter(f => f.name !== '.emptyFolderPlaceholder');
+
+    // Find unrecognized images
+    const unrecognized = images.filter(img => {
+      const meta = imageMetadata.get(img.name);
+      if (!meta) return true;
+      const mp = (meta.marketplace || '').toLowerCase();
+      // Exclude already checked
+      if (mp.startsWith('ocr:') || mp.startsWith('pipeline:') || mp === 'требует проверки') return false;
+      return mp === 'не указан' || mp === 'не определён' || mp === 'не определен' || mp === '';
+    });
+
+    if (unrecognized.length === 0) {
+      return res.json({ success: true, message: 'No images to analyze', remaining: 0 });
+    }
+
+    const img = unrecognized[0];
+    console.log(`Pipeline analyzing: ${img.name} (${unrecognized.length} remaining)`);
+
+    const { data: urlData } = supabase.storage
+      .from(BUCKET)
+      .getPublicUrl(`images/${img.name}`);
+
+    // Download image
+    const imageBuffer = await new Promise((resolve, reject) => {
+      const protocol = urlData.publicUrl.startsWith('https') ? https : http;
+      protocol.get(urlData.publicUrl, (response) => {
+        const chunks = [];
+        response.on('data', (chunk) => chunks.push(chunk));
+        response.on('end', () => resolve(Buffer.concat(chunks)));
+        response.on('error', reject);
+      }).on('error', reject);
+    });
+
+    // Run 3-stage pipeline
+    const startTime = Date.now();
+    const result = await analyzeScreenshotPipeline(imageBuffer);
+    const elapsed = Date.now() - startTime;
+
+    if (result.marketplace && result.confidence) {
+      // Success - update metadata
+      const existingMeta = imageMetadata.get(img.name) || {};
+      imageMetadata.set(img.name, {
+        ...existingMeta,
+        marketplace: result.marketplace,
+        page: result.page || existingMeta.page || 'Не указана'
+      });
+      await saveMetadata();
+
+      return res.json({
+        success: true,
+        id: img.name,
+        marketplace: result.marketplace,
+        page: result.page,
+        description: result.description,
+        elapsed: `${elapsed}ms`,
+        remaining: unrecognized.length - 1
+      });
+    } else {
+      // Failed - mark as checked
+      const existingMeta = imageMetadata.get(img.name) || {};
+      imageMetadata.set(img.name, {
+        ...existingMeta,
+        marketplace: 'Pipeline: не определён',
+        page: existingMeta.page || 'Не указана'
+      });
+      await saveMetadata();
+
+      return res.json({
+        success: false,
+        id: img.name,
+        error: 'Pipeline could not determine marketplace',
+        elapsed: `${elapsed}ms`,
+        remaining: unrecognized.length - 1
+      });
+    }
+
+  } catch (error) {
+    console.error('Pipeline analysis error:', error);
+    res.status(500).json({ error: 'Pipeline failed', details: error.message });
+  }
+});
+
 // Reset "AI: не определён" marks for re-analysis
 app.post('/api/reset-unrecognized', async (req, res) => {
   try {
@@ -1408,9 +1503,9 @@ app.post('/api/reset-unrecognized', async (req, res) => {
     const resetIds = [];
     
     for (const [id, meta] of imageMetadata.entries()) {
-      // Reset AI:, Сравнение:, OCR:, and Требует проверки
+      // Reset AI:, Сравнение:, OCR:, Pipeline:, and Требует проверки
       const mp = meta.marketplace || '';
-      if (mp.startsWith('AI:') || mp.startsWith('Сравнение:') || mp.startsWith('OCR:') || mp === 'Требует проверки') {
+      if (mp.startsWith('AI:') || mp.startsWith('Сравнение:') || mp.startsWith('OCR:') || mp.startsWith('Pipeline:') || mp === 'Требует проверки') {
         meta.marketplace = 'Не определён';
         meta.page = 'Не определена';
         imageMetadata.set(id, meta);
