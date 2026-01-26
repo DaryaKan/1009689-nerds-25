@@ -462,7 +462,7 @@ app.get('/api/images', async (req, res) => {
     const { data, error } = await supabase.storage
       .from(BUCKET)
       .list('images', {
-        limit: 100,
+        limit: 1000,
         sortBy: { column: 'created_at', order: 'desc' }
       });
 
