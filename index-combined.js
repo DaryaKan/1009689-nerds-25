@@ -19,7 +19,7 @@ const Tesseract = require('tesseract.js');
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
 // Backup Gemini API key (second Google account)
-const GEMINI_API_KEY_BACKUP = process.env.GEMINI_API_KEY_BACKUP || 'AIzaSyCJUrsE_ANXpnlrp6i40Z0j1XoTtXcgb3w';
+const GEMINI_API_KEY_BACKUP = process.env.GEMINI_API_KEY_BACKUP || 'AIzaSyBN02W3NWHCM6avgt1BHiZLE7T9atLqBfQ';
 
 // Initialize OpenRouter AI (backup)
 const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY || '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';
