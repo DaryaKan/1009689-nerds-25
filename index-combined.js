@@ -28,53 +28,163 @@ if (GEMINI_API_KEY) {
   console.log('Gemini API key configured');
 }
 
-// Pipeline function: 3-stage marketplace detection
+// Pipeline function: Run ALL stages, then choose best result
 async function analyzeScreenshotPipeline(imageBuffer) {
-  console.log('=== Starting 3-stage analysis pipeline ===');
+  console.log('=== Starting full analysis pipeline (all stages) ===');
+  
+  const results = [];
   
   // Stage 1: OCR-based local analysis (no AI)
   console.log('Stage 1: OCR analysis...');
-  const ocrResult = await analyzeWithOCR(imageBuffer);
-  if (ocrResult.marketplace && ocrResult.confidence) {
-    console.log(`Stage 1 SUCCESS: ${ocrResult.marketplace}`);
-    return ocrResult;
+  try {
+    const ocrResult = await analyzeWithOCR(imageBuffer);
+    if (ocrResult.marketplace && ocrResult.confidence) {
+      results.push({ 
+        stage: 'OCR', 
+        priority: 1,
+        ...ocrResult 
+      });
+      console.log(`Stage 1 result: ${ocrResult.marketplace}`);
+    } else {
+      console.log('Stage 1: No match');
+    }
+  } catch (err) {
+    console.log('Stage 1 error:', err.message);
   }
-  console.log('Stage 1: No match found');
   
   // Stage 2: AI analysis by visual features (logos, colors, UI)
   console.log('Stage 2: AI visual analysis...');
-  const aiResult = await analyzeScreenshot(imageBuffer);
-  if (aiResult.marketplace && aiResult.confidence) {
-    console.log(`Stage 2 SUCCESS: ${aiResult.marketplace}`);
-    return aiResult;
+  try {
+    const aiResult = await analyzeScreenshot(imageBuffer);
+    if (aiResult.marketplace && aiResult.confidence) {
+      results.push({ 
+        stage: 'AI Visual', 
+        priority: 2,
+        ...aiResult 
+      });
+      console.log(`Stage 2 result: ${aiResult.marketplace}`);
+    } else {
+      console.log('Stage 2: No confident match');
+    }
+  } catch (err) {
+    console.log('Stage 2 error:', err.message);
   }
-  console.log('Stage 2: No confident match');
   
   // Stage 3: AI comparison with known examples
   console.log('Stage 3: AI comparison analysis...');
-  const comparisonResult = await analyzeByComparisonInternal(imageBuffer);
-  if (comparisonResult.marketplace && comparisonResult.confidence) {
-    console.log(`Stage 3 SUCCESS: ${comparisonResult.marketplace}`);
-    return comparisonResult;
+  try {
+    const comparisonResult = await analyzeByComparisonInternal(imageBuffer);
+    if (comparisonResult.marketplace && comparisonResult.confidence) {
+      results.push({ 
+        stage: 'Comparison', 
+        priority: 3,
+        ...comparisonResult 
+      });
+      console.log(`Stage 3 result: ${comparisonResult.marketplace}`);
+    } else {
+      console.log('Stage 3: No match');
+    }
+  } catch (err) {
+    console.log('Stage 3 error:', err.message);
   }
-  console.log('Stage 3: No match found');
   
   // Stage 4: Backup Gemini API (second account)
   console.log('Stage 4: Backup Gemini AI analysis...');
-  const backupResult = await analyzeWithBackupGemini(imageBuffer);
-  if (backupResult.marketplace && backupResult.confidence) {
-    console.log(`Stage 4 SUCCESS: ${backupResult.marketplace}`);
-    return backupResult;
+  try {
+    const backupResult = await analyzeWithBackupGemini(imageBuffer);
+    if (backupResult.marketplace && backupResult.confidence) {
+      results.push({ 
+        stage: 'Backup AI', 
+        priority: 4,
+        ...backupResult 
+      });
+      console.log(`Stage 4 result: ${backupResult.marketplace}`);
+    } else {
+      console.log('Stage 4: No match');
+    }
+  } catch (err) {
+    console.log('Stage 4 error:', err.message);
   }
-  console.log('Stage 4: No match found');
   
-  // All stages failed
-  console.log('=== Pipeline complete: No marketplace identified ===');
-  return { 
-    marketplace: null, 
-    page: null, 
-    description: '', 
-    confidence: false 
+  console.log(`=== All stages complete. Results: ${results.length} ===`);
+  
+  // No results from any stage
+  if (results.length === 0) {
+    console.log('Pipeline: No marketplace identified by any method');
+    return { 
+      marketplace: null, 
+      page: null, 
+      description: 'Не удалось определить', 
+      confidence: false,
+      allResults: []
+    };
+  }
+  
+  // If only one result, use it
+  if (results.length === 1) {
+    const r = results[0];
+    console.log(`Pipeline: Single result from ${r.stage}: ${r.marketplace}`);
+    return {
+      marketplace: r.marketplace,
+      page: r.page,
+      description: `${r.stage}: ${r.marketplace}`,
+      confidence: true,
+      allResults: results
+    };
+  }
+  
+  // Multiple results - find consensus or use priority
+  const marketplaceCounts = {};
+  const pageCounts = {};
+  
+  for (const r of results) {
+    const mp = r.marketplace;
+    const pg = r.page;
+    
+    if (mp) {
+      marketplaceCounts[mp] = (marketplaceCounts[mp] || 0) + 1;
+    }
+    if (pg) {
+      pageCounts[pg] = (pageCounts[pg] || 0) + 1;
+    }
+  }
+  
+  // Find marketplace with most votes
+  let bestMarketplace = null;
+  let maxMpVotes = 0;
+  for (const [mp, count] of Object.entries(marketplaceCounts)) {
+    if (count > maxMpVotes) {
+      maxMpVotes = count;
+      bestMarketplace = mp;
+    }
+  }
+  
+  // Find page with most votes
+  let bestPage = null;
+  let maxPgVotes = 0;
+  for (const [pg, count] of Object.entries(pageCounts)) {
+    if (count > maxPgVotes) {
+      maxPgVotes = count;
+      bestPage = pg;
+    }
+  }
+  
+  // Build description showing consensus
+  const stagesAgreed = results.filter(r => r.marketplace === bestMarketplace).map(r => r.stage);
+  const description = maxMpVotes > 1 
+    ? `Консенсус (${stagesAgreed.join(', ')}): ${bestMarketplace}`
+    : `${results[0].stage}: ${bestMarketplace}`;
+  
+  console.log(`Pipeline result: ${bestMarketplace} (${maxMpVotes}/${results.length} votes)`);
+  console.log(`Page result: ${bestPage} (${maxPgVotes}/${results.length} votes)`);
+  
+  return {
+    marketplace: bestMarketplace,
+    page: bestPage,
+    description: description,
+    confidence: true,
+    votes: { marketplace: maxMpVotes, page: maxPgVotes, total: results.length },
+    allResults: results
   };
 }
 
@@ -1741,9 +1851,10 @@ app.post('/api/analyze-pipeline', async (req, res) => {
     const result = await analyzeScreenshotPipeline(imageBuffer);
     const elapsed = Date.now() - startTime;
 
+    const existingMeta = imageMetadata.get(img.name) || {};
+    
     if (result.marketplace && result.confidence) {
       // Success - update metadata
-      const existingMeta = imageMetadata.get(img.name) || {};
       imageMetadata.set(img.name, {
         ...existingMeta,
         marketplace: result.marketplace,
@@ -1757,12 +1868,13 @@ app.post('/api/analyze-pipeline', async (req, res) => {
         marketplace: result.marketplace,
         page: result.page,
         description: result.description,
+        votes: result.votes,
+        allResults: result.allResults?.map(r => ({ stage: r.stage, marketplace: r.marketplace, page: r.page })),
         elapsed: `${elapsed}ms`,
         remaining: unrecognized.length - 1
       });
     } else {
       // Failed - mark as checked
-      const existingMeta = imageMetadata.get(img.name) || {};
       imageMetadata.set(img.name, {
         ...existingMeta,
         marketplace: 'Pipeline: не определён',
@@ -1774,6 +1886,7 @@ app.post('/api/analyze-pipeline', async (req, res) => {
         success: false,
         id: img.name,
         error: 'Pipeline could not determine marketplace',
+        allResults: result.allResults?.map(r => ({ stage: r.stage, marketplace: r.marketplace, page: r.page })),
         elapsed: `${elapsed}ms`,
         remaining: unrecognized.length - 1
       });
