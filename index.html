@@ -1357,7 +1357,7 @@
       
       // Load stats for info block
       try {
-        const response = await fetch(`${API_BASE}/api/compare-options`);
+        const response = await fetch(`${API_URL}/api/compare-options`);
         const data = await response.json();
         
         const pages = data.options || [];
@@ -1398,7 +1398,7 @@
       document.getElementById('compareError').style.display = 'none';
       
       try {
-        const response = await fetch(`${API_BASE}/api/analyze-query`, {
+        const response = await fetch(`${API_URL}/api/analyze-query`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ query })
