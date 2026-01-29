@@ -15,33 +15,55 @@
     :root {
       --accent: #0083FF;
       --accent-hover: #006dd6;
-      --bg-primary: #ffffff;
-      --bg-secondary: #f8f9fa;
-      --bg-dark: #111111;
-      --text-primary: #111111;
-      --text-secondary: #666666;
-      --text-muted: #999999;
-      --border: #e0e0e0;
-      --border-light: #f0f0f0;
+    }
+    
+    /* Light Theme */
+    [data-theme="light"] {
+      --bg: #ffffff;
+      --bg-secondary: #f5f5f7;
+      --card-bg: #ffffff;
+      --text: #1d1d1f;
+      --text-secondary: #86868b;
+      --border: #d2d2d7;
+      --header-bg: rgba(255, 255, 255, 0.72);
+      --shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+      --input-bg: #f5f5f7;
+    }
+    
+    /* Dark Theme */
+    [data-theme="dark"] {
+      --bg: #000000;
+      --bg-secondary: #1c1c1e;
+      --card-bg: #1c1c1e;
+      --text: #f5f5f7;
+      --text-secondary: #86868b;
+      --border: #38383a;
+      --header-bg: rgba(28, 28, 30, 0.72);
+      --shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+      --input-bg: #2c2c2e;
     }
 
     body {
       font-family: 'SF Pro Rounded', 'SF Pro', 'Nunito', -apple-system, BlinkMacSystemFont, sans-serif;
-      background: var(--bg-secondary);
+      background: var(--bg);
       min-height: 100vh;
-      color: var(--text-primary);
+      color: var(--text);
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
+      transition: background 0.3s ease, color 0.3s ease;
     }
 
     /* Header */
     .header {
-      background: var(--bg-primary);
+      background: var(--header-bg);
+      backdrop-filter: saturate(180%) blur(20px);
+      -webkit-backdrop-filter: saturate(180%) blur(20px);
       border-bottom: 1px solid var(--border);
       padding: 16px 24px;
       position: sticky;
       top: 0;
       z-index: 100;
+      transition: background 0.3s ease;
     }
 
     .header-content {
@@ -140,6 +162,62 @@
       border-color: var(--accent);
       color: #fff;
     }
+    
+    /* Theme Toggle - AI Studio Style */
+    .theme-toggle {
+      position: relative;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s;
+    }
+    
+    .theme-toggle:hover {
+      background: var(--bg-secondary);
+    }
+    
+    .theme-toggle svg {
+      width: 20px;
+      height: 20px;
+      fill: var(--text-secondary);
+      transition: fill 0.2s, transform 0.3s;
+    }
+    
+    .theme-toggle:hover svg {
+      fill: var(--text);
+    }
+    
+    .theme-toggle .icon-sun,
+    .theme-toggle .icon-moon {
+      position: absolute;
+      transition: opacity 0.3s, transform 0.3s;
+    }
+    
+    [data-theme="light"] .theme-toggle .icon-sun {
+      opacity: 1;
+      transform: rotate(0deg);
+    }
+    
+    [data-theme="light"] .theme-toggle .icon-moon {
+      opacity: 0;
+      transform: rotate(-90deg);
+    }
+    
+    [data-theme="dark"] .theme-toggle .icon-sun {
+      opacity: 0;
+      transform: rotate(90deg);
+    }
+    
+    [data-theme="dark"] .theme-toggle .icon-moon {
+      opacity: 1;
+      transform: rotate(0deg);
+    }
 
     .upload-btn:hover {
       background: var(--accent-hover);
@@ -147,9 +225,10 @@
 
     /* Filters Bar */
     .filters-bar {
-      background: var(--bg-primary);
+      background: var(--card-bg);
       border-bottom: 1px solid var(--border);
       padding: 12px 24px;
+      transition: background 0.3s;
     }
 
     .filters-content {
@@ -211,14 +290,15 @@
       top: calc(100% + 4px);
       left: 0;
       min-width: 200px;
-      background: var(--bg-primary);
+      background: var(--card-bg);
       border: 1px solid var(--border);
       border-radius: 10px;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+      box-shadow: var(--shadow);
       z-index: 50;
       display: none;
       max-height: 300px;
       overflow-y: auto;
+      transition: background 0.3s;
     }
 
     .filter-dropdown.open .filter-dropdown-menu {
@@ -232,6 +312,7 @@
       padding: 10px 14px;
       cursor: pointer;
       transition: background 0.15s;
+      color: var(--text);
     }
 
     .filter-option:hover {
@@ -325,16 +406,17 @@
 
     /* Card */
     .card {
-      background: var(--bg-primary);
+      background: var(--card-bg);
       border-radius: 12px;
       overflow: hidden;
-      transition: transform 0.2s, box-shadow 0.2s;
+      transition: transform 0.2s, box-shadow 0.2s, background 0.3s;
       cursor: pointer;
       border: 1px solid var(--border);
     }
 
     .card:hover {
       transform: translateY(-4px);
+      box-shadow: var(--shadow);
       box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08);
       border-color: var(--accent);
     }
@@ -434,13 +516,15 @@
     }
 
     .modal {
-      background: var(--bg-primary);
+      background: var(--card-bg);
       border-radius: 16px;
       width: 100%;
       max-width: 500px;
       max-height: 90vh;
       overflow-y: auto;
       border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      transition: background 0.3s;
     }
 
     .modal-header {
@@ -762,10 +846,11 @@
       border: 1px solid var(--border);
       border-radius: 8px;
       font-size: 14px;
-      background: var(--bg-primary);
-      color: var(--text-primary);
+      background: var(--input-bg);
+      color: var(--text);
       cursor: pointer;
       width: 100%;
+      transition: background 0.3s, border-color 0.2s;
     }
 
     .detail-select:focus {
@@ -934,6 +1019,14 @@
       </button>
       <button class="upload-btn" onclick="openUploadModal()">
         <span>+</span> Загрузить
+      </button>
+      <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
+        <svg class="icon-sun" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zM2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1zm18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1zM11 2v2c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1zm0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1zM5.99 4.58c-.39-.39-1.03-.39-1.41 0-.39.39-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41L5.99 4.58zm12.37 12.37c-.39-.39-1.03-.39-1.41 0-.39.39-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0 .39-.39.39-1.03 0-1.41l-1.06-1.06zm1.06-10.96c.39-.39.39-1.03 0-1.41-.39-.39-1.03-.39-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06zM7.05 18.36c.39-.39.39-1.03 0-1.41-.39-.39-1.03-.39-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06z"/>
+        </svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9c0-.46-.04-.92-.1-1.36-.98 1.37-2.58 2.26-4.4 2.26-2.98 0-5.4-2.42-5.4-5.4 0-1.81.89-3.42 2.26-4.4-.44-.06-.9-.1-1.36-.1z"/>
+        </svg>
       </button>
     </div>
   </header>
@@ -1194,6 +1287,24 @@
     let allImages = [];
     let selectedFile = null;
     let currentDetailImage = null;
+
+    // Theme management
+    function initTheme() {
+      const savedTheme = localStorage.getItem('theme');
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      const theme = savedTheme || (prefersDark ? 'dark' : 'light');
+      document.documentElement.setAttribute('data-theme', theme);
+    }
+    
+    function toggleTheme() {
+      const currentTheme = document.documentElement.getAttribute('data-theme');
+      const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', newTheme);
+      localStorage.setItem('theme', newTheme);
+    }
+    
+    // Initialize theme immediately (before DOM loaded)
+    initTheme();
 
     // Initialize
     document.addEventListener('DOMContentLoaded', () => {
