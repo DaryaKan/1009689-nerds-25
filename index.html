@@ -209,6 +209,300 @@
       transform: translateY(0);
     }
     
+    /* AI Side Panel */
+    .ai-panel {
+      position: fixed;
+      top: 0;
+      right: -480px;
+      width: 480px;
+      height: 100vh;
+      background: var(--bg);
+      border-left: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      z-index: 1100;
+      transition: right 0.3s ease;
+      box-shadow: -8px 0 32px rgba(0, 0, 0, 0.4);
+    }
+    
+    .ai-panel.open {
+      right: 0;
+    }
+    
+    .ai-panel-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 1099;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s ease;
+    }
+    
+    .ai-panel-overlay.visible {
+      opacity: 1;
+      visibility: visible;
+    }
+    
+    .ai-panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-secondary);
+    }
+    
+    .ai-panel-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .ai-sparkle {
+      background: linear-gradient(135deg, var(--gradient-blue), var(--gradient-purple));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      font-size: 18px;
+    }
+    
+    .ai-panel-close {
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      font-size: 24px;
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 6px;
+      transition: all 0.2s ease;
+    }
+    
+    .ai-panel-close:hover {
+      background: var(--bg-elevated);
+      color: var(--text);
+    }
+    
+    /* Chat Area */
+    .ai-chat {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    
+    .ai-message {
+      display: flex;
+      gap: 12px;
+      max-width: 100%;
+    }
+    
+    .ai-message.user {
+      flex-direction: row-reverse;
+    }
+    
+    .ai-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--gradient-blue), var(--gradient-purple));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      color: #fff;
+      flex-shrink: 0;
+    }
+    
+    .ai-message.user .ai-avatar {
+      background: var(--bg-elevated);
+      color: var(--text);
+    }
+    
+    .ai-bubble {
+      background: var(--bg-secondary);
+      border-radius: 16px;
+      padding: 12px 16px;
+      max-width: calc(100% - 44px);
+      line-height: 1.5;
+      font-size: 14px;
+    }
+    
+    .ai-message.user .ai-bubble {
+      background: linear-gradient(135deg, var(--gradient-blue), var(--gradient-purple));
+      color: #fff;
+      border-radius: 16px 16px 4px 16px;
+    }
+    
+    .ai-bubble p {
+      margin: 0;
+    }
+    
+    .ai-bubble p + p {
+      margin-top: 8px;
+    }
+    
+    .ai-suggestions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+    }
+    
+    .ai-suggestion {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 8px 12px;
+      border-radius: 16px;
+      font-size: 12px;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    
+    .ai-suggestion:hover {
+      background: var(--bg);
+      border-color: var(--accent);
+      transform: translateY(-1px);
+    }
+    
+    /* Images in chat */
+    .ai-images {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      margin-top: 12px;
+      padding-bottom: 4px;
+    }
+    
+    .ai-images img {
+      width: 80px;
+      height: 80px;
+      object-fit: cover;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: transform 0.2s ease;
+    }
+    
+    .ai-images img:hover {
+      transform: scale(1.05);
+    }
+    
+    /* Loading animation */
+    .ai-typing {
+      display: flex;
+      gap: 4px;
+      padding: 8px 0;
+    }
+    
+    .ai-typing span {
+      width: 8px;
+      height: 8px;
+      background: var(--text-secondary);
+      border-radius: 50%;
+      animation: typing 1.4s infinite;
+    }
+    
+    .ai-typing span:nth-child(2) {
+      animation-delay: 0.2s;
+    }
+    
+    .ai-typing span:nth-child(3) {
+      animation-delay: 0.4s;
+    }
+    
+    @keyframes typing {
+      0%, 60%, 100% {
+        transform: translateY(0);
+        opacity: 0.4;
+      }
+      30% {
+        transform: translateY(-4px);
+        opacity: 1;
+      }
+    }
+    
+    /* Input Area */
+    .ai-input-area {
+      padding: 16px 20px;
+      border-top: 1px solid var(--border);
+      background: var(--bg-secondary);
+    }
+    
+    .ai-input-wrapper {
+      display: flex;
+      align-items: flex-end;
+      gap: 12px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 8px 8px 8px 16px;
+      transition: border-color 0.2s ease;
+    }
+    
+    .ai-input-wrapper:focus-within {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px var(--accent-glow);
+    }
+    
+    .ai-input {
+      flex: 1;
+      background: none;
+      border: none;
+      color: var(--text);
+      font-size: 14px;
+      font-family: inherit;
+      resize: none;
+      max-height: 120px;
+      line-height: 1.5;
+      outline: none;
+    }
+    
+    .ai-input::placeholder {
+      color: var(--text-secondary);
+    }
+    
+    .ai-send {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: none;
+      background: linear-gradient(135deg, var(--gradient-blue), var(--gradient-purple));
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      flex-shrink: 0;
+    }
+    
+    .ai-send:hover {
+      transform: scale(1.05);
+      box-shadow: 0 4px 12px rgba(66, 133, 244, 0.4);
+    }
+    
+    .ai-send:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* Mobile responsive */
+    @media (max-width: 520px) {
+      .ai-panel {
+        width: 100%;
+        right: -100%;
+      }
+    }
 
     .upload-btn:hover {
       background: var(--accent-hover);
@@ -1092,64 +1386,51 @@
     </div>
   </main>
 
-  <!-- Compare Modal -->
-  <div class="modal-overlay" id="compareModal">
-    <div class="modal" style="max-width: 900px; max-height: 90vh;">
-      <div class="modal-header">
-        <h2 class="modal-title">📊 AI Аналитик</h2>
-        <button class="modal-close" onclick="closeCompareModal()">×</button>
+  <!-- AI Side Panel -->
+  <div class="ai-panel" id="aiPanel">
+    <div class="ai-panel-header">
+      <div class="ai-panel-title">
+        <span class="ai-sparkle">✦</span> AI Аналитик
       </div>
-      <div class="modal-body" style="overflow-y: auto; max-height: calc(90vh - 120px);">
-        <div id="compareSelect" style="margin-bottom: 20px;">
+      <button class="ai-panel-close" onclick="closeCompareModal()">×</button>
+    </div>
+    
+    <!-- Chat Messages -->
+    <div class="ai-chat" id="aiChat">
+      <!-- Welcome message -->
+      <div class="ai-message ai-welcome">
+        <div class="ai-avatar">✦</div>
+        <div class="ai-bubble">
+          <p>Привет! Я помогу проанализировать UX/UI ваших скриншотов.</p>
+          <p style="margin-top: 8px; font-size: 13px; color: var(--text-secondary);">Выберите быстрый запрос или напишите свой:</p>
           
-          <!-- Свободное поле ввода -->
-          <label class="form-label">Задайте вопрос AI:</label>
-          <textarea id="compareQuery" class="detail-input" 
-            placeholder="Например: Сравни корзины всех маркетплейсов, или: Как изменился дизайн Wildberries?"
-            style="width: 100%; min-height: 80px; padding: 12px; font-size: 15px; resize: vertical; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text);"></textarea>
-          
-          <!-- Теги-подсказки -->
-          <div style="margin-top: 16px; position: relative; z-index: 10;">
-            <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 10px;">Быстрые запросы:</div>
-            <div id="compareTags" style="display: flex; flex-wrap: wrap; gap: 8px;">
-              <button type="button" class="compare-tag" onclick="setCompareQuery('Сравни страницы Корзина у всех маркетплейсов')">🛒 Корзины</button>
-              <button type="button" class="compare-tag" onclick="setCompareQuery('Сравни главные страницы всех маркетплейсов')">🏠 Главные</button>
-              <button type="button" class="compare-tag" onclick="setCompareQuery('Сравни карточки товаров у всех маркетплейсов')">📦 Карточки товаров</button>
-              <button type="button" class="compare-tag" onclick="setCompareQuery('Сравни каталоги всех маркетплейсов')">📋 Каталоги</button>
-              <button type="button" class="compare-tag" onclick="setCompareQuery('Сравни профили пользователя у всех маркетплейсов')">👤 Профили</button>
-              <button type="button" class="compare-tag" onclick="setCompareQuery('Проанализируй UX Wildberries')">💜 Wildberries</button>
-              <button type="button" class="compare-tag" onclick="setCompareQuery('Проанализируй UX Ozon')">🔵 Ozon</button>
-              <button type="button" class="compare-tag" onclick="setCompareQuery('Проанализируй UX Золотое Яблоко')">🍏 Золотое Яблоко</button>
-              <button type="button" class="compare-tag" onclick="setCompareQuery('Какие тренды в дизайне e-commerce я вижу на скриншотах?')">📈 Тренды</button>
-              <button type="button" class="compare-tag" onclick="setCompareQuery('Какой маркетплейс имеет лучший UX и почему?')">🏆 Лучший UX</button>
-            </div>
-          </div>
-          
-          <!-- Информация о данных -->
-          <div id="compareInfo" style="margin-top: 16px; padding: 12px; background: rgba(0,131,255,0.1); border-radius: 8px; font-size: 13px; color: var(--text-secondary);">
-            Загрузка информации...
+          <div class="ai-suggestions">
+            <button type="button" class="ai-suggestion" onclick="sendAiQuery('Сравни страницы Корзина у всех маркетплейсов')">🛒 Сравни корзины</button>
+            <button type="button" class="ai-suggestion" onclick="sendAiQuery('Сравни главные страницы всех маркетплейсов')">🏠 Сравни главные</button>
+            <button type="button" class="ai-suggestion" onclick="sendAiQuery('Сравни карточки товаров у всех маркетплейсов')">📦 Карточки товаров</button>
+            <button type="button" class="ai-suggestion" onclick="sendAiQuery('Проанализируй UX Wildberries')">💜 Wildberries</button>
+            <button type="button" class="ai-suggestion" onclick="sendAiQuery('Проанализируй UX Золотое Яблоко')">🍏 Золотое Яблоко</button>
+            <button type="button" class="ai-suggestion" onclick="sendAiQuery('Какой маркетплейс имеет лучший UX?')">🏆 Лучший UX</button>
           </div>
         </div>
-        
-        <button id="compareStartBtn" onclick="runComparison()" style="width: 100%; margin-bottom: 20px; padding: 14px 24px; border-radius: 24px; border: none; background: linear-gradient(135deg, var(--gradient-blue), var(--gradient-purple)); color: #fff; font-size: 15px; font-weight: 500; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 4px 16px rgba(66, 133, 244, 0.3);">
-          ✦ Отправить запрос
+      </div>
+    </div>
+    
+    <!-- Input Area -->
+    <div class="ai-input-area">
+      <div class="ai-input-wrapper">
+        <textarea id="aiInput" class="ai-input" placeholder="Задайте вопрос..." rows="1" onkeydown="handleAiKeydown(event)"></textarea>
+        <button class="ai-send" onclick="sendAiMessage()">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+          </svg>
         </button>
-        
-        <div id="compareLoading" style="display: none; text-align: center; padding: 40px;">
-          <div style="font-size: 48px; margin-bottom: 16px;">🔄</div>
-          <div style="color: var(--text-secondary);">AI анализирует скриншоты...</div>
-          <div style="color: var(--text-secondary); font-size: 12px; margin-top: 8px;">Это может занять 30-60 секунд</div>
-        </div>
-        
-        <div id="compareResult" style="display: none;">
-          <div id="compareImages" style="display: flex; gap: 12px; overflow-x: auto; padding-bottom: 16px; margin-bottom: 20px;"></div>
-          <div id="compareAnalysis" style="background: var(--card-bg); border-radius: 12px; padding: 20px; white-space: pre-wrap; line-height: 1.6;"></div>
-        </div>
-        
-        <div id="compareError" style="display: none; color: #ff4444; background: rgba(255,68,68,0.1); padding: 16px; border-radius: 8px;"></div>
       </div>
     </div>
   </div>
+  
+  <!-- Panel Overlay -->
+  <div class="ai-panel-overlay" id="aiPanelOverlay" onclick="closeCompareModal()"></div>
 
   <!-- Upload Modal -->
   <div class="modal-overlay" id="uploadModal">
@@ -1346,56 +1627,98 @@
 
     // Modal functions
     // Compare Modal functions
-    async function openCompareModal() {
-      document.getElementById('compareModal').classList.add('active');
-      document.getElementById('compareResult').style.display = 'none';
-      document.getElementById('compareError').style.display = 'none';
-      document.getElementById('compareLoading').style.display = 'none';
-      document.getElementById('compareSelect').style.display = 'block';
-      document.getElementById('compareStartBtn').style.display = 'block';
-      document.getElementById('compareQuery').value = '';
+    // AI Panel functions
+    let chatHistory = [];
+    
+    function openCompareModal() {
+      document.getElementById('aiPanel').classList.add('open');
+      document.getElementById('aiPanelOverlay').classList.add('visible');
+      document.body.style.overflow = 'hidden';
       
-      // Load stats for info block
-      try {
-        const response = await fetch(`${API_URL}/api/compare-options`);
-        const data = await response.json();
-        
-        const pages = data.options || [];
-        const allMps = new Set();
-        pages.forEach(p => p.marketplaces.forEach(m => allMps.add(m)));
-        
-        const infoHtml = `
-          <strong>📊 Доступно для анализа:</strong><br>
-          • ${allImages.length} скриншотов<br>
-          • ${allMps.size} маркетплейсов: ${Array.from(allMps).slice(0, 8).join(', ')}${allMps.size > 8 ? '...' : ''}<br>
-          • Страницы: ${pages.map(p => p.page).join(', ')}
-        `;
-        document.getElementById('compareInfo').innerHTML = infoHtml;
-      } catch (err) {
-        document.getElementById('compareInfo').textContent = 'Данные загружены';
+      // Reset chat if empty
+      if (chatHistory.length === 0) {
+        resetAiChat();
       }
     }
     
     function closeCompareModal() {
-      document.getElementById('compareModal').classList.remove('active');
+      document.getElementById('aiPanel').classList.remove('open');
+      document.getElementById('aiPanelOverlay').classList.remove('visible');
+      document.body.style.overflow = '';
     }
     
-    function setCompareQuery(query) {
-      document.getElementById('compareQuery').value = query;
+    function resetAiChat() {
+      chatHistory = [];
+      const chat = document.getElementById('aiChat');
+      chat.innerHTML = `
+        <div class="ai-message ai-welcome">
+          <div class="ai-avatar">✦</div>
+          <div class="ai-bubble">
+            <p>Привет! Я помогу проанализировать UX/UI ваших скриншотов.</p>
+            <p style="margin-top: 8px; font-size: 13px; color: var(--text-secondary);">Выберите быстрый запрос или напишите свой:</p>
+            
+            <div class="ai-suggestions">
+              <button type="button" class="ai-suggestion" onclick="sendAiQuery('Сравни страницы Корзина у всех маркетплейсов')">🛒 Сравни корзины</button>
+              <button type="button" class="ai-suggestion" onclick="sendAiQuery('Сравни главные страницы всех маркетплейсов')">🏠 Сравни главные</button>
+              <button type="button" class="ai-suggestion" onclick="sendAiQuery('Сравни карточки товаров у всех маркетплейсов')">📦 Карточки товаров</button>
+              <button type="button" class="ai-suggestion" onclick="sendAiQuery('Проанализируй UX Wildberries')">💜 Wildberries</button>
+              <button type="button" class="ai-suggestion" onclick="sendAiQuery('Проанализируй UX Золотое Яблоко')">🍏 Золотое Яблоко</button>
+              <button type="button" class="ai-suggestion" onclick="sendAiQuery('Какой маркетплейс имеет лучший UX?')">🏆 Лучший UX</button>
+            </div>
+          </div>
+        </div>
+      `;
     }
     
-    async function runComparison() {
-      const query = document.getElementById('compareQuery').value.trim();
-      if (!query) {
-        alert('Введите запрос для анализа');
-        return;
+    function handleAiKeydown(e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendAiMessage();
       }
+      // Auto-resize textarea
+      const textarea = e.target;
+      textarea.style.height = 'auto';
+      textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
+    }
+    
+    function sendAiMessage() {
+      const input = document.getElementById('aiInput');
+      const query = input.value.trim();
+      if (!query) return;
       
-      document.getElementById('compareSelect').style.display = 'none';
-      document.getElementById('compareStartBtn').style.display = 'none';
-      document.getElementById('compareLoading').style.display = 'block';
-      document.getElementById('compareResult').style.display = 'none';
-      document.getElementById('compareError').style.display = 'none';
+      input.value = '';
+      input.style.height = 'auto';
+      
+      sendAiQuery(query);
+    }
+    
+    async function sendAiQuery(query) {
+      const chat = document.getElementById('aiChat');
+      
+      // Add user message
+      chatHistory.push({ role: 'user', content: query });
+      const userMsg = document.createElement('div');
+      userMsg.className = 'ai-message user';
+      userMsg.innerHTML = `
+        <div class="ai-avatar">👤</div>
+        <div class="ai-bubble">${escapeHtml(query)}</div>
+      `;
+      chat.appendChild(userMsg);
+      
+      // Add typing indicator
+      const typingMsg = document.createElement('div');
+      typingMsg.className = 'ai-message';
+      typingMsg.id = 'aiTyping';
+      typingMsg.innerHTML = `
+        <div class="ai-avatar">✦</div>
+        <div class="ai-bubble">
+          <div class="ai-typing">
+            <span></span><span></span><span></span>
+          </div>
+        </div>
+      `;
+      chat.appendChild(typingMsg);
+      chat.scrollTop = chat.scrollHeight;
       
       try {
         const response = await fetch(`${API_URL}/api/analyze-query`, {
@@ -1406,51 +1729,71 @@
         
         const data = await response.json();
         
-        document.getElementById('compareLoading').style.display = 'none';
+        // Remove typing indicator
+        document.getElementById('aiTyping')?.remove();
         
         if (data.error) {
-          document.getElementById('compareError').textContent = data.error + (data.details ? `: ${data.details}` : '');
-          document.getElementById('compareError').style.display = 'block';
-          document.getElementById('compareSelect').style.display = 'block';
-          document.getElementById('compareStartBtn').style.display = 'block';
+          addAiMessage('Произошла ошибка: ' + data.error + (data.details ? ` (${data.details})` : ''), [], true);
           return;
         }
         
-        // Show images used
-        const imagesDiv = document.getElementById('compareImages');
-        imagesDiv.innerHTML = '';
-        if (data.images && data.images.length > 0) {
-          for (const imgData of data.images) {
-            const img = allImages.find(i => i.id === imgData.id);
-            if (img) {
-              const div = document.createElement('div');
-              div.style.cssText = 'flex-shrink: 0; text-align: center;';
-              div.innerHTML = `
-                <img src="${img.url}" style="height: 120px; border-radius: 8px; border: 1px solid var(--border);">
-                <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">${imgData.marketplace || ''}</div>
-              `;
-              imagesDiv.appendChild(div);
-            }
-          }
-        }
+        // Format analysis
+        const analysis = formatAiResponse(data.analysis || 'Нет ответа');
         
-        // Show analysis with markdown-like formatting
-        const analysis = (data.analysis || '')
-          .replace(/^## (.+)$/gm, '<h3 style="color: var(--accent); margin-top: 20px; margin-bottom: 10px;">$1</h3>')
-          .replace(/^### (.+)$/gm, '<h4 style="color: var(--text); margin-top: 16px; margin-bottom: 8px;">$1</h4>')
-          .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-          .replace(/^- (.+)$/gm, '• $1');
+        // Get images
+        const images = (data.images || []).map(imgData => {
+          const img = allImages.find(i => i.id === imgData.id);
+          return img ? { url: img.url, label: imgData.marketplace } : null;
+        }).filter(Boolean);
         
-        document.getElementById('compareAnalysis').innerHTML = analysis;
-        document.getElementById('compareResult').style.display = 'block';
+        addAiMessage(analysis, images);
+        chatHistory.push({ role: 'assistant', content: data.analysis, images });
         
       } catch (err) {
-        document.getElementById('compareLoading').style.display = 'none';
-        document.getElementById('compareError').textContent = 'Ошибка: ' + err.message;
-        document.getElementById('compareError').style.display = 'block';
-        document.getElementById('compareSelect').style.display = 'block';
-        document.getElementById('compareStartBtn').style.display = 'block';
+        document.getElementById('aiTyping')?.remove();
+        addAiMessage('Ошибка соединения: ' + err.message, [], true);
       }
+    }
+    
+    function addAiMessage(content, images = [], isError = false) {
+      const chat = document.getElementById('aiChat');
+      const msg = document.createElement('div');
+      msg.className = 'ai-message';
+      
+      let imagesHtml = '';
+      if (images.length > 0) {
+        imagesHtml = `
+          <div class="ai-images">
+            ${images.map(img => `<img src="${img.url}" title="${img.label || ''}" onclick="window.open('${img.url}', '_blank')">`).join('')}
+          </div>
+        `;
+      }
+      
+      msg.innerHTML = `
+        <div class="ai-avatar">✦</div>
+        <div class="ai-bubble" style="${isError ? 'background: rgba(255,68,68,0.1); color: #ff6b6b;' : ''}">
+          ${imagesHtml}
+          <div class="ai-text">${content}</div>
+        </div>
+      `;
+      chat.appendChild(msg);
+      chat.scrollTop = chat.scrollHeight;
+    }
+    
+    function formatAiResponse(text) {
+      return text
+        .replace(/^## (.+)$/gm, '<h3 style="color: var(--accent); margin-top: 16px; margin-bottom: 8px; font-size: 15px;">$1</h3>')
+        .replace(/^### (.+)$/gm, '<h4 style="color: var(--text); margin-top: 12px; margin-bottom: 6px; font-size: 14px;">$1</h4>')
+        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+        .replace(/^- (.+)$/gm, '<div style="padding-left: 12px;">• $1</div>')
+        .replace(/\n\n/g, '<br><br>')
+        .replace(/\n/g, '<br>');
+    }
+    
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
     }
 
     function openUploadModal() {
