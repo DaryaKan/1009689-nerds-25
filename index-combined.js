@@ -2732,14 +2732,14 @@ if (BOT_TOKEN && BOT_TOKEN.length > 10) {
       });
     }
 
-    // Marketplace keyboard
+    // Marketplace keyboard - актуальный список
     const marketplaceKeyboard = {
       inline_keyboard: [
-        [{ text: '🔵 Ozon', callback_data: 'mp_Ozon' }, { text: '🟣 Wildberries', callback_data: 'mp_Wildberries' }],
-        [{ text: '🟡 Яндекс.Маркет', callback_data: 'mp_Яндекс.Маркет' }, { text: '🟠 AliExpress', callback_data: 'mp_AliExpress' }],
-        [{ text: '🟢 СберМегаМаркет', callback_data: 'mp_СберМегаМаркет' }, { text: '🛒 Lamoda', callback_data: 'mp_Lamoda' }],
-        [{ text: '🟢 Avito', callback_data: 'mp_Avito' }, { text: '📦 Amazon', callback_data: 'mp_Amazon' }],
-        [{ text: '⚪ Другой', callback_data: 'mp_Другой' }]
+        [{ text: '🟣 Wildberries', callback_data: 'mp_Wildberries' }, { text: '🔵 Ozon', callback_data: 'mp_Ozon' }],
+        [{ text: '🟠 AliExpress', callback_data: 'mp_AliExpress' }, { text: '🟡 Яндекс Маркет', callback_data: 'mp_Яндекс Маркет' }],
+        [{ text: '🟢 Мегамаркет', callback_data: 'mp_Мегамаркет' }, { text: '🖤 Lamoda', callback_data: 'mp_Lamoda' }],
+        [{ text: '🟢 Avito', callback_data: 'mp_Avito' }, { text: '🍏 Золотое Яблоко', callback_data: 'mp_Золотое Яблоко' }],
+        [{ text: '⬛ SHEIN', callback_data: 'mp_SHEIN' }, { text: '📦 Другой...', callback_data: 'mp_custom' }]
       ]
     };
 
@@ -2747,19 +2747,18 @@ if (BOT_TOKEN && BOT_TOKEN.length > 10) {
     const pageKeyboard = {
       inline_keyboard: [
         [{ text: '🏠 Главная', callback_data: 'pg_Главная' }, { text: '📋 Каталог', callback_data: 'pg_Каталог' }],
-        [{ text: '🛍️ Карточка товара', callback_data: 'pg_Карточка товара' }, { text: '🛒 Корзина', callback_data: 'pg_Корзина' }],
-        [{ text: '📦 Заказы', callback_data: 'pg_Заказы' }, { text: '🔍 Поиск', callback_data: 'pg_Поиск' }],
-        [{ text: '👤 Личный кабинет', callback_data: 'pg_Личный кабинет' }, { text: '⭐ Отзывы', callback_data: 'pg_Отзывы' }],
-        [{ text: '🏷️ Акции', callback_data: 'pg_Акции' }, { text: '📄 Другое', callback_data: 'pg_Другое' }]
+        [{ text: '📦 Карточка товара', callback_data: 'pg_Карточка товара' }, { text: '🛒 Корзина', callback_data: 'pg_Корзина' }],
+        [{ text: '👤 Профиль', callback_data: 'pg_Профиль' }, { text: '📋 Заказы', callback_data: 'pg_Заказы' }],
+        [{ text: '❤️ Избранное', callback_data: 'pg_Избранное' }, { text: '🔍 Поиск', callback_data: 'pg_Поиск' }],
+        [{ text: '📄 Другое...', callback_data: 'pg_custom' }]
       ]
     };
 
-    // Date keyboard
+    // Date keyboard - упрощённый
     const dateKeyboard = {
       inline_keyboard: [
         [{ text: '📅 Сегодня', callback_data: 'date_today' }, { text: '📅 Вчера', callback_data: 'date_yesterday' }],
-        [{ text: '📅 Позавчера', callback_data: 'date_2days' }, { text: '📅 3 дня назад', callback_data: 'date_3days' }],
-        [{ text: '✏️ Ввести дату', callback_data: 'date_custom' }]
+        [{ text: '✏️ Ввести дату вручную', callback_data: 'date_custom' }]
       ]
     };
 
@@ -2773,27 +2772,23 @@ if (BOT_TOKEN && BOT_TOKEN.length > 10) {
       return date.toISOString().split('T')[0];
     }
 
-    // Start command
+    // Start command - начинает flow загрузки
     bot.onText(/\/start/, (msg) => {
       pendingUploads.delete(msg.chat.id);
       userStates.delete(msg.chat.id);
       pendingPhotos.delete(msg.chat.id);
+      
+      // Шаг 1: Сразу спрашиваем дату
       bot.sendMessage(msg.chat.id, `
-📸 *Screenshot Library Bot*
+✦ *Screenshot Library*
 
-*Как загрузить скриншоты:*
-1️⃣ Укажите дату командой /date
-2️⃣ Отправьте скриншоты (можно несколько сразу)
-3️⃣ Бот определит маркетплейс и страницу автоматически
+Давайте загрузим скриншоты!
 
-*Команды:*
-/date — установить дату для загрузок
-/list — последние скриншоты
-/stats — статистика
-/cancel — отменить / сбросить
-
-🤖 Powered by Gemini AI
-      `, { parse_mode: 'Markdown' });
+*Шаг 1 из 3* — Выберите дату скриншотов:
+      `, { 
+        parse_mode: 'Markdown',
+        reply_markup: dateKeyboard
+      });
     });
 
     // Date command
@@ -2867,56 +2862,26 @@ if (BOT_TOKEN && BOT_TOKEN.length > 10) {
       if (msg.text.startsWith('/')) return;
       
       const chatId = msg.chat.id;
-      const state = userStates.get(chatId);
+      const state = userStates.get(chatId) || {};
       
-      // Check if waiting for custom date
-      if (state && state.waitingForDate) {
+      // Ввод кастомной даты
+      if (state.waitingForDate) {
         const text = msg.text.trim();
-        
-        // Try to parse date in DD.MM.YYYY format
         const dateMatch = text.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);
         
         if (dateMatch) {
           const [, day, month, year] = dateMatch;
           const date = new Date(year, month - 1, day);
           
-          // Validate date
           if (date.getDate() == day && date.getMonth() == month - 1) {
             const dateStr = getDateString(date);
-            userStates.set(chatId, { date: dateStr });
+            userStates.set(chatId, { date: dateStr, step: 'marketplace' });
             
-            // Check for pending photos
-            const pending = pendingPhotos.get(chatId);
-            if (pending && pending.length > 0) {
-              pendingPhotos.delete(chatId);
-              
-              bot.sendMessage(chatId, 
-                `✅ *Дата установлена: ${formatDate(date)}*\n\n⏳ Обрабатываю ${pending.length} скриншот(ов)...`,
-                { parse_mode: 'Markdown' }
-              );
-              
-              // Process pending photos
-              const photos = pending.map(p => p.photo);
-              if (photos.length === 1) {
-                const photo = photos[0];
-                const file = await bot.getFile(photo.file_id);
-                const fileUrl = `https://api.telegram.org/file/bot${BOT_TOKEN}/${file.file_path}`;
-                const fileBuffer = await downloadFile(fileUrl);
-                const ext = file.file_path.split('.').pop() || 'jpg';
-                const fileName = `${uuidv4()}.${ext}`;
-                const mimeType = `image/${ext === 'jpg' ? 'jpeg' : ext}`;
-                
-                const statusMsg = await bot.sendMessage(chatId, '🔍 *Анализирую скриншот...*', { parse_mode: 'Markdown' });
-                await processImage(chatId, fileBuffer, fileName, mimeType, statusMsg.message_id);
-              } else {
-                await processAlbum(chatId, photos);
-              }
-            } else {
-              bot.sendMessage(chatId, 
-                `✅ *Дата установлена: ${formatDate(date)}*\n\n📸 Теперь отправьте скриншоты — они будут сохранены с этой датой.\n\nДля смены даты: /date`,
-                { parse_mode: 'Markdown' }
-              );
-            }
+            // Шаг 2: Выбор маркетплейса
+            bot.sendMessage(chatId, 
+              `✅ Дата: *${formatDate(date)}*\n\n*Шаг 2 из 3* — Выберите маркетплейс:`,
+              { parse_mode: 'Markdown', reply_markup: marketplaceKeyboard }
+            );
           } else {
             bot.sendMessage(chatId, '❌ Некорректная дата. Введите в формате ДД.ММ.ГГГГ\nНапример: 15.01.2026');
           }
@@ -2925,11 +2890,53 @@ if (BOT_TOKEN && BOT_TOKEN.length > 10) {
         }
         return;
       }
+      
+      // Ввод кастомного маркетплейса
+      if (state.waitingForMarketplace) {
+        const marketplace = msg.text.trim();
+        if (marketplace.length < 2) {
+          bot.sendMessage(chatId, '❌ Название слишком короткое. Введите название маркетплейса:');
+          return;
+        }
+        
+        userStates.set(chatId, { ...state, marketplace, waitingForMarketplace: false, step: 'upload' });
+        
+        // Шаг 3: Загрузка изображений
+        bot.sendMessage(chatId, 
+          `✅ Дата: *${state.date ? formatDate(new Date(state.date)) : 'не указана'}*\n✅ Маркетплейс: *${marketplace}*\n\n*Шаг 3 из 3* — Загрузите скриншоты\n\n📸 Отправьте один или несколько скриншотов.\nAI автоматически определит тип страницы.`,
+          { parse_mode: 'Markdown' }
+        );
+        return;
+      }
+      
+      // Ввод кастомной страницы
+      if (state.waitingForPage) {
+        const page = msg.text.trim();
+        if (page.length < 2) {
+          bot.sendMessage(chatId, '❌ Название слишком короткое. Введите название страницы:');
+          return;
+        }
+        
+        userStates.set(chatId, { ...state, page, waitingForPage: false });
+        
+        // Продолжить обработку если есть pending upload
+        const pending = pendingUploads.get(chatId);
+        if (pending) {
+          pending.analysis.page = page;
+          // Финализировать загрузку
+          await finalizeUpload(chatId, pending);
+        }
+        return;
+      }
     });
 
     // Process and upload image
     async function processImage(chatId, fileBuffer, fileName, mimeType, statusMsgId) {
       try {
+        // Get state with preset marketplace
+        const state = userStates.get(chatId) || {};
+        const presetMarketplace = state.marketplace;
+        
         // Analyze with 3-stage pipeline
         await bot.editMessageText('🔍 *Анализирую скриншот...*\n\n1️⃣ OCR проверка\n2️⃣ AI анализ\n3️⃣ Сравнение с примерами', { 
           chat_id: chatId, 
@@ -2938,6 +2945,12 @@ if (BOT_TOKEN && BOT_TOKEN.length > 10) {
         });
 
         const analysis = await analyzeScreenshotPipeline(fileBuffer);
+        
+        // Если маркетплейс был указан в flow, использовать его
+        if (presetMarketplace) {
+          analysis.marketplace = presetMarketplace;
+          analysis.confidence = true;
+        }
         
         console.log('Analysis result:', analysis);
 
@@ -3065,15 +3078,9 @@ if (BOT_TOKEN && BOT_TOKEN.length > 10) {
         } else if (data === 'date_yesterday') {
           selectedDate = new Date(today);
           selectedDate.setDate(selectedDate.getDate() - 1);
-        } else if (data === 'date_2days') {
-          selectedDate = new Date(today);
-          selectedDate.setDate(selectedDate.getDate() - 2);
-        } else if (data === 'date_3days') {
-          selectedDate = new Date(today);
-          selectedDate.setDate(selectedDate.getDate() - 3);
         } else if (data === 'date_custom') {
           // Ask for custom date input
-          userStates.set(chatId, { waitingForDate: true });
+          userStates.set(chatId, { waitingForDate: true, step: 'date' });
           await bot.editMessageText(
             '✏️ *Введите дату в формате ДД.ММ.ГГГГ*\n\nНапример: 15.01.2026',
             { chat_id: chatId, message_id: query.message.message_id, parse_mode: 'Markdown' }
@@ -3083,93 +3090,98 @@ if (BOT_TOKEN && BOT_TOKEN.length > 10) {
 
         if (selectedDate) {
           const dateStr = getDateString(selectedDate);
-          userStates.set(chatId, { date: dateStr });
+          userStates.set(chatId, { date: dateStr, step: 'marketplace' });
           
-          // Check for pending photos
-          const pending = pendingPhotos.get(chatId);
-          if (pending && pending.length > 0) {
-            pendingPhotos.delete(chatId);
-            
-            await bot.editMessageText(
-              `✅ *Дата установлена: ${formatDate(selectedDate)}*\n\n⏳ Обрабатываю ${pending.length} скриншот(ов)...`,
-              { chat_id: chatId, message_id: query.message.message_id, parse_mode: 'Markdown' }
-            );
-            
-            // Process pending photos
-            const photos = pending.map(p => p.photo);
-            if (photos.length === 1) {
-              // Single photo
-              const photo = photos[0];
-              const file = await bot.getFile(photo.file_id);
-              const fileUrl = `https://api.telegram.org/file/bot${BOT_TOKEN}/${file.file_path}`;
-              const fileBuffer = await downloadFile(fileUrl);
-              const ext = file.file_path.split('.').pop() || 'jpg';
-              const fileName = `${uuidv4()}.${ext}`;
-              const mimeType = `image/${ext === 'jpg' ? 'jpeg' : ext}`;
-              
-              const statusMsg = await bot.sendMessage(chatId, '🔍 *Анализирую скриншот...*', { parse_mode: 'Markdown' });
-              await processImage(chatId, fileBuffer, fileName, mimeType, statusMsg.message_id);
-            } else {
-              // Multiple photos
-              await processAlbum(chatId, photos);
-            }
-          } else {
-            await bot.editMessageText(
-              `✅ *Дата установлена: ${formatDate(selectedDate)}*\n\n📸 Теперь отправьте скриншоты — они будут сохранены с этой датой.\n\nДля смены даты: /date`,
-              { chat_id: chatId, message_id: query.message.message_id, parse_mode: 'Markdown' }
-            );
-          }
-        }
-        return;
-      }
-
-      // Handle marketplace/page selection
-      const pending = pendingUploads.get(chatId);
-
-      if (!pending) {
-        return;
-      }
-
-      if (data.startsWith('mp_')) {
-        // Marketplace selected
-        pending.analysis.marketplace = data.replace('mp_', '');
-        
-        // Check if we also need page
-        if (!pending.analysis.page || pending.analysis.page === 'null') {
-          pending.step = 'page';
-          pendingUploads.set(chatId, pending);
-
+          // Шаг 2: Выбор маркетплейса
           await bot.editMessageText(
-            `✅ Маркетплейс: *${pending.analysis.marketplace}*\n\nВыберите тип страницы:`,
+            `✅ Дата: *${formatDate(selectedDate)}*\n\n*Шаг 2 из 3* — Выберите маркетплейс:`,
             { 
               chat_id: chatId, 
               message_id: query.message.message_id, 
               parse_mode: 'Markdown',
-              reply_markup: pageKeyboard
+              reply_markup: marketplaceKeyboard
             }
           );
-        } else {
-          // Have both - finalize
+        }
+        return;
+      }
+      
+      // Handle marketplace/page selection
+      const pending = pendingUploads.get(chatId);
+      const state = userStates.get(chatId) || {};
+
+      if (data.startsWith('mp_')) {
+        // Обработка кастомного ввода
+        if (data === 'mp_custom') {
+          userStates.set(chatId, { ...state, waitingForMarketplace: true });
+          await bot.editMessageText(
+            '✏️ *Введите название маркетплейса:*',
+            { chat_id: chatId, message_id: query.message.message_id, parse_mode: 'Markdown' }
+          );
+          return;
+        }
+        
+        const marketplace = data.replace('mp_', '');
+        
+        // Если есть pending upload (AI не смог определить) - обработать его
+        if (pending) {
+          pending.analysis.marketplace = marketplace;
+          
+          if (!pending.analysis.page || pending.analysis.page === 'null') {
+            pending.step = 'page';
+            pendingUploads.set(chatId, pending);
+            await bot.editMessageText(
+              `✅ Маркетплейс: *${marketplace}*\n\nВыберите тип страницы:`,
+              { chat_id: chatId, message_id: query.message.message_id, parse_mode: 'Markdown', reply_markup: pageKeyboard }
+            );
+          } else {
+            await finalizeUpload(chatId, pending.fileBuffer, pending.fileName, pending.mimeType, pending.analysis, query.message.message_id);
+          }
+          return;
+        }
+        
+        // Flow из /start - сохранить маркетплейс и перейти к загрузке
+        userStates.set(chatId, { ...state, marketplace, step: 'upload' });
+        await bot.editMessageText(
+          `✅ Дата: *${state.date ? formatDate(new Date(state.date)) : 'не указана'}*\n✅ Маркетплейс: *${marketplace}*\n\n*Шаг 3 из 3* — Загрузите скриншоты\n\n📸 Отправьте один или несколько скриншотов.\nAI автоматически определит тип страницы.`,
+          { chat_id: chatId, message_id: query.message.message_id, parse_mode: 'Markdown' }
+        );
+        return;
+      }
+      
+      if (data.startsWith('pg_')) {
+        // Обработка кастомного ввода
+        if (data === 'pg_custom') {
+          userStates.set(chatId, { ...state, waitingForPage: true });
+          await bot.editMessageText(
+            '✏️ *Введите название страницы:*',
+            { chat_id: chatId, message_id: query.message.message_id, parse_mode: 'Markdown' }
+          );
+          return;
+        }
+        
+        // Если есть pending upload
+        if (pending) {
+          pending.analysis.page = data.replace('pg_', '');
           await finalizeUpload(chatId, pending.fileBuffer, pending.fileName, pending.mimeType, pending.analysis, query.message.message_id);
         }
-
-      } else if (data.startsWith('pg_')) {
-        // Page selected
-        pending.analysis.page = data.replace('pg_', '');
-        
-        // Finalize upload
-        await finalizeUpload(chatId, pending.fileBuffer, pending.fileName, pending.mimeType, pending.analysis, query.message.message_id);
       }
     });
 
     // Process album (multiple photos)
     async function processAlbum(chatId, photos) {
-      // Get date from user state or use today
-      const state = userStates.get(chatId);
-      const screenshotDate = state?.date || new Date().toISOString().split('T')[0];
+      // Get date and marketplace from user state
+      const state = userStates.get(chatId) || {};
+      const screenshotDate = state.date || new Date().toISOString().split('T')[0];
+      const presetMarketplace = state.marketplace; // Маркетплейс из flow
       const formattedDate = new Date(screenshotDate).toLocaleDateString('ru-RU');
 
-      const statusMsg = await bot.sendMessage(chatId, `📸 *Обрабатываю ${photos.length} скриншотов...*\n📅 Дата: ${formattedDate}`, { parse_mode: 'Markdown' });
+      let statusText = `📸 *Обрабатываю ${photos.length} скриншотов...*\n📅 Дата: ${formattedDate}`;
+      if (presetMarketplace) {
+        statusText += `\n🏪 Маркетплейс: ${presetMarketplace}`;
+      }
+      
+      const statusMsg = await bot.sendMessage(chatId, statusText, { parse_mode: 'Markdown' });
       
       let successCount = 0;
       let failCount = 0;
@@ -3178,7 +3190,7 @@ if (BOT_TOKEN && BOT_TOKEN.length > 10) {
       for (let i = 0; i < photos.length; i++) {
         try {
           await bot.editMessageText(
-            `🔍 *Анализирую скриншот ${i + 1} из ${photos.length}...*\n📅 Дата: ${formattedDate}`,
+            `🔍 *Анализирую скриншот ${i + 1} из ${photos.length}...*\n📅 Дата: ${formattedDate}${presetMarketplace ? `\n🏪 ${presetMarketplace}` : ''}`,
             { chat_id: chatId, message_id: statusMsg.message_id, parse_mode: 'Markdown' }
           );
 
@@ -3189,6 +3201,11 @@ if (BOT_TOKEN && BOT_TOKEN.length > 10) {
 
           // Analyze with 3-stage pipeline (OCR -> AI -> Comparison)
           const analysis = await analyzeScreenshotPipeline(fileBuffer);
+          
+          // Если маркетплейс был указан в flow, использовать его
+          if (presetMarketplace) {
+            analysis.marketplace = presetMarketplace;
+          }
 
           const ext = file.file_path.split('.').pop() || 'jpg';
           const fileName = `${uuidv4()}.${ext}`;
