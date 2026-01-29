@@ -2205,17 +2205,24 @@ app.post('/api/analyze-query', async (req, res) => {
     // Parse query to find relevant images
     const queryLower = query.toLowerCase();
     
-    // Detect marketplaces mentioned
+    // Check if user wants ALL marketplaces
+    const wantsAllMarketplaces = queryLower.includes('всех маркетплейс') || 
+                                  queryLower.includes('все маркетплейс') ||
+                                  queryLower.includes('всех магазин') ||
+                                  queryLower.includes('у всех') ||
+                                  queryLower.includes('разных маркетплейс');
+    
+    // Detect marketplaces mentioned (only if not asking for all)
     const marketplaceKeywords = {
-      'wildberries': 'Wildberries', 'wb': 'Wildberries', 'вайлдберриз': 'Wildberries',
+      'wildberries': 'Wildberries', 'wb ': 'Wildberries', 'вайлдберриз': 'Wildberries',
       'ozon': 'Ozon', 'озон': 'Ozon',
-      'aliexpress': 'AliExpress', 'али': 'AliExpress',
-      'яндекс': 'Яндекс Маркет', 'маркет': 'Яндекс Маркет',
-      'мегамаркет': 'Мегамаркет', 'сбер': 'Мегамаркет',
+      'aliexpress': 'AliExpress', 'алиэкспресс': 'AliExpress',
+      'яндекс маркет': 'Яндекс Маркет', 'яндекс.маркет': 'Яндекс Маркет',
+      'мегамаркет': 'Мегамаркет', 'сбермегамаркет': 'Мегамаркет',
       'lamoda': 'Lamoda', 'ламода': 'Lamoda',
       'avito': 'Avito', 'авито': 'Avito',
       'shein': 'SHEIN', 'шейн': 'SHEIN',
-      'золотое': 'Золотое Яблоко', 'яблоко': 'Золотое Яблоко'
+      'золотое яблоко': 'Золотое Яблоко'
     };
     
     // Detect pages mentioned
@@ -2223,7 +2230,7 @@ app.post('/api/analyze-query', async (req, res) => {
       'корзин': 'Корзина', 'cart': 'Корзина',
       'главн': 'Главная', 'home': 'Главная',
       'каталог': 'Каталог', 'catalog': 'Каталог',
-      'карточк': 'Карточка товара', 'товар': 'Карточка товара', 'product': 'Карточка товара',
+      'карточк': 'Карточка товара', 'product': 'Карточка товара',
       'профил': 'Профиль', 'profile': 'Профиль',
       'заказ': 'Заказы', 'order': 'Заказы',
       'избранн': 'Избранное', 'favorit': 'Избранное',
@@ -2233,9 +2240,12 @@ app.post('/api/analyze-query', async (req, res) => {
     let targetMarketplaces = [];
     let targetPages = [];
     
-    for (const [keyword, mp] of Object.entries(marketplaceKeywords)) {
-      if (queryLower.includes(keyword) && !targetMarketplaces.includes(mp)) {
-        targetMarketplaces.push(mp);
+    // Only look for specific marketplaces if NOT asking for all
+    if (!wantsAllMarketplaces) {
+      for (const [keyword, mp] of Object.entries(marketplaceKeywords)) {
+        if (queryLower.includes(keyword) && !targetMarketplaces.includes(mp)) {
+          targetMarketplaces.push(mp);
+        }
       }
     }
     
@@ -2245,12 +2255,13 @@ app.post('/api/analyze-query', async (req, res) => {
       }
     }
     
+    console.log('Wants all marketplaces:', wantsAllMarketplaces);
     console.log('Target marketplaces:', targetMarketplaces);
     console.log('Target pages:', targetPages);
 
     // Select images based on query
     const selectedImages = [];
-    const seenKeys = new Set();
+    const seenMarketplaces = new Set();
 
     for (const file of files) {
       if (file.name === '.emptyFolderPlaceholder') continue;
@@ -2263,33 +2274,56 @@ app.post('/api/analyze-query', async (req, res) => {
       
       // Skip unrecognized
       if (!mp || mp.toLowerCase().includes('не определён')) continue;
+      if (!pg || pg.toLowerCase().includes('не определена')) continue;
       
       let shouldInclude = false;
       
-      // If specific marketplaces requested
-      if (targetMarketplaces.length > 0) {
-        if (targetMarketplaces.some(t => mp.toLowerCase().includes(t.toLowerCase()))) {
-          shouldInclude = true;
-        }
-      }
-      
-      // If specific pages requested
-      if (targetPages.length > 0) {
+      // If user wants ALL marketplaces for specific page
+      if (wantsAllMarketplaces && targetPages.length > 0) {
+        // Check if this image matches the target page
         if (targetPages.some(t => pg.toLowerCase().includes(t.toLowerCase()))) {
-          if (targetMarketplaces.length === 0 || shouldInclude) {
+          // Include only one per marketplace
+          if (!seenMarketplaces.has(mp)) {
+            seenMarketplaces.add(mp);
             shouldInclude = true;
           }
-        } else if (targetMarketplaces.length === 0) {
-          shouldInclude = false;
         }
       }
-      
+      // If specific marketplaces requested
+      else if (targetMarketplaces.length > 0) {
+        if (targetMarketplaces.some(t => mp.toLowerCase().includes(t.toLowerCase()))) {
+          // If also specific pages requested
+          if (targetPages.length > 0) {
+            if (targetPages.some(t => pg.toLowerCase().includes(t.toLowerCase()))) {
+              if (!seenMarketplaces.has(mp)) {
+                seenMarketplaces.add(mp);
+                shouldInclude = true;
+              }
+            }
+          } else {
+            // Any page from this marketplace
+            if (!seenMarketplaces.has(mp)) {
+              seenMarketplaces.add(mp);
+              shouldInclude = true;
+            }
+          }
+        }
+      }
+      // If only specific pages requested (no specific marketplaces)
+      else if (targetPages.length > 0) {
+        if (targetPages.some(t => pg.toLowerCase().includes(t.toLowerCase()))) {
+          // Include one per marketplace for this page
+          if (!seenMarketplaces.has(mp)) {
+            seenMarketplaces.add(mp);
+            shouldInclude = true;
+          }
+        }
+      }
       // If no specific filters, include diverse sample
-      if (targetMarketplaces.length === 0 && targetPages.length === 0) {
-        // Include one per marketplace-page combination
-        const key = `${mp}-${pg}`;
-        if (!seenKeys.has(key)) {
-          seenKeys.add(key);
+      else {
+        // Include one per marketplace
+        if (!seenMarketplaces.has(mp)) {
+          seenMarketplaces.add(mp);
           shouldInclude = true;
         }
       }
