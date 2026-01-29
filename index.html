@@ -190,15 +190,23 @@
       padding: 8px 14px;
       border-radius: 20px;
       font-size: 13px;
+      font-family: inherit;
       cursor: pointer;
       transition: all 0.2s ease;
       white-space: nowrap;
+      position: relative;
+      z-index: 1;
     }
     
     .compare-tag:hover {
-      background: var(--bg-secondary);
+      background: var(--accent);
       border-color: var(--accent);
-      color: var(--accent);
+      color: #fff;
+      transform: translateY(-1px);
+    }
+    
+    .compare-tag:active {
+      transform: translateY(0);
     }
     
 
@@ -1101,19 +1109,19 @@
             style="width: 100%; min-height: 80px; padding: 12px; font-size: 15px; resize: vertical; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text);"></textarea>
           
           <!-- Теги-подсказки -->
-          <div style="margin-top: 12px;">
-            <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 8px;">Быстрые запросы:</div>
+          <div style="margin-top: 16px; position: relative; z-index: 10;">
+            <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 10px;">Быстрые запросы:</div>
             <div id="compareTags" style="display: flex; flex-wrap: wrap; gap: 8px;">
-              <button class="compare-tag" onclick="setCompareQuery('Сравни страницы Корзина у всех маркетплейсов')">🛒 Корзины</button>
-              <button class="compare-tag" onclick="setCompareQuery('Сравни главные страницы всех маркетплейсов')">🏠 Главные</button>
-              <button class="compare-tag" onclick="setCompareQuery('Сравни карточки товаров у всех маркетплейсов')">📦 Карточки товаров</button>
-              <button class="compare-tag" onclick="setCompareQuery('Сравни каталоги всех маркетплейсов')">📋 Каталоги</button>
-              <button class="compare-tag" onclick="setCompareQuery('Сравни профили пользователя у всех маркетплейсов')">👤 Профили</button>
-              <button class="compare-tag" onclick="setCompareQuery('Проанализируй UX Wildberries')">💜 Wildberries</button>
-              <button class="compare-tag" onclick="setCompareQuery('Проанализируй UX Ozon')">🔵 Ozon</button>
-              <button class="compare-tag" onclick="setCompareQuery('Проанализируй UX Золотое Яблоко')">🍏 Золотое Яблоко</button>
-              <button class="compare-tag" onclick="setCompareQuery('Какие тренды в дизайне e-commerce я вижу на скриншотах?')">📈 Тренды</button>
-              <button class="compare-tag" onclick="setCompareQuery('Какой маркетплейс имеет лучший UX и почему?')">🏆 Лучший UX</button>
+              <button type="button" class="compare-tag" onclick="setCompareQuery('Сравни страницы Корзина у всех маркетплейсов')">🛒 Корзины</button>
+              <button type="button" class="compare-tag" onclick="setCompareQuery('Сравни главные страницы всех маркетплейсов')">🏠 Главные</button>
+              <button type="button" class="compare-tag" onclick="setCompareQuery('Сравни карточки товаров у всех маркетплейсов')">📦 Карточки товаров</button>
+              <button type="button" class="compare-tag" onclick="setCompareQuery('Сравни каталоги всех маркетплейсов')">📋 Каталоги</button>
+              <button type="button" class="compare-tag" onclick="setCompareQuery('Сравни профили пользователя у всех маркетплейсов')">👤 Профили</button>
+              <button type="button" class="compare-tag" onclick="setCompareQuery('Проанализируй UX Wildberries')">💜 Wildberries</button>
+              <button type="button" class="compare-tag" onclick="setCompareQuery('Проанализируй UX Ozon')">🔵 Ozon</button>
+              <button type="button" class="compare-tag" onclick="setCompareQuery('Проанализируй UX Золотое Яблоко')">🍏 Золотое Яблоко</button>
+              <button type="button" class="compare-tag" onclick="setCompareQuery('Какие тренды в дизайне e-commerce я вижу на скриншотах?')">📈 Тренды</button>
+              <button type="button" class="compare-tag" onclick="setCompareQuery('Какой маркетплейс имеет лучший UX и почему?')">🏆 Лучший UX</button>
             </div>
           </div>
           
