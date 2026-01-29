@@ -122,6 +122,24 @@
       background: var(--accent);
       color: #fff;
     }
+    
+    .compare-tag {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 6px 12px;
+      border-radius: 16px;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+    
+    .compare-tag:hover {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
 
     .upload-btn:hover {
       background: var(--accent-hover);
@@ -974,20 +992,43 @@
   <div class="modal-overlay" id="compareModal">
     <div class="modal" style="max-width: 900px; max-height: 90vh;">
       <div class="modal-header">
-        <h2 class="modal-title">📊 Сравнительный UX/UI анализ</h2>
+        <h2 class="modal-title">📊 AI Аналитик</h2>
         <button class="modal-close" onclick="closeCompareModal()">×</button>
       </div>
       <div class="modal-body" style="overflow-y: auto; max-height: calc(90vh - 120px);">
         <div id="compareSelect" style="margin-bottom: 20px;">
-          <label class="form-label">Выберите страницу для сравнения:</label>
-          <select id="comparePageSelect" class="detail-select" style="width: 100%; padding: 12px; font-size: 16px;">
-            <option value="">Загрузка...</option>
-          </select>
-          <div id="compareMarketplaces" style="margin-top: 10px; color: var(--text-secondary); font-size: 14px;"></div>
+          
+          <!-- Свободное поле ввода -->
+          <label class="form-label">Задайте вопрос AI:</label>
+          <textarea id="compareQuery" class="detail-input" 
+            placeholder="Например: Сравни корзины всех маркетплейсов, или: Как изменился дизайн Wildberries?"
+            style="width: 100%; min-height: 80px; padding: 12px; font-size: 15px; resize: vertical; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text);"></textarea>
+          
+          <!-- Теги-подсказки -->
+          <div style="margin-top: 12px;">
+            <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 8px;">Быстрые запросы:</div>
+            <div id="compareTags" style="display: flex; flex-wrap: wrap; gap: 8px;">
+              <button class="compare-tag" onclick="setCompareQuery('Сравни страницы Корзина у всех маркетплейсов')">🛒 Корзины</button>
+              <button class="compare-tag" onclick="setCompareQuery('Сравни главные страницы всех маркетплейсов')">🏠 Главные</button>
+              <button class="compare-tag" onclick="setCompareQuery('Сравни карточки товаров у всех маркетплейсов')">📦 Карточки товаров</button>
+              <button class="compare-tag" onclick="setCompareQuery('Сравни каталоги всех маркетплейсов')">📋 Каталоги</button>
+              <button class="compare-tag" onclick="setCompareQuery('Сравни профили пользователя у всех маркетплейсов')">👤 Профили</button>
+              <button class="compare-tag" onclick="setCompareQuery('Проанализируй UX Wildberries')">💜 Wildberries</button>
+              <button class="compare-tag" onclick="setCompareQuery('Проанализируй UX Ozon')">🔵 Ozon</button>
+              <button class="compare-tag" onclick="setCompareQuery('Проанализируй UX Золотое Яблоко')">🍏 Золотое Яблоко</button>
+              <button class="compare-tag" onclick="setCompareQuery('Какие тренды в дизайне e-commerce я вижу на скриншотах?')">📈 Тренды</button>
+              <button class="compare-tag" onclick="setCompareQuery('Какой маркетплейс имеет лучший UX и почему?')">🏆 Лучший UX</button>
+            </div>
+          </div>
+          
+          <!-- Информация о данных -->
+          <div id="compareInfo" style="margin-top: 16px; padding: 12px; background: rgba(0,131,255,0.1); border-radius: 8px; font-size: 13px; color: var(--text-secondary);">
+            Загрузка информации...
+          </div>
         </div>
         
         <button id="compareStartBtn" class="btn-save" onclick="runComparison()" style="width: 100%; margin-bottom: 20px;">
-          🚀 Запустить AI анализ
+          🚀 Отправить запрос
         </button>
         
         <div id="compareLoading" style="display: none; text-align: center; padding: 40px;">
@@ -1208,30 +1249,26 @@
       document.getElementById('compareLoading').style.display = 'none';
       document.getElementById('compareSelect').style.display = 'block';
       document.getElementById('compareStartBtn').style.display = 'block';
+      document.getElementById('compareQuery').value = '';
       
-      // Load compare options
+      // Load stats for info block
       try {
         const response = await fetch(`${API_BASE}/api/compare-options`);
         const data = await response.json();
         
-        const select = document.getElementById('comparePageSelect');
-        select.innerHTML = '<option value="">Выберите страницу...</option>';
+        const pages = data.options || [];
+        const allMps = new Set();
+        pages.forEach(p => p.marketplaces.forEach(m => allMps.add(m)));
         
-        for (const opt of data.options) {
-          const option = document.createElement('option');
-          option.value = opt.page;
-          option.textContent = `${opt.page} (${opt.marketplaces.length} маркетплейсов, ${opt.count} скриншотов)`;
-          option.dataset.marketplaces = opt.marketplaces.join(', ');
-          select.appendChild(option);
-        }
-        
-        select.onchange = function() {
-          const selected = select.options[select.selectedIndex];
-          const mps = selected.dataset.marketplaces || '';
-          document.getElementById('compareMarketplaces').textContent = mps ? `Маркетплейсы: ${mps}` : '';
-        };
+        const infoHtml = `
+          <strong>📊 Доступно для анализа:</strong><br>
+          • ${allImages.length} скриншотов<br>
+          • ${allMps.size} маркетплейсов: ${Array.from(allMps).slice(0, 8).join(', ')}${allMps.size > 8 ? '...' : ''}<br>
+          • Страницы: ${pages.map(p => p.page).join(', ')}
+        `;
+        document.getElementById('compareInfo').innerHTML = infoHtml;
       } catch (err) {
-        console.error('Failed to load compare options:', err);
+        document.getElementById('compareInfo').textContent = 'Данные загружены';
       }
     }
     
@@ -1239,10 +1276,14 @@
       document.getElementById('compareModal').classList.remove('active');
     }
     
+    function setCompareQuery(query) {
+      document.getElementById('compareQuery').value = query;
+    }
+    
     async function runComparison() {
-      const page = document.getElementById('comparePageSelect').value;
-      if (!page) {
-        alert('Выберите страницу для сравнения');
+      const query = document.getElementById('compareQuery').value.trim();
+      if (!query) {
+        alert('Введите запрос для анализа');
         return;
       }
       
@@ -1253,10 +1294,10 @@
       document.getElementById('compareError').style.display = 'none';
       
       try {
-        const response = await fetch(`${API_BASE}/api/compare-page`, {
+        const response = await fetch(`${API_BASE}/api/analyze-query`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ page })
+          body: JSON.stringify({ query })
         });
         
         const data = await response.json();
@@ -1271,24 +1312,26 @@
           return;
         }
         
-        // Show images
+        // Show images used
         const imagesDiv = document.getElementById('compareImages');
         imagesDiv.innerHTML = '';
-        for (const mp of data.marketplaces) {
-          const img = allImages.find(i => i.id === mp.id);
-          if (img) {
-            const div = document.createElement('div');
-            div.style.cssText = 'flex-shrink: 0; text-align: center;';
-            div.innerHTML = `
-              <img src="${img.url}" style="height: 150px; border-radius: 8px; border: 1px solid var(--border);">
-              <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">${mp.name}</div>
-            `;
-            imagesDiv.appendChild(div);
+        if (data.images && data.images.length > 0) {
+          for (const imgData of data.images) {
+            const img = allImages.find(i => i.id === imgData.id);
+            if (img) {
+              const div = document.createElement('div');
+              div.style.cssText = 'flex-shrink: 0; text-align: center;';
+              div.innerHTML = `
+                <img src="${img.url}" style="height: 120px; border-radius: 8px; border: 1px solid var(--border);">
+                <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">${imgData.marketplace || ''}</div>
+              `;
+              imagesDiv.appendChild(div);
+            }
           }
         }
         
         // Show analysis with markdown-like formatting
-        const analysis = data.analysis
+        const analysis = (data.analysis || '')
           .replace(/^## (.+)$/gm, '<h3 style="color: var(--accent); margin-top: 20px; margin-bottom: 10px;">$1</h3>')
           .replace(/^### (.+)$/gm, '<h4 style="color: var(--text); margin-top: 16px; margin-bottom: 8px;">$1</h4>')
           .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')

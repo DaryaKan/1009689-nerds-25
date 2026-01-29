@@ -2182,6 +2182,232 @@ app.post('/api/compare-page', async (req, res) => {
   }
 });
 
+// Analyze with custom query - flexible AI analysis
+app.post('/api/analyze-query', async (req, res) => {
+  try {
+    const { query } = req.body;
+    
+    if (!query) {
+      return res.status(400).json({ error: 'Query parameter required' });
+    }
+
+    console.log('Analyze query:', query);
+
+    // Get all images
+    const { data: files, error } = await supabase.storage
+      .from(BUCKET)
+      .list('images', { limit: 1000 });
+
+    if (error) {
+      return res.status(500).json({ error: 'Failed to list images' });
+    }
+
+    // Parse query to find relevant images
+    const queryLower = query.toLowerCase();
+    
+    // Detect marketplaces mentioned
+    const marketplaceKeywords = {
+      'wildberries': 'Wildberries', 'wb': 'Wildberries', 'вайлдберриз': 'Wildberries',
+      'ozon': 'Ozon', 'озон': 'Ozon',
+      'aliexpress': 'AliExpress', 'али': 'AliExpress',
+      'яндекс': 'Яндекс Маркет', 'маркет': 'Яндекс Маркет',
+      'мегамаркет': 'Мегамаркет', 'сбер': 'Мегамаркет',
+      'lamoda': 'Lamoda', 'ламода': 'Lamoda',
+      'avito': 'Avito', 'авито': 'Avito',
+      'shein': 'SHEIN', 'шейн': 'SHEIN',
+      'золотое': 'Золотое Яблоко', 'яблоко': 'Золотое Яблоко'
+    };
+    
+    // Detect pages mentioned
+    const pageKeywords = {
+      'корзин': 'Корзина', 'cart': 'Корзина',
+      'главн': 'Главная', 'home': 'Главная',
+      'каталог': 'Каталог', 'catalog': 'Каталог',
+      'карточк': 'Карточка товара', 'товар': 'Карточка товара', 'product': 'Карточка товара',
+      'профил': 'Профиль', 'profile': 'Профиль',
+      'заказ': 'Заказы', 'order': 'Заказы',
+      'избранн': 'Избранное', 'favorit': 'Избранное',
+      'поиск': 'Поиск', 'search': 'Поиск'
+    };
+    
+    let targetMarketplaces = [];
+    let targetPages = [];
+    
+    for (const [keyword, mp] of Object.entries(marketplaceKeywords)) {
+      if (queryLower.includes(keyword) && !targetMarketplaces.includes(mp)) {
+        targetMarketplaces.push(mp);
+      }
+    }
+    
+    for (const [keyword, pg] of Object.entries(pageKeywords)) {
+      if (queryLower.includes(keyword) && !targetPages.includes(pg)) {
+        targetPages.push(pg);
+      }
+    }
+    
+    console.log('Target marketplaces:', targetMarketplaces);
+    console.log('Target pages:', targetPages);
+
+    // Select images based on query
+    const selectedImages = [];
+    const seenKeys = new Set();
+
+    for (const file of files) {
+      if (file.name === '.emptyFolderPlaceholder') continue;
+      
+      const meta = imageMetadata.get(file.name);
+      if (!meta) continue;
+      
+      const mp = meta.marketplace || '';
+      const pg = meta.page || '';
+      
+      // Skip unrecognized
+      if (!mp || mp.toLowerCase().includes('не определён')) continue;
+      
+      let shouldInclude = false;
+      
+      // If specific marketplaces requested
+      if (targetMarketplaces.length > 0) {
+        if (targetMarketplaces.some(t => mp.toLowerCase().includes(t.toLowerCase()))) {
+          shouldInclude = true;
+        }
+      }
+      
+      // If specific pages requested
+      if (targetPages.length > 0) {
+        if (targetPages.some(t => pg.toLowerCase().includes(t.toLowerCase()))) {
+          if (targetMarketplaces.length === 0 || shouldInclude) {
+            shouldInclude = true;
+          }
+        } else if (targetMarketplaces.length === 0) {
+          shouldInclude = false;
+        }
+      }
+      
+      // If no specific filters, include diverse sample
+      if (targetMarketplaces.length === 0 && targetPages.length === 0) {
+        // Include one per marketplace-page combination
+        const key = `${mp}-${pg}`;
+        if (!seenKeys.has(key)) {
+          seenKeys.add(key);
+          shouldInclude = true;
+        }
+      }
+      
+      if (shouldInclude) {
+        const { data: urlData } = supabase.storage
+          .from(BUCKET)
+          .getPublicUrl(`images/${file.name}`);
+        
+        selectedImages.push({
+          id: file.name,
+          marketplace: mp,
+          page: pg,
+          url: urlData.publicUrl
+        });
+      }
+      
+      // Limit to 8 images
+      if (selectedImages.length >= 8) break;
+    }
+
+    if (selectedImages.length === 0) {
+      return res.status(400).json({ error: 'Не найдено изображений для анализа по вашему запросу' });
+    }
+
+    console.log(`Selected ${selectedImages.length} images for analysis`);
+
+    // Download images
+    const imageBuffers = [];
+    for (const img of selectedImages) {
+      const buffer = await new Promise((resolve, reject) => {
+        const protocol = img.url.startsWith('https') ? https : http;
+        protocol.get(img.url, (response) => {
+          const chunks = [];
+          response.on('data', (chunk) => chunks.push(chunk));
+          response.on('end', () => resolve(Buffer.concat(chunks)));
+          response.on('error', reject);
+        }).on('error', reject);
+      });
+      imageBuffers.push({ ...img, buffer });
+    }
+
+    // Build prompt
+    const imageDescriptions = selectedImages.map(i => `${i.marketplace} - ${i.page}`).join(', ');
+    
+    const prompt = `Ты - эксперт по продуктовому дизайну и UX/UI мобильных приложений e-commerce.
+
+Пользователь задал вопрос: "${query}"
+
+Я показываю тебе ${selectedImages.length} скриншотов из разных маркетплейсов: ${imageDescriptions}
+
+Дай развернутый ответ на вопрос пользователя, опираясь на эти скриншоты.
+
+Структурируй ответ с заголовками (##).
+Будь конкретен, приводи примеры из скриншотов.
+Пиши на русском языке.`;
+
+    // Call Gemini API
+    const parts = [{ text: prompt }];
+    
+    for (const img of imageBuffers) {
+      parts.push({
+        text: `\n--- ${img.marketplace} | ${img.page} ---`
+      });
+      parts.push({
+        inline_data: {
+          mime_type: 'image/jpeg',
+          data: img.buffer.toString('base64')
+        }
+      });
+    }
+
+    const apiKey = GEMINI_API_KEY || GEMINI_API_KEY_BACKUP;
+    if (!apiKey) {
+      return res.status(400).json({ error: 'No Gemini API key configured' });
+    }
+
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+    
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts }],
+        generationConfig: {
+          maxOutputTokens: 4000
+        }
+      })
+    });
+
+    const data = await response.json();
+    
+    if (data.error) {
+      return res.status(500).json({ 
+        error: 'Gemini API error', 
+        details: data.error.message
+      });
+    }
+
+    const analysisText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    
+    if (!analysisText) {
+      return res.status(500).json({ error: 'No analysis received from AI' });
+    }
+
+    res.json({
+      success: true,
+      query: query,
+      images: selectedImages.map(i => ({ id: i.id, marketplace: i.marketplace, page: i.page })),
+      analysis: analysisText
+    });
+
+  } catch (error) {
+    console.error('Analyze query error:', error);
+    res.status(500).json({ error: 'Analysis failed', details: error.message });
+  }
+});
+
 // Get available pages for comparison
 app.get('/api/compare-options', async (req, res) => {
   try {
