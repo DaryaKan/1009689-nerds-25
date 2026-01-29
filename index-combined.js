@@ -110,20 +110,34 @@ async function askClaude(query, context = null, images = []) {
 function isScreenshotQuery(query) {
   const queryLower = query.toLowerCase();
   
-  // Keywords that indicate screenshot/comparison query
-  const screenshotKeywords = [
-    'сравни', 'сравнение', 'сравнить',
-    'проанализируй', 'анализ',
-    'скриншот', 'картин', 'изображен',
-    'маркетплейс', 'wildberries', 'ozon', 'озон', 'вайлдберриз',
-    'яндекс маркет', 'мегамаркет', 'сбермегамаркет',
-    'золотое яблоко', 'lamoda', 'ламода', 'aliexpress', 'алиэкспресс',
-    'корзин', 'каталог', 'карточк', 'профил', 'главн',
-    'страниц', 'экран', 'интерфейс',
-    'покажи', 'найди на скриншот'
+  // Keywords that REQUIRE screenshots (action words)
+  const actionKeywords = [
+    'сравни скриншот', 'сравни страниц', 'сравни корзин', 'сравни главн', 'сравни карточк',
+    'проанализируй ux', 'проанализируй ui', 'проанализируй интерфейс', 'проанализируй дизайн',
+    'покажи скриншот', 'покажи страниц', 'покажи интерфейс',
+    'на скриншот', 'на картинк', 'на изображен',
+    'анализ скриншот', 'анализ интерфейс'
   ];
   
-  return screenshotKeywords.some(kw => queryLower.includes(kw));
+  // Check for action keywords first (these definitely need screenshots)
+  if (actionKeywords.some(kw => queryLower.includes(kw))) {
+    return true;
+  }
+  
+  // Keywords that suggest screenshot analysis when combined with marketplace names
+  const analysisWords = ['сравни', 'проанализируй', 'покажи', 'анализ'];
+  const pageWords = ['корзин', 'каталог', 'карточк', 'профил', 'главн', 'страниц', 'экран', 'интерфейс'];
+  
+  const hasAnalysisWord = analysisWords.some(w => queryLower.includes(w));
+  const hasPageWord = pageWords.some(w => queryLower.includes(w));
+  
+  // If has analysis word AND page word - needs screenshots
+  if (hasAnalysisWord && hasPageWord) {
+    return true;
+  }
+  
+  // Otherwise, treat as general question (even if mentions marketplace names)
+  return false;
 }
 
 // Pipeline function: Run ALL stages, then choose best result
@@ -2499,8 +2513,50 @@ app.post('/api/analyze-query', async (req, res) => {
       if (selectedImages.length >= 8) break;
     }
 
+    // If no images found, fallback to general question mode
     if (selectedImages.length === 0) {
-      return res.status(400).json({ error: 'Не найдено изображений для анализа по вашему запросу' });
+      console.log('No images found, falling back to general question mode');
+      
+      // Try Claude first
+      const claudeResponse = await askClaude(query);
+      if (claudeResponse) {
+        return res.json({
+          success: true,
+          query: query,
+          images: [],
+          analysis: claudeResponse,
+          model: 'claude-sonnet-4'
+        });
+      }
+      
+      // Fallback to Gemini
+      const apiKey = GEMINI_API_KEY || GEMINI_API_KEY_BACKUP;
+      if (apiKey) {
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+        const geminiResponse = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ 
+              text: `Ты - AI ассистент по UX/UI дизайну и e-commerce. Отвечай кратко и по делу.\n\nВопрос: ${query}` 
+            }] }],
+            generationConfig: { maxOutputTokens: 2000 }
+          })
+        });
+        
+        const geminiData = await geminiResponse.json();
+        const analysisText = geminiData.candidates?.[0]?.content?.parts?.[0]?.text || 'Не удалось получить ответ';
+        
+        return res.json({
+          success: true,
+          query: query,
+          images: [],
+          analysis: analysisText,
+          model: 'gemini'
+        });
+      }
+      
+      return res.status(400).json({ error: 'Не найдено изображений и нет доступных AI моделей' });
     }
 
     console.log(`Selected ${selectedImages.length} images for analysis`);
