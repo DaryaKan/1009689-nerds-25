@@ -24,8 +24,106 @@ const GEMINI_API_KEY_BACKUP = process.env.GEMINI_API_KEY_BACKUP || 'AIzaSyBN02W3
 // Initialize OpenRouter AI (backup)
 const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY || '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';
 
+// Initialize Anthropic Claude API
+const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
+let anthropic = null;
+if (ANTHROPIC_API_KEY) {
+  const Anthropic = require('@anthropic-ai/sdk');
+  anthropic = new Anthropic({ apiKey: ANTHROPIC_API_KEY });
+  console.log('Claude API configured');
+}
+
 if (GEMINI_API_KEY) {
   console.log('Gemini API key configured');
+}
+
+// Claude Opus 4.5 for general questions and chat
+async function askClaude(query, context = null, images = []) {
+  if (!anthropic) {
+    console.log('Claude API not configured, falling back to Gemini');
+    return null;
+  }
+
+  try {
+    console.log('Asking Claude Opus 4.5:', query.substring(0, 100));
+    
+    const systemPrompt = `Ты - AI ассистент по UX/UI дизайну и e-commerce. Ты помогаешь анализировать скриншоты мобильных приложений маркетплейсов и отвечаешь на вопросы о дизайне, UX, трендах и лучших практиках.
+
+Ты можешь:
+- Анализировать UX/UI скриншотов
+- Сравнивать дизайн разных маркетплейсов
+- Отвечать на вопросы о трендах в e-commerce дизайне
+- Давать рекомендации по улучшению UX
+- Обсуждать лучшие практики в мобильном дизайне
+
+Отвечай кратко и по делу. Используй структурированные ответы с заголовками и списками когда это уместно.`;
+
+    const messages = [];
+    
+    // Build content array
+    const content = [];
+    
+    // Add images if provided
+    if (images && images.length > 0) {
+      for (const img of images) {
+        if (img.base64 && img.mediaType) {
+          content.push({
+            type: 'image',
+            source: {
+              type: 'base64',
+              media_type: img.mediaType,
+              data: img.base64
+            }
+          });
+        }
+      }
+    }
+    
+    // Add context if provided
+    let textContent = query;
+    if (context) {
+      textContent = `${context}\n\nВопрос: ${query}`;
+    }
+    
+    content.push({ type: 'text', text: textContent });
+    
+    messages.push({ role: 'user', content });
+
+    const response = await anthropic.messages.create({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 4096,
+      system: systemPrompt,
+      messages
+    });
+
+    const answer = response.content[0]?.text || '';
+    console.log('Claude response received, length:', answer.length);
+    return answer;
+
+  } catch (error) {
+    console.error('Claude API error:', error.message);
+    return null;
+  }
+}
+
+// Determine if query is about screenshots/comparison or general question
+function isScreenshotQuery(query) {
+  const queryLower = query.toLowerCase();
+  
+  // Keywords that indicate screenshot/comparison query
+  const screenshotKeywords = [
+    'сравни', 'сравнение', 'сравнить',
+    'проанализируй', 'анализ',
+    'скриншот', 'картин', 'изображен',
+    'маркетплейс', 'wildberries', 'ozon', 'озон', 'вайлдберриз',
+    'яндекс маркет', 'мегамаркет', 'сбермегамаркет',
+    'золотое яблоко', 'lamoda', 'ламода', 'aliexpress', 'алиэкспресс',
+    'корзин', 'каталог', 'карточк', 'профил', 'главн',
+    'страниц', 'экран', 'интерфейс',
+    'покажи', 'найди на скриншот'
+  ];
+  
+  return screenshotKeywords.some(kw => queryLower.includes(kw));
 }
 
 // Pipeline function: Run ALL stages, then choose best result
@@ -2192,7 +2290,60 @@ app.post('/api/analyze-query', async (req, res) => {
     }
 
     console.log('Analyze query:', query);
+    
+    // Determine if this is a screenshot-related query or general question
+    const needsScreenshots = isScreenshotQuery(query);
+    console.log('Needs screenshots:', needsScreenshots);
 
+    // If general question (not about screenshots), use Claude
+    if (!needsScreenshots) {
+      console.log('General question - using Claude');
+      
+      // Try Claude first
+      const claudeResponse = await askClaude(query);
+      
+      if (claudeResponse) {
+        return res.json({
+          success: true,
+          query: query,
+          images: [],
+          analysis: claudeResponse,
+          model: 'claude-sonnet-4'
+        });
+      }
+      
+      // Fallback to Gemini for general question
+      console.log('Claude unavailable, falling back to Gemini');
+      const apiKey = GEMINI_API_KEY || GEMINI_API_KEY_BACKUP;
+      if (!apiKey) {
+        return res.status(400).json({ error: 'No AI API key configured' });
+      }
+      
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+      const geminiResponse = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ 
+            text: `Ты - AI ассистент по UX/UI дизайну и e-commerce. Отвечай кратко и по делу.\n\nВопрос: ${query}` 
+          }] }],
+          generationConfig: { maxOutputTokens: 2000 }
+        })
+      });
+      
+      const geminiData = await geminiResponse.json();
+      const analysisText = geminiData.candidates?.[0]?.content?.parts?.[0]?.text || 'Не удалось получить ответ';
+      
+      return res.json({
+        success: true,
+        query: query,
+        images: [],
+        analysis: analysisText,
+        model: 'gemini'
+      });
+    }
+
+    // Screenshot-related query - use existing logic
     // Get all images
     const { data: files, error } = await supabase.storage
       .from(BUCKET)
@@ -2384,7 +2535,33 @@ app.post('/api/analyze-query', async (req, res) => {
 Будь конкретен, приводи примеры из скриншотов.
 Пиши на русском языке.`;
 
-    // Call Gemini API
+    // Try Claude with images first (if available)
+    if (anthropic) {
+      try {
+        console.log('Using Claude for image analysis');
+        
+        const claudeImages = imageBuffers.map(img => ({
+          base64: img.buffer.toString('base64'),
+          mediaType: 'image/jpeg'
+        }));
+        
+        const claudeResponse = await askClaude(query, `Я показываю тебе ${selectedImages.length} скриншотов из маркетплейсов: ${imageDescriptions}. Проанализируй их и ответь на вопрос.`, claudeImages);
+        
+        if (claudeResponse) {
+          return res.json({
+            success: true,
+            query: query,
+            images: selectedImages.map(i => ({ id: i.id, marketplace: i.marketplace, page: i.page })),
+            analysis: claudeResponse,
+            model: 'claude-sonnet-4'
+          });
+        }
+      } catch (claudeErr) {
+        console.log('Claude failed, falling back to Gemini:', claudeErr.message);
+      }
+    }
+
+    // Fallback to Gemini API
     const parts = [{ text: prompt }];
     
     for (const img of imageBuffers) {
@@ -2436,7 +2613,8 @@ app.post('/api/analyze-query', async (req, res) => {
       success: true,
       query: query,
       images: selectedImages.map(i => ({ id: i.id, marketplace: i.marketplace, page: i.page })),
-      analysis: analysisText
+      analysis: analysisText,
+      model: 'gemini'
     });
 
   } catch (error) {
