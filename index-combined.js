@@ -2295,15 +2295,18 @@ app.post('/api/analyze-query', async (req, res) => {
           // If also specific pages requested
           if (targetPages.length > 0) {
             if (targetPages.some(t => pg.toLowerCase().includes(t.toLowerCase()))) {
-              if (!seenMarketplaces.has(mp)) {
-                seenMarketplaces.add(mp);
+              // One image per page for this marketplace
+              const key = `${mp}-${pg}`;
+              if (!seenMarketplaces.has(key)) {
+                seenMarketplaces.add(key);
                 shouldInclude = true;
               }
             }
           } else {
-            // Any page from this marketplace
-            if (!seenMarketplaces.has(mp)) {
-              seenMarketplaces.add(mp);
+            // Include multiple pages from this marketplace (one per page type)
+            const key = `${mp}-${pg}`;
+            if (!seenMarketplaces.has(key)) {
+              seenMarketplaces.add(key);
               shouldInclude = true;
             }
           }
