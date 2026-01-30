@@ -1023,7 +1023,7 @@ async function saveMetadata() {
 // Load metadata on startup
 loadMetadata();
 
-// Create screenshot from URL (placeholder - requires puppeteer for full implementation)
+// Download image from URL and save
 app.post('/api/screenshot-url', express.json(), async (req, res) => {
   try {
     const { url, marketplace, page, date, tag } = req.body;
@@ -1032,17 +1032,127 @@ app.post('/api/screenshot-url', express.json(), async (req, res) => {
       return res.status(400).json({ error: 'URL is required' });
     }
     
-    // For now, return a message that this feature requires additional setup
-    // Full implementation would use puppeteer to capture screenshots
-    res.status(501).json({ 
-      error: 'Функция создания скриншотов по URL требует дополнительной настройки (Puppeteer)',
-      message: 'Эта функция будет доступна после установки headless browser на сервере',
-      url: url
+    console.log('Downloading image from URL:', url);
+    
+    // Download image from URL
+    const imageBuffer = await new Promise((resolve, reject) => {
+      const protocol = url.startsWith('https') ? https : http;
+      
+      const request = protocol.get(url, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        }
+      }, (response) => {
+        // Handle redirects
+        if (response.statusCode >= 300 && response.statusCode < 400 && response.headers.location) {
+          const redirectUrl = response.headers.location;
+          const redirectProtocol = redirectUrl.startsWith('https') ? https : http;
+          redirectProtocol.get(redirectUrl, (redirectResponse) => {
+            const chunks = [];
+            redirectResponse.on('data', (chunk) => chunks.push(chunk));
+            redirectResponse.on('end', () => resolve(Buffer.concat(chunks)));
+            redirectResponse.on('error', reject);
+          }).on('error', reject);
+          return;
+        }
+        
+        if (response.statusCode !== 200) {
+          reject(new Error(`HTTP ${response.statusCode}`));
+          return;
+        }
+        
+        const chunks = [];
+        response.on('data', (chunk) => chunks.push(chunk));
+        response.on('end', () => resolve(Buffer.concat(chunks)));
+        response.on('error', reject);
+      });
+      
+      request.on('error', reject);
+      request.setTimeout(30000, () => {
+        request.destroy();
+        reject(new Error('Request timeout'));
+      });
+    });
+    
+    // Check if it's an image
+    const contentType = imageBuffer.slice(0, 8);
+    const isJpeg = contentType[0] === 0xFF && contentType[1] === 0xD8;
+    const isPng = contentType[0] === 0x89 && contentType[1] === 0x50;
+    const isGif = contentType[0] === 0x47 && contentType[1] === 0x49;
+    const isWebp = contentType[8] === 0x57 && contentType[9] === 0x45;
+    
+    if (!isJpeg && !isPng && !isGif) {
+      return res.status(400).json({ 
+        error: 'URL должен вести на изображение (JPEG, PNG, GIF)',
+        hint: 'Попробуйте скопировать прямую ссылку на изображение'
+      });
+    }
+    
+    // Determine file extension
+    let ext = 'jpg';
+    if (isPng) ext = 'png';
+    if (isGif) ext = 'gif';
+    
+    // Generate unique filename
+    const fileName = `${uuidv4()}.${ext}`;
+    const filePath = `images/${fileName}`;
+    
+    // Upload to Supabase
+    const { error: uploadError } = await supabase.storage
+      .from(BUCKET)
+      .upload(filePath, imageBuffer, {
+        contentType: isJpeg ? 'image/jpeg' : isPng ? 'image/png' : 'image/gif'
+      });
+    
+    if (uploadError) {
+      console.error('Upload error:', uploadError);
+      return res.status(500).json({ error: 'Failed to upload image' });
+    }
+    
+    // Try to analyze if marketplace/page not provided
+    let finalMarketplace = marketplace || '';
+    let finalPage = page || '';
+    
+    if (!finalMarketplace || !finalPage) {
+      try {
+        const analysis = await analyzeScreenshotPipeline(imageBuffer);
+        if (!finalMarketplace && analysis.marketplace) {
+          finalMarketplace = analysis.marketplace;
+        }
+        if (!finalPage && analysis.page) {
+          finalPage = analysis.page;
+        }
+      } catch (e) {
+        console.log('Analysis failed:', e.message);
+      }
+    }
+    
+    // Store metadata
+    imageMetadata.set(fileName, {
+      marketplace: finalMarketplace || 'Не определён',
+      page: finalPage || 'Не определена',
+      date: date || new Date().toISOString().split('T')[0],
+      description: `Загружено с: ${url.substring(0, 50)}...`,
+      tag: tag || 'web'
+    });
+    
+    await saveMetadata();
+    
+    const { data: urlData } = supabase.storage
+      .from(BUCKET)
+      .getPublicUrl(filePath);
+    
+    res.json({
+      success: true,
+      id: fileName,
+      url: urlData.publicUrl,
+      marketplace: finalMarketplace,
+      page: finalPage
     });
     
   } catch (error) {
     console.error('Screenshot URL error:', error);
-    res.status(500).json({ error: 'Failed to create screenshot', details: error.message });
+    res.status(500).json({ error: 'Не удалось загрузить изображение', details: error.message });
   }
 });
 
