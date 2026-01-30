@@ -1042,35 +1042,26 @@ app.post('/api/screenshot-url', express.json(), async (req, res) => {
     
     console.log('Creating screenshot from URL:', url);
     
-    // Use screenshotone.com API (free tier available)
-    // Or use alternative services
-    const screenshotApiKey = process.env.SCREENSHOT_API_KEY;
+    // Use Thum.io - free screenshot API with good bot bypass
+    // Parameters: width, crop (height), wait (delay), noanimate
+    const thumUrl = `https://image.thum.io/get/width/1920/crop/1080/wait/5/noanimate/https://${url.replace(/^https?:\/\//, '')}`;
     
-    let imageBuffer;
+    console.log('Requesting screenshot from Thum.io...');
     
-    if (screenshotApiKey) {
-      // Use ScreenshotOne API
-      const apiUrl = `https://api.screenshotone.com/take?access_key=${screenshotApiKey}&url=${encodeURIComponent(url)}&viewport_width=1920&viewport_height=1080&format=png&block_ads=true&block_trackers=true&delay=5&timeout=60`;
-      
-      const response = await fetch(apiUrl);
-      if (!response.ok) {
-        throw new Error(`Screenshot API error: ${response.status}`);
+    const response = await fetch(thumUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
       }
-      imageBuffer = Buffer.from(await response.arrayBuffer());
-    } else {
-      // Fallback: Use free microlink API
-      const microlinkUrl = `https://api.microlink.io/?url=${encodeURIComponent(url)}&screenshot=true&meta=false&embed=screenshot.url`;
-      
-      const response = await fetch(microlinkUrl);
-      const data = await response.json();
-      
-      if (data.status !== 'success' || !data.data?.screenshot?.url) {
-        throw new Error('Microlink API failed');
-      }
-      
-      // Download the screenshot image
-      const imgResponse = await fetch(data.data.screenshot.url);
-      imageBuffer = Buffer.from(await imgResponse.arrayBuffer());
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Screenshot API error: ${response.status}`);
+    }
+    
+    const imageBuffer = Buffer.from(await response.arrayBuffer());
+    
+    if (imageBuffer.length < 1000) {
+      throw new Error('Screenshot too small, probably failed');
     }
     
     console.log('Screenshot captured, size:', imageBuffer.length);
