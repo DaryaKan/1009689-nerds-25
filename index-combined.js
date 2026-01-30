@@ -1059,24 +1059,13 @@ app.post('/api/screenshot-url', express.json(), async (req, res) => {
     
     const browserPage = await browser.newPage();
     
-    // Set mobile viewport (iPhone 12 Pro)
-    const isMobile = device !== 'desktop';
-    if (isMobile) {
-      await browserPage.setViewport({
-        width: 390,
-        height: 844,
-        deviceScaleFactor: 3,
-        isMobile: true,
-        hasTouch: true
-      });
-      await browserPage.setUserAgent('Mozilla/5.0 (iPhone; CPU iPhone OS 14_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0 Mobile/15E148 Safari/604.1');
-    } else {
-      await browserPage.setViewport({
-        width: 1440,
-        height: 900,
-        deviceScaleFactor: 2
-      });
-    }
+    // Set desktop viewport by default
+    await browserPage.setViewport({
+      width: 1440,
+      height: 900,
+      deviceScaleFactor: 2
+    });
+    await browserPage.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
     
     // Navigate to URL
     await browserPage.goto(url, {
