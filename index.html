@@ -964,6 +964,54 @@
       color: var(--accent);
     }
 
+    .upload-tabs {
+      display: flex;
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+    }
+
+    .upload-tab {
+      flex: 1;
+      padding: 14px 16px;
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      color: var(--text-secondary);
+      font-size: 14px;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .upload-tab:hover {
+      color: var(--text);
+      background: var(--bg-elevated);
+    }
+
+    .upload-tab.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+
+    .upload-tab-content {
+      display: none;
+    }
+
+    .upload-tab-content.active {
+      display: block;
+    }
+
+    .form-hint {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-top: 6px;
+    }
+
+    .optional {
+      font-weight: normal;
+      color: var(--text-secondary);
+    }
+
     .modal-body {
       padding: 24px;
     }
@@ -1541,11 +1589,19 @@
   <div class="modal-overlay" id="uploadModal">
     <div class="modal">
       <div class="modal-header">
-        <h2 class="modal-title">Загрузить скриншот</h2>
+        <h2 class="modal-title">Добавить</h2>
         <button class="modal-close" onclick="closeUploadModal()">×</button>
       </div>
+      
+      <!-- Tabs -->
+      <div class="upload-tabs">
+        <button type="button" class="upload-tab active" data-tab="screenshot" onclick="switchUploadTab('screenshot')">📱 Скриншот</button>
+        <button type="button" class="upload-tab" data-tab="link" onclick="switchUploadTab('link')">🔗 Ссылка</button>
+      </div>
+      
       <div class="modal-body">
-        <form id="uploadForm" onsubmit="handleUpload(event)">
+        <!-- Screenshot Tab -->
+        <form id="uploadForm" onsubmit="handleUpload(event)" class="upload-tab-content active" data-tab="screenshot">
           <div class="form-group">
             <label class="form-label">Изображение</label>
             <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()">
@@ -1580,11 +1636,63 @@
           </div>
 
           <div class="form-group">
+            <label class="form-label">Тип</label>
+            <div class="tag-toggle">
+              <button type="button" class="tag-toggle-btn active" data-tag="app" id="uploadTagApp" onclick="setUploadTag('app')">📱 App</button>
+              <button type="button" class="tag-toggle-btn" data-tag="web" id="uploadTagWeb" onclick="setUploadTag('web')">🌐 Web</button>
+            </div>
+          </div>
+
+          <div class="form-group">
             <label class="form-label">Описание (необязательно)</label>
             <input type="text" class="form-input" id="description" placeholder="Краткое описание">
           </div>
 
           <button type="submit" class="submit-btn" id="submitBtn" disabled>Загрузить</button>
+        </form>
+        
+        <!-- Link Tab -->
+        <form id="linkForm" onsubmit="handleLinkUpload(event)" class="upload-tab-content" data-tab="link">
+          <div class="form-group">
+            <label class="form-label">Ссылка на страницу</label>
+            <input type="url" class="form-input" id="linkUrl" placeholder="https://..." required>
+            <div class="form-hint">Введите URL страницы маркетплейса для создания скриншота</div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Маркетплейс <span class="optional">(опционально)</span></label>
+            <div class="combo-select">
+              <select class="form-select" id="linkMarketplace" onchange="handleComboSelect(this, 'linkMarketplaceCustom')">
+                <option value="">Определить автоматически</option>
+              </select>
+              <input type="text" class="form-input combo-input" id="linkMarketplaceCustom" placeholder="Введите название..." style="display:none">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Страница / Раздел <span class="optional">(опционально)</span></label>
+            <div class="combo-select">
+              <select class="form-select" id="linkPageName" onchange="handleComboSelect(this, 'linkPageNameCustom')">
+                <option value="">Определить автоматически</option>
+              </select>
+              <input type="text" class="form-input combo-input" id="linkPageNameCustom" placeholder="Введите название..." style="display:none">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Дата</label>
+            <input type="date" class="form-input" id="linkDate" required>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Тип</label>
+            <div class="tag-toggle">
+              <button type="button" class="tag-toggle-btn" data-tag="app" id="linkTagApp" onclick="setLinkTag('app')">📱 App</button>
+              <button type="button" class="tag-toggle-btn active" data-tag="web" id="linkTagWeb" onclick="setLinkTag('web')">🌐 Web</button>
+            </div>
+          </div>
+
+          <button type="submit" class="submit-btn" id="linkSubmitBtn">🔍 Создать скриншот</button>
         </form>
       </div>
     </div>
@@ -1959,8 +2067,15 @@
       return div.innerHTML;
     }
 
+    let currentUploadTag = 'app';
+    let currentLinkTag = 'web';
+
     function openUploadModal() {
       document.getElementById('uploadModal').classList.add('active');
+      // Set today's date for link form
+      document.getElementById('linkDate').value = new Date().toISOString().split('T')[0];
+      // Populate link form selects
+      populateLinkSelects();
     }
 
     function closeUploadModal() {
@@ -1968,12 +2083,54 @@
       resetForm();
     }
 
+    function switchUploadTab(tab) {
+      // Update tab buttons
+      document.querySelectorAll('.upload-tab').forEach(t => {
+        t.classList.toggle('active', t.dataset.tab === tab);
+      });
+      // Update tab content
+      document.querySelectorAll('.upload-tab-content').forEach(c => {
+        c.classList.toggle('active', c.dataset.tab === tab);
+      });
+    }
+
+    function setUploadTag(tag) {
+      currentUploadTag = tag;
+      document.getElementById('uploadTagApp').classList.toggle('active', tag === 'app');
+      document.getElementById('uploadTagWeb').classList.toggle('active', tag === 'web');
+    }
+
+    function setLinkTag(tag) {
+      currentLinkTag = tag;
+      document.getElementById('linkTagApp').classList.toggle('active', tag === 'app');
+      document.getElementById('linkTagWeb').classList.toggle('active', tag === 'web');
+    }
+
+    function populateLinkSelects() {
+      const linkMpSelect = document.getElementById('linkMarketplace');
+      const linkPgSelect = document.getElementById('linkPageName');
+      
+      // Get options from main selects
+      const mpOptions = document.getElementById('marketplace').innerHTML;
+      const pgOptions = document.getElementById('pageName').innerHTML;
+      
+      linkMpSelect.innerHTML = '<option value="">Определить автоматически</option>' + mpOptions;
+      linkPgSelect.innerHTML = '<option value="">Определить автоматически</option>' + pgOptions;
+    }
+
     function resetForm() {
       document.getElementById('uploadForm').reset();
+      document.getElementById('linkForm').reset();
       document.getElementById('previewImage').style.display = 'none';
       document.getElementById('uploadZone').style.display = 'block';
       document.getElementById('submitBtn').disabled = true;
       selectedFile = null;
+      currentUploadTag = 'app';
+      currentLinkTag = 'web';
+      
+      // Reset upload tags
+      setUploadTag('app');
+      setLinkTag('web');
       
       // Reset combo selects
       document.getElementById('marketplace').style.display = 'block';
@@ -1982,6 +2139,59 @@
       document.getElementById('pageName').style.display = 'block';
       document.getElementById('pageNameCustom').style.display = 'none';
       document.getElementById('pageNameCustom').value = '';
+      
+      // Reset link combo selects
+      document.getElementById('linkMarketplace').style.display = 'block';
+      document.getElementById('linkMarketplaceCustom').style.display = 'none';
+      document.getElementById('linkMarketplaceCustom').value = '';
+      document.getElementById('linkPageName').style.display = 'block';
+      document.getElementById('linkPageNameCustom').style.display = 'none';
+      document.getElementById('linkPageNameCustom').value = '';
+      
+      // Switch to screenshot tab
+      switchUploadTab('screenshot');
+    }
+
+    async function handleLinkUpload(e) {
+      e.preventDefault();
+      
+      const url = document.getElementById('linkUrl').value.trim();
+      const marketplace = getComboValue('linkMarketplace', 'linkMarketplaceCustom');
+      const page = getComboValue('linkPageName', 'linkPageNameCustom');
+      const date = document.getElementById('linkDate').value;
+      
+      const submitBtn = document.getElementById('linkSubmitBtn');
+      submitBtn.disabled = true;
+      submitBtn.textContent = '⏳ Создание скриншота...';
+      
+      try {
+        const response = await fetch(`${API_URL}/api/screenshot-url`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            url,
+            marketplace: marketplace || undefined,
+            page: page || undefined,
+            date,
+            tag: currentLinkTag
+          })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          showToast('Скриншот создан!', 'success');
+          closeUploadModal();
+          loadImages();
+        } else {
+          showToast(data.error || 'Ошибка создания скриншота', 'error');
+        }
+      } catch (err) {
+        showToast('Ошибка: ' + err.message, 'error');
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = '🔍 Создать скриншот';
+      }
     }
 
     // File handling
@@ -2038,7 +2248,8 @@
         marketplace: getComboValue('marketplace', 'marketplaceCustom'),
         page: getComboValue('pageName', 'pageNameCustom'),
         date: document.getElementById('screenshotDate').value,
-        description: document.getElementById('description').value
+        description: document.getElementById('description').value,
+        tag: currentUploadTag
       };
 
       const formData = new FormData();

@@ -1023,6 +1023,29 @@ async function saveMetadata() {
 // Load metadata on startup
 loadMetadata();
 
+// Create screenshot from URL (placeholder - requires puppeteer for full implementation)
+app.post('/api/screenshot-url', express.json(), async (req, res) => {
+  try {
+    const { url, marketplace, page, date, tag } = req.body;
+    
+    if (!url) {
+      return res.status(400).json({ error: 'URL is required' });
+    }
+    
+    // For now, return a message that this feature requires additional setup
+    // Full implementation would use puppeteer to capture screenshots
+    res.status(501).json({ 
+      error: 'Функция создания скриншотов по URL требует дополнительной настройки (Puppeteer)',
+      message: 'Эта функция будет доступна после установки headless browser на сервере',
+      url: url
+    });
+    
+  } catch (error) {
+    console.error('Screenshot URL error:', error);
+    res.status(500).json({ error: 'Failed to create screenshot', details: error.message });
+  }
+});
+
 // Upload single image
 app.post('/api/upload', upload.single('image'), async (req, res) => {
   try {
@@ -1063,7 +1086,8 @@ app.post('/api/upload', upload.single('image'), async (req, res) => {
       marketplace: metadata.marketplace || '',
       page: metadata.page || '',
       date: metadata.date || new Date().toISOString().split('T')[0],
-      description: metadata.description || ''
+      description: metadata.description || '',
+      tag: metadata.tag || 'app'
     });
     
     // Save metadata to storage
