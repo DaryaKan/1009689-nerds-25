@@ -1455,15 +1455,10 @@
 
       <div class="filter-dropdown" id="dateDropdown">
         <button class="filter-dropdown-btn" onclick="toggleDropdown('dateDropdown')">
-          Дата <span class="arrow">▼</span>
+          Период <span class="arrow">▼</span>
         </button>
-        <div class="filter-dropdown-menu">
-          <div class="date-filter-content">
-            <label>От</label>
-            <input type="date" id="dateFrom" onchange="applyFilters(); updateDropdownButtons()">
-            <label>До</label>
-            <input type="date" id="dateTo" onchange="applyFilters(); updateDropdownButtons()">
-          </div>
+        <div class="filter-dropdown-menu" id="dateFilters">
+          <!-- Generated dynamically -->
         </div>
       </div>
 
@@ -2275,18 +2270,24 @@
     }
 
     // Update filter options and selects
+    const monthNames = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 
+                        'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'];
+
     function updateFilters() {
       // Save current filter selections before rebuilding
       const selectedMarketplaces = [...document.querySelectorAll('#marketplaceFilters input:checked')].map(el => el.value);
       const selectedPages = [...document.querySelectorAll('#pageFilters input:checked')].map(el => el.value);
+      const selectedDates = [...document.querySelectorAll('#dateFilters input:checked')].map(el => el.value);
 
       const marketplaces = {};
       const pages = {};
+      const dates = {};
 
       allImages.forEach(img => {
         // Normalize marketplace name
         let mp = normalizeMarketplace(img.metadata?.marketplace) || 'Не указан';
         const pg = img.metadata?.page || 'Не указана';
+        const date = img.metadata?.date || '';
         
         // Skip unknown/empty values in counts
         if (mp && mp !== 'Не указан') {
@@ -2295,6 +2296,15 @@
           marketplaces['Не указан'] = (marketplaces['Не указан'] || 0) + 1;
         }
         pages[pg] = (pages[pg] || 0) + 1;
+        
+        // Extract month-year from date
+        if (date) {
+          const [year, month] = date.split('-');
+          if (year && month) {
+            const key = `${year}-${month}`;
+            dates[key] = (dates[key] || 0) + 1;
+          }
+        }
       });
 
       // Update filter dropdowns with logos
@@ -2317,6 +2327,22 @@
           </div>
         `).join('');
 
+      // Update date filters - sorted by date descending (newest first)
+      const sortedDates = Object.entries(dates).sort((a, b) => b[0].localeCompare(a[0]));
+      document.getElementById('dateFilters').innerHTML = sortedDates
+        .map(([key, count]) => {
+          const [year, month] = key.split('-');
+          const monthName = monthNames[parseInt(month) - 1];
+          const label = `${monthName} ${year}`;
+          return `
+            <div class="filter-option">
+              <input type="checkbox" id="dt-${key}" value="${key}" ${selectedDates.includes(key) ? 'checked' : ''} onchange="applyFilters(); updateDropdownButtons()">
+              <label for="dt-${key}">${label}</label>
+              <span class="option-count">${count}</span>
+            </div>
+          `;
+        }).join('');
+
       // Update dropdown buttons to reflect restored selections
       updateDropdownButtons();
 
@@ -2337,8 +2363,7 @@
     function updateDropdownButtons() {
       const mpCount = document.querySelectorAll('#marketplaceFilters input:checked').length;
       const pgCount = document.querySelectorAll('#pageFilters input:checked').length;
-      const dateFrom = document.getElementById('dateFrom').value;
-      const dateTo = document.getElementById('dateTo').value;
+      const dtCount = document.querySelectorAll('#dateFilters input:checked').length;
 
       const mpBtn = document.querySelector('#marketplaceDropdown .filter-dropdown-btn');
       const pgBtn = document.querySelector('#pageDropdown .filter-dropdown-btn');
@@ -2350,17 +2375,17 @@
       pgBtn.innerHTML = `Страница ${pgCount ? `<span class="count">${pgCount}</span>` : ''} <span class="arrow">▼</span>`;
       pgBtn.classList.toggle('active', pgCount > 0);
 
-      dateBtn.classList.toggle('active', dateFrom || dateTo);
+      dateBtn.innerHTML = `Период ${dtCount ? `<span class="count">${dtCount}</span>` : ''} <span class="arrow">▼</span>`;
+      dateBtn.classList.toggle('active', dtCount > 0);
     }
 
     // Apply filters
     function applyFilters() {
       const search = document.getElementById('searchInput').value.toLowerCase();
-      const dateFrom = document.getElementById('dateFrom').value;
-      const dateTo = document.getElementById('dateTo').value;
 
       const selectedMarketplaces = [...document.querySelectorAll('#marketplaceFilters input:checked')].map(el => el.value);
       const selectedPages = [...document.querySelectorAll('#pageFilters input:checked')].map(el => el.value);
+      const selectedDates = [...document.querySelectorAll('#dateFilters input:checked')].map(el => el.value);
 
       const filtered = allImages.filter(img => {
         // Normalize marketplace for filtering
@@ -2387,8 +2412,13 @@
           return false;
         }
 
-        if (dateFrom && date < dateFrom) return false;
-        if (dateTo && date > dateTo) return false;
+        // Date filter by month-year
+        if (selectedDates.length > 0) {
+          if (!date) return false;
+          const [year, month] = date.split('-');
+          const dateKey = `${year}-${month}`;
+          if (!selectedDates.includes(dateKey)) return false;
+        }
 
         return true;
       });
@@ -2399,8 +2429,6 @@
     // Clear filters
     function clearFilters() {
       document.getElementById('searchInput').value = '';
-      document.getElementById('dateFrom').value = '';
-      document.getElementById('dateTo').value = '';
       document.querySelectorAll('.filter-dropdown-menu input[type="checkbox"]').forEach(el => el.checked = false);
       setTagFilter('all');
       updateDropdownButtons();
