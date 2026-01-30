@@ -8,4 +8,7 @@
 *.sublime*
 node_modules/
 npm-debug.*
+.env
+server/.env
+server/uploads/
 Thumbs.db

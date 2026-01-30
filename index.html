@@ -1,159 +1,2892 @@
 <!DOCTYPE html>
 <html lang="ru">
-  <head>
-    <meta charset="utf-8">
-    <link rel="stylesheet" href="css/normalize.css">
-    <link rel="stylesheet" href="css/style.min.css"/>
-    <link href="https://fonts.googleapis.com/css?family=Roboto:400,500,700&display=swap&subset=cyrillic" rel="stylesheet">
-    <title>Нёрдс</title>
-  </head>
-  <body>
-    <header class="main-header">
-      <nav class="main-navigation">
-        <a class="main-header-logo">
-          <img src="img/nerds-logo.svg" width="160" height="65" alt="Нёрдс">
-        </a>
-        <ul class="site-navigation">
-          <li><a class="current" href="index.html">СТУДИЯ</a></li>
-          <li><a href="clients.html">КЛИЕНТЫ</a></li>
-          <li><a href="catalog.html">МАГАЗИН</a></li>
-          <li><a href="contacts.html">КОНТАКТЫ</a></li>
-        </ul>
-        <div class="order-cart"><a href="#">Корзина</a></div>
-      </nav>
-      <section class="carousel">
-        <input type="radio" name="point" id="slide1" class="slide1" checked="">
-        <input type="radio" name="point" id="slide2" class="slide2">
-        <input type="radio" name="point" id="slide3" class="slide3">
-        <div class="slider">
-          <div class="slides slide1">
-            <p><span>Долго, дорого,<br>скрупулезно.</span></p>
-            <p>Математически выверенный дизайн<br>для вашего сайта и мобильного приложения.</p>
-            <a href="more.html" class="button">Узнать больше</a>
-          </div>
-          <div class="slides slide2">
-            <p><span>Любим математику,<br>как никто другой</span></p>
-            <p>Никакого креатива, только математические формулы<br>для расчета идеальных пропорций.</p>
-            <a href="more.html" class="button">Узнать больше</a>
-          </div>
-          <div class="slides slide3">
-            <p><span>Только ночь,<br>только хардкор</span></p>
-            <p>Работаем днем, как все? Мы против этого.<br>Ближе к полуночи работа только начинается.</p>
-            <a href="more.html" class="button">Узнать больше</a>
-          </div>
-        </div>	
-        <div class="controls">
-          <label for="slide1"></label>
-          <label for="slide2"></label>
-          <label for="slide3"></label>
-        </div>
-      </section>
-    </header>
-    <main class="container">
-      <h1 class="visually-hidden">Студия "Нёрдс"</h1>
-      <section class="advantages">
-      <h2 class="visually-hidden">Наши услуги</h2>
-        <div class="flex-box">
-          <div class="box item-sites">
-            <h3>Веб-сайты</h3>
-              <p>Мир никогда не будет прежним после того как увидит ваш сайт!</p>
-              <a href="catalog.html" class="button button-order-red">Заказать</a>
-          </div>
-          <div class="box item-apps">
-            <h3>Приложения</h3>
-              <p>Покорите топ-10 приложений в AppStore и Google Play</p>
-              <a href="catalog.html" class="button button-order-green">Заказать</a>
-          </div>
-          <div class="box item-pres">
-            <h3>Презентации</h3>
-              <p>Вы даже не подозреваете, насколько вы изумительны!</p>
-              <a href="catalog.html" class="button button-order-yellow">Заказать</a>
-          </div>
-        </div>
-      </section>
-      <section class="studio">
-        <h2 class="visually-hidden">О студии "Нёрдс"</h2>
-          <div class="about-us">
-            <p><span>Мы — маленькая, но гордая дизайн-студия из Краснодара.</span></p>
-            <p>Исповедуем принципы минимализма и чистоты. Ставим математический расчет превыше креатива. Работаем не покладая рук, как роботы.</p>
-            <h3>Выполняем заказы на разработку:</h3>
-            <ul>
-              <li>Веб-сайтов любой сложности</li>
-              <li>Мобильных приложений для IOS и Android</li>
-              <li>Слайдшоу и видео для корпоративных презентаций</li>
-            </ul>
-          </div>
-          <div class="progress">
-            <table class="progress-table">
-              <caption>С 2004 года любим точноcть во всем:</caption>
-              <tbody><tr class="row">
-                <td class="percent">146<sup>%</sup></td>
-                <td class="percent">100<sup>%</sup></td>
-                <td class="percent">50<sup>%</sup></td>
-              </tr>
-              <tr class="row">
-                <td class="title">Уровень самоотдачи</td>
-                <td class="title">Соблюдение сроков</td>
-                <td class="title">Минимальная предоплата</td>
-              </tr>
-            </tbody></table>
-          </div>
-      </section>
-      <ul class="partners">
-          <li><a href="https://htmlacademy.ru/" class="htmlacademy">
-            <img src="img/logo-1.png" width="199" height="68" alt="Логотип htmlacademy">
-          </a></li>
-          <li><a href="#" class="borodinski">
-            <img src="img/logo-2.png" width="209" height="87" alt="Логотип borodinski">
-          </a></li>
-          <li><a href="#" class="pink">
-            <img src="img/logo-3.png" width="185" height="52" alt="Логотип pink">
-          </a>
-          </li><li><a href="#" class="mishka">
-            <img src="img/logo-4.png" width="173" height="84" alt="Логотип mishka">
-          </a></li>
-        </ul>
-    </main>
-    <section class="contacts">
-      <h2 class="visually-hidden">Наши контакты</h2>
-      <div class="center">
-        <div class="contacts-card">
-          <h3>Nёrds design studio</h3>
-            <p>191186, Санкт-Петербург,
-            ул. Б. Конюшенная, д. 19/8</p>
-            <p>тел. +7 (812) 275-75-75</p>
-            <a href="email.html" class="button contacts-button">Напишите нам</a>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Screenshot Library - Библиотека скриншотов</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      /* Gemini-inspired colors */
+      --bg: #131314;
+      --bg-secondary: #1e1f20;
+      --bg-elevated: #282a2c;
+      --card-bg: #1e1f20;
+      --text: #e3e3e3;
+      --text-secondary: #9aa0a6;
+      --text-muted: #5f6368;
+      --border: rgba(255, 255, 255, 0.08);
+      --border-hover: rgba(255, 255, 255, 0.16);
+      
+      /* Gemini gradient colors */
+      --gradient-blue: #4285f4;
+      --gradient-purple: #9b72cb;
+      --gradient-pink: #d96570;
+      --gradient-orange: #f4a261;
+      
+      /* Accent */
+      --accent: #8ab4f8;
+      --accent-hover: #aecbfa;
+      --accent-glow: rgba(138, 180, 248, 0.3);
+      
+      /* Effects */
+      --shadow: 0 4px 32px rgba(0, 0, 0, 0.4);
+      --shadow-glow: 0 0 40px rgba(138, 180, 248, 0.15);
+      --input-bg: #282a2c;
+    }
+
+    body {
+      font-family: 'Google Sans', 'Nunito', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg);
+      min-height: 100vh;
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    
+    /* Gemini gradient background effect */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 400px;
+      background: radial-gradient(ellipse 80% 50% at 50% -20%, rgba(138, 180, 248, 0.15), transparent),
+                  radial-gradient(ellipse 60% 40% at 80% 10%, rgba(155, 114, 203, 0.1), transparent);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Header - Gemini style */
+    .header {
+      background: rgba(19, 19, 20, 0.8);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 24px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .header-content {
+      max-width: 1400px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .logo {
+      font-size: 18px;
+      font-weight: 500;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      white-space: nowrap;
+    }
+    
+    .logo-icon {
+      width: 28px;
+      height: 28px;
+      background: linear-gradient(135deg, var(--gradient-blue), var(--gradient-purple), var(--gradient-pink));
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+    }
+
+    .logo span {
+      background: linear-gradient(90deg, var(--gradient-blue), var(--gradient-purple));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .header-search {
+      flex: 1;
+      max-width: 400px;
+    }
+
+    .search-input {
+      width: 100%;
+      padding: 12px 16px;
+      padding-left: 44px;
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      font-size: 14px;
+      color: var(--text);
+      background: var(--bg-secondary) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%239aa0a6'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z'%3E%3C/path%3E%3C/svg%3E") no-repeat 14px center;
+      background-size: 18px;
+      transition: all 0.2s ease;
+    }
+
+    .search-input::placeholder {
+      color: var(--text-muted);
+    }
+
+    .search-input:focus {
+      outline: none;
+      border-color: var(--accent);
+      background-color: var(--bg-elevated);
+      box-shadow: 0 0 0 2px var(--accent-glow);
+    }
+
+    .upload-btn {
+      background: linear-gradient(135deg, var(--gradient-blue), var(--gradient-purple));
+      color: #fff;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+      box-shadow: 0 2px 8px rgba(66, 133, 244, 0.3);
+    }
+    
+    .upload-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 16px rgba(66, 133, 244, 0.4);
+    }
+    
+    .compare-btn {
+      background: var(--bg-elevated);
+      color: var(--accent);
+      border: 1px solid var(--border);
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+    
+    .compare-btn:hover {
+      background: var(--bg-secondary);
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px var(--accent-glow);
+    }
+    
+    .compare-tag {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      padding: 8px 14px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+      position: relative;
+      z-index: 1;
+    }
+    
+    .compare-tag:hover {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+      transform: translateY(-1px);
+    }
+    
+    .compare-tag:active {
+      transform: translateY(0);
+    }
+    
+    /* AI Side Panel */
+    .ai-panel {
+      position: fixed;
+      top: 0;
+      right: -480px;
+      width: 480px;
+      height: 100vh;
+      background: var(--bg);
+      border-left: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      z-index: 1100;
+      transition: right 0.3s ease;
+      box-shadow: -8px 0 32px rgba(0, 0, 0, 0.4);
+    }
+    
+    .ai-panel.open {
+      right: 0;
+    }
+    
+    .ai-panel-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 1099;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s ease;
+    }
+    
+    .ai-panel-overlay.visible {
+      opacity: 1;
+      visibility: visible;
+    }
+    
+    .ai-panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-secondary);
+    }
+    
+    .ai-panel-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .ai-sparkle {
+      background: linear-gradient(135deg, var(--gradient-blue), var(--gradient-purple));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      font-size: 18px;
+    }
+    
+    .ai-panel-close {
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      font-size: 24px;
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 6px;
+      transition: all 0.2s ease;
+    }
+    
+    .ai-panel-close:hover {
+      background: var(--bg-elevated);
+      color: var(--text);
+    }
+    
+    /* Chat Area */
+    .ai-chat {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    
+    .ai-message {
+      display: flex;
+      gap: 12px;
+      max-width: 100%;
+      position: relative;
+    }
+    
+    .ai-message:hover .ai-msg-delete {
+      opacity: 1;
+    }
+    
+    .ai-msg-delete {
+      position: absolute;
+      top: 0;
+      right: -28px;
+      width: 24px;
+      height: 24px;
+      border: none;
+      background: var(--bg-elevated);
+      color: var(--text-secondary);
+      border-radius: 50%;
+      cursor: pointer;
+      opacity: 0;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+    }
+    
+    .ai-message.user .ai-msg-delete {
+      right: auto;
+      left: -28px;
+    }
+    
+    .ai-msg-delete:hover {
+      background: rgba(255, 68, 68, 0.2);
+      color: #ff6b6b;
+    }
+    
+    .ai-message.user {
+      flex-direction: row-reverse;
+    }
+    
+    .ai-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--gradient-blue), var(--gradient-purple));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      color: #fff;
+      flex-shrink: 0;
+    }
+    
+    .ai-message.user .ai-avatar {
+      background: var(--bg-elevated);
+      color: var(--text);
+    }
+    
+    .ai-bubble {
+      background: var(--bg-secondary);
+      border-radius: 16px;
+      padding: 12px 16px;
+      max-width: calc(100% - 44px);
+      line-height: 1.5;
+      font-size: 14px;
+    }
+    
+    .ai-message.user .ai-bubble {
+      background: linear-gradient(135deg, var(--gradient-blue), var(--gradient-purple));
+      color: #fff;
+      border-radius: 16px 16px 4px 16px;
+    }
+    
+    .ai-bubble p {
+      margin: 0;
+    }
+    
+    .ai-bubble p + p {
+      margin-top: 8px;
+    }
+    
+    .ai-suggestions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+    }
+    
+    .ai-suggestion {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 8px 12px;
+      border-radius: 16px;
+      font-size: 12px;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    
+    .ai-suggestion:hover {
+      background: var(--bg);
+      border-color: var(--accent);
+      transform: translateY(-1px);
+    }
+    
+    /* Images in chat */
+    .ai-images {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      margin-top: 12px;
+      padding-bottom: 4px;
+    }
+    
+    .ai-images img {
+      width: 80px;
+      height: 80px;
+      object-fit: cover;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: transform 0.2s ease;
+    }
+    
+    .ai-images img:hover {
+      transform: scale(1.05);
+    }
+    
+    /* Loading animation */
+    .ai-typing {
+      display: flex;
+      gap: 4px;
+      padding: 8px 0;
+    }
+    
+    .ai-typing span {
+      width: 8px;
+      height: 8px;
+      background: var(--text-secondary);
+      border-radius: 50%;
+      animation: typing 1.4s infinite;
+    }
+    
+    .ai-typing span:nth-child(2) {
+      animation-delay: 0.2s;
+    }
+    
+    .ai-typing span:nth-child(3) {
+      animation-delay: 0.4s;
+    }
+    
+    @keyframes typing {
+      0%, 60%, 100% {
+        transform: translateY(0);
+        opacity: 0.4;
+      }
+      30% {
+        transform: translateY(-4px);
+        opacity: 1;
+      }
+    }
+    
+    /* Input Area */
+    .ai-input-area {
+      padding: 16px 20px;
+      border-top: 1px solid var(--border);
+      background: var(--bg-secondary);
+    }
+    
+    .ai-input-wrapper {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 8px 8px 8px 16px;
+      transition: border-color 0.2s ease;
+    }
+    
+    .ai-input-wrapper:focus-within {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px var(--accent-glow);
+    }
+    
+    .ai-input {
+      flex: 1;
+      background: none;
+      border: none;
+      color: var(--text);
+      font-size: 14px;
+      font-family: inherit;
+      resize: none;
+      max-height: 120px;
+      line-height: 1.5;
+      outline: none;
+    }
+    
+    .ai-input::placeholder {
+      color: var(--text-secondary);
+    }
+    
+    .ai-send {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: none;
+      background: linear-gradient(135deg, var(--gradient-blue), var(--gradient-purple));
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      flex-shrink: 0;
+    }
+    
+    .ai-send:hover {
+      transform: scale(1.05);
+      box-shadow: 0 4px 12px rgba(66, 133, 244, 0.4);
+    }
+    
+    .ai-send:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* Mobile responsive */
+    @media (max-width: 520px) {
+      .ai-panel {
+        width: 100%;
+        right: -100%;
+      }
+    }
+
+    .upload-btn:hover {
+      background: var(--accent-hover);
+    }
+
+    /* Filters Bar */
+    .filters-bar {
+      background: rgba(30, 31, 32, 0.6);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 24px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .filters-content {
+      max-width: 1400px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .filter-dropdown {
+      position: relative;
+    }
+
+    .filter-dropdown-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 14px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 13px;
+      color: var(--text-primary);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .filter-dropdown-btn:hover {
+      border-color: var(--accent);
+    }
+
+    .filter-dropdown-btn.active {
+      border-color: var(--accent);
+      background: rgba(0, 131, 255, 0.1);
+    }
+
+    .filter-dropdown-btn .arrow {
+      font-size: 10px;
+      transition: transform 0.2s;
+    }
+
+    .filter-dropdown.open .filter-dropdown-btn .arrow {
+      transform: rotate(180deg);
+    }
+
+    .filter-dropdown-btn .count {
+      background: var(--accent);
+      color: #fff;
+      font-size: 11px;
+      padding: 2px 6px;
+      border-radius: 10px;
+      margin-left: 4px;
+    }
+
+    .filter-dropdown-menu {
+      position: absolute;
+      top: calc(100% + 8px);
+      left: 0;
+      min-width: 220px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      box-shadow: var(--shadow);
+      z-index: 50;
+      display: none;
+      max-height: 320px;
+      overflow-y: auto;
+      padding: 8px;
+    }
+
+    .filter-dropdown.open .filter-dropdown-menu {
+      display: block;
+      animation: fadeIn 0.15s ease;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .filter-option {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      cursor: pointer;
+      transition: background 0.15s;
+      color: var(--text);
+      border-radius: 10px;
+    }
+
+    .filter-option:hover {
+      background: var(--bg-secondary);
+    }
+
+    .filter-option input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+
+    .filter-option label {
+      flex: 1;
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    .filter-option .option-count {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .date-filter-content {
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .date-filter-content label {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+    }
+
+    .date-filter-content input {
+      padding: 8px 10px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 13px;
+      width: 100%;
+    }
+
+    .date-filter-content input:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .tag-filter {
+      display: flex;
+      gap: 4px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 4px;
+    }
+
+    .tag-btn {
+      padding: 6px 12px;
+      background: transparent;
+      border: none;
+      border-radius: 6px;
+      font-size: 12px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+
+    .tag-btn:hover {
+      background: var(--bg-elevated);
+      color: var(--text);
+    }
+
+    .tag-btn.active {
+      background: linear-gradient(135deg, var(--gradient-blue), var(--gradient-purple));
+      color: #fff;
+    }
+
+    .tag-toggle {
+      display: flex;
+      gap: 4px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 4px;
+    }
+
+    .tag-toggle-btn {
+      padding: 6px 14px;
+      background: transparent;
+      border: none;
+      border-radius: 6px;
+      font-size: 13px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+
+    .tag-toggle-btn:hover {
+      background: var(--bg-elevated);
+      color: var(--text);
+    }
+
+    .tag-toggle-btn.active {
+      background: linear-gradient(135deg, var(--gradient-blue), var(--gradient-purple));
+      color: #fff;
+    }
+
+    .clear-filters-btn {
+      padding: 8px 14px;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 13px;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .clear-filters-btn:hover {
+      border-color: #dc2626;
+      color: #dc2626;
+    }
+
+    .results-count {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-left: auto;
+    }
+
+    /* Main Layout */
+    .main {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    /* Content Area */
+    .content {
+      min-height: 500px;
+    }
+
+    /* Gallery Grid */
+    .gallery {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 20px;
+    }
+
+    /* Card */
+    .card {
+      background: var(--card-bg);
+      border-radius: 16px;
+      overflow: hidden;
+      transition: all 0.3s ease;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      position: relative;
+    }
+    
+    .card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 16px;
+      padding: 1px;
+      background: linear-gradient(135deg, transparent, transparent);
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-glow);
+      border-color: var(--border-hover);
+      box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08);
+      border-color: var(--accent);
+    }
+
+    .card-image {
+      position: relative;
+      aspect-ratio: 16/10;
+      overflow: hidden;
+      background: var(--bg-secondary);
+    }
+
+    .card-image img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .card-body {
+      padding: 16px;
+    }
+
+    .card-title {
+      font-size: 14px;
+      font-weight: 500;
+      margin-bottom: 8px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      color: var(--text-primary);
+    }
+
+    .card-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .card-date {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .card-actions {
+      display: flex;
+      gap: 8px;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    .card:hover .card-actions {
+      opacity: 1;
+    }
+
+    .action-btn {
+      width: 28px;
+      height: 28px;
+      border: none;
+      background: var(--bg-secondary);
+      border-radius: 6px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      transition: all 0.2s;
+    }
+
+    .action-btn:hover {
+      background: var(--accent);
+    }
+
+    .action-btn.delete-btn:hover {
+      background: #dc2626;
+    }
+
+    /* Modal */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.6);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      padding: 20px;
+      backdrop-filter: blur(4px);
+    }
+
+    .modal-overlay.active {
+      display: flex;
+    }
+
+    .modal {
+      background: var(--bg-secondary);
+      border-radius: 24px;
+      width: 100%;
+      max-width: 500px;
+      max-height: 90vh;
+      overflow-y: auto;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow), 0 0 80px rgba(66, 133, 244, 0.1);
+    }
+
+    .modal-header {
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .modal-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .modal-close {
+      width: 32px;
+      height: 32px;
+      border: 1px solid var(--border);
+      background: var(--bg-primary);
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 18px;
+      transition: all 0.2s;
+    }
+
+    .modal-close:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .upload-tabs {
+      display: flex;
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+    }
+
+    .upload-tab {
+      flex: 1;
+      padding: 14px 16px;
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      color: var(--text-secondary);
+      font-size: 14px;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .upload-tab:hover {
+      color: var(--text);
+      background: var(--bg-elevated);
+    }
+
+    .upload-tab.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+
+    .upload-tab-content {
+      display: none;
+    }
+
+    .upload-tab-content.active {
+      display: block;
+    }
+
+    .form-hint {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-top: 6px;
+    }
+
+    .optional {
+      font-weight: normal;
+      color: var(--text-secondary);
+    }
+
+    .modal-body {
+      padding: 24px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      margin-bottom: 8px;
+      color: var(--text-secondary);
+    }
+
+    .form-input, .form-select {
+      width: 100%;
+      padding: 12px 16px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 14px;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      transition: border-color 0.2s;
+    }
+
+    .form-input:focus, .form-select:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    /* Upload Zone */
+    .upload-zone {
+      border: 2px dashed var(--border);
+      border-radius: 12px;
+      padding: 40px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+    }
+
+    .upload-zone:hover, .upload-zone.dragover {
+      border-color: var(--accent);
+      background: rgba(0, 131, 255, 0.05);
+    }
+
+    .upload-zone-icon {
+      font-size: 48px;
+      margin-bottom: 12px;
+      filter: grayscale(100%);
+    }
+
+    .upload-zone-text {
+      font-size: 14px;
+      color: var(--text-secondary);
+    }
+
+    .upload-zone-text span {
+      color: var(--accent);
+      font-weight: 500;
+    }
+
+    .preview-image {
+      max-width: 100%;
+      max-height: 200px;
+      border-radius: 8px;
+      margin-top: 16px;
+    }
+
+    .submit-btn {
+      width: 100%;
+      padding: 14px;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 500;
+      cursor: pointer;
+      margin-top: 8px;
+      transition: background 0.2s;
+    }
+
+    .submit-btn:hover {
+      background: var(--accent-hover);
+    }
+
+    .submit-btn:disabled {
+      background: var(--text-muted);
+      cursor: not-allowed;
+    }
+
+    /* Lightbox */
+    .lightbox {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.95);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 1001;
+    }
+
+    .lightbox.active {
+      display: flex;
+    }
+
+    .lightbox img {
+      max-width: 90%;
+      max-height: 90%;
+      object-fit: contain;
+      border-radius: 4px;
+    }
+
+    .lightbox-close {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      font-size: 32px;
+      color: #fff;
+      cursor: pointer;
+      opacity: 0.8;
+      transition: opacity 0.2s;
+    }
+
+    .lightbox-close:hover {
+      opacity: 1;
+    }
+
+    .lightbox-info {
+      position: absolute;
+      bottom: 20px;
+      left: 20px;
+      color: #fff;
+    }
+
+    .lightbox-info h3 {
+      font-size: 18px;
+      margin-bottom: 8px;
+    }
+
+    .lightbox-info p {
+      font-size: 14px;
+      opacity: 0.7;
+    }
+
+    /* Empty State */
+    .empty-state {
+      text-align: center;
+      padding: 80px 20px;
+      color: var(--text-muted);
+    }
+
+    .empty-state-icon {
+      font-size: 64px;
+      margin-bottom: 16px;
+      filter: grayscale(100%);
+      opacity: 0.5;
+    }
+
+    .empty-state h3 {
+      font-size: 18px;
+      margin-bottom: 8px;
+      color: var(--text-primary);
+    }
+
+    /* Toast */
+    .toast-container {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      z-index: 1002;
+    }
+
+    .toast {
+      padding: 14px 20px;
+      background: var(--text-primary);
+      color: var(--bg-primary);
+      border-radius: 8px;
+      margin-top: 10px;
+      animation: slideIn 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 14px;
+    }
+
+    .toast.success { background: var(--accent); }
+    .toast.error { background: #dc2626; }
+
+    @keyframes slideIn {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+
+    /* Detail Modal */
+    .detail-modal {
+      max-width: 900px;
+      width: 95%;
+    }
+
+    .detail-grid {
+      display: grid;
+      grid-template-columns: 1fr 1.2fr;
+      gap: 24px;
+    }
+
+    .detail-left {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .detail-right {
+      display: flex;
+      align-items: flex-start;
+    }
+
+    .detail-image-container {
+      position: relative;
+      border-radius: 12px;
+      overflow: hidden;
+      cursor: pointer;
+      width: 100%;
+    }
+
+    .detail-image-container img {
+      width: 100%;
+      max-height: 500px;
+      object-fit: contain;
+      background: var(--bg-secondary);
+    }
+
+    .detail-image-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity 0.2s;
+      color: #fff;
+      font-size: 16px;
+    }
+
+    .detail-image-container:hover .detail-image-overlay {
+      opacity: 1;
+    }
+
+    .detail-info {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      flex: 1;
+    }
+
+    .detail-row {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .detail-label {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .combo-select {
+      display: flex;
+      gap: 8px;
+      width: 100%;
+    }
+
+    .detail-select {
+      flex: 1;
+      padding: 12px 14px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      font-size: 14px;
+      background: var(--input-bg);
+      color: var(--text);
+      cursor: pointer;
+      width: 100%;
+      transition: all 0.2s ease;
+    }
+
+    .detail-select:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px var(--accent-glow);
+    }
+
+    .combo-input {
+      flex: 1;
+    }
+
+    .detail-date-input,
+    .detail-text-input {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 14px;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+    }
+
+    .detail-date-input:focus,
+    .detail-text-input:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .detail-link-container {
+      display: flex;
+      gap: 8px;
+      width: 100%;
+    }
+
+    .detail-link-input {
+      flex: 1;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 13px;
+      background: var(--bg-secondary);
+      color: var(--text-secondary);
+    }
+
+    .detail-copy-btn {
+      padding: 10px 14px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--bg-primary);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .detail-copy-btn:hover {
+      border-color: var(--accent);
+      background: var(--accent);
+    }
+
+    .detail-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .detail-btn {
+      flex: 1;
+      padding: 12px 16px;
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: 500;
+      text-align: center;
+      text-decoration: none;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      border: none;
+    }
+
+    .detail-btn-save {
+      background: linear-gradient(135deg, var(--gradient-blue), var(--gradient-purple));
+      color: #fff;
+      flex: 2;
+    }
+
+    .detail-btn-save:hover {
+      box-shadow: 0 4px 16px rgba(66, 133, 244, 0.4);
+      transform: translateY(-1px);
+    }
+
+    .detail-btn-secondary {
+      background: var(--bg-elevated);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    .detail-btn-secondary:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .detail-btn-danger {
+      background: var(--bg-elevated);
+      color: var(--text-secondary);
+      border: 1px solid var(--border);
+    }
+
+    .detail-btn-danger:hover {
+      background: rgba(220, 38, 38, 0.2);
+      color: #f87171;
+      border-color: #f87171;
+    }
+
+    /* Responsive */
+    @media (max-width: 900px) {
+      .header-content {
+        flex-wrap: wrap;
+      }
+      .header-search {
+        order: 3;
+        flex: 100%;
+        max-width: 100%;
+        margin-top: 12px;
+      }
+      .filters-content {
+        justify-content: flex-start;
+      }
+      .results-count {
+        flex: 100%;
+        margin-left: 0;
+        margin-top: 8px;
+      }
+      .detail-modal {
+        max-width: 95%;
+      }
+      .detail-grid {
+        grid-template-columns: 1fr;
+      }
+      .detail-right {
+        order: -1;
+      }
+      .detail-image-container img {
+        max-height: 300px;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .gallery {
+        grid-template-columns: 1fr;
+      }
+      .filter-dropdown-btn {
+        padding: 8px 10px;
+        font-size: 12px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <div class="header-content">
+      <div class="logo">
+        <div class="logo-icon">✦</div>
+        Screenshot<span>Library</span>
+      </div>
+      <div class="header-search">
+        <input type="text" class="search-input" placeholder="Поиск..." id="searchInput" oninput="applyFilters()">
+      </div>
+      <button class="compare-btn" onclick="openCompareModal()">
+        ✦ Спросить AI
+      </button>
+      <button class="upload-btn" onclick="openUploadModal()">
+        <span>+</span> Загрузить
+      </button>
+    </div>
+  </header>
+
+  <div class="filters-bar">
+    <div class="filters-content">
+      <div class="filter-dropdown" id="marketplaceDropdown">
+        <button class="filter-dropdown-btn" onclick="toggleDropdown('marketplaceDropdown')">
+          Маркетплейс <span class="arrow">▼</span>
+        </button>
+        <div class="filter-dropdown-menu" id="marketplaceFilters">
+          <!-- Generated dynamically -->
         </div>
       </div>
-        <div class="maps">
-          <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d1998.603625305654!2d30.320853351466614!3d59.93871916896551!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x4696310fca145cc1%3A0x42b32648d8238007!2z0JHQvtC70YzRiNCw0Y8g0JrQvtC90Y7RiNC10L3QvdCw0Y8g0YPQuy4sIDE5LzgsINCh0LDQvdC60YIt0J_QtdGC0LXRgNCx0YPRgNCzLCAxOTExODY!5e0!3m2!1sru!2sru!4v1560759644832!5m2!1sru!2sru"></iframe>
+
+      <div class="filter-dropdown" id="pageDropdown">
+        <button class="filter-dropdown-btn" onclick="toggleDropdown('pageDropdown')">
+          Страница <span class="arrow">▼</span>
+        </button>
+        <div class="filter-dropdown-menu" id="pageFilters">
+          <!-- Generated dynamically -->
         </div>
-    </section>
-    <footer class="main-footer">
-      <ul class="social-buttons">
-	  <li><a class="social-button-vk" href="https://vk.com/"><span class="visually-hidden">Вконтакте</span></a></li>
-	  <li><a class="social-button-facebook" href="https://www.facebook.com/"><span class="visually-hidden">Фейсбук</span></a></li>
-	  <li><a class="social-button-instagram" href="https://www.instagram.com/"><span class="visually-hidden">Инстаграм</span></a></li>
-      </ul>
-      <p>
-        <span>Давайте дружить, это выгодно!</span>
-        Скидка 10% для друзей из социальных сетей.</p>
-    </footer>
-    <div class="container">
-      <section class="write-us-hidden" id="modal">
-        <h3>Напишите нам</h3>
-          <a><span class="modal-close"></span></a>
-          <form class="form-write-us" method="post">
-            <p><label for="name">Ваше имя:</label>
-            <input type="text" id="name" class="write-name" name="name" placeholder="Представтесь, пожалуйста" required></p>
-            <p><label for="email">Ваш e-mail:</label>
-            <input type="text" id="email" class="write-email" name="email" placeholder="Для отправки ответа" required></p>
-            <label for="message">Текст письма:</label>
-            <textarea name="message" id="message" class="write-message" cols="30" rows="10" required>В свободной форме</textarea>
-            <button class="button-submit">Отправить</button>
-          </form>
-      </section>
-     </div>
-    <script src="js/modal.popup.min.js"></script>
-  </body>
+      </div>
+
+      <div class="filter-dropdown" id="dateDropdown">
+        <button class="filter-dropdown-btn" onclick="toggleDropdown('dateDropdown')">
+          Период <span class="arrow">▼</span>
+        </button>
+        <div class="filter-dropdown-menu" id="dateFilters">
+          <!-- Generated dynamically -->
+        </div>
+      </div>
+
+      <div class="tag-filter">
+        <button class="tag-btn active" data-tag="all" onclick="setTagFilter('all')">Все</button>
+        <button class="tag-btn" data-tag="app" onclick="setTagFilter('app')">📱 App</button>
+        <button class="tag-btn" data-tag="web" onclick="setTagFilter('web')">🌐 Web</button>
+      </div>
+
+      <button class="clear-filters-btn" onclick="clearFilters()">Сбросить</button>
+
+      <div class="results-count" id="resultsCount">0 скриншотов</div>
+    </div>
+  </div>
+
+  <main class="main">
+    <div class="gallery" id="gallery">
+      <div class="empty-state">
+        <div class="empty-state-icon">📭</div>
+        <h3>Библиотека пуста</h3>
+        <p>Загрузите первый скриншот</p>
+      </div>
+    </div>
+  </main>
+
+  <!-- AI Side Panel -->
+  <div class="ai-panel" id="aiPanel">
+    <div class="ai-panel-header">
+      <div class="ai-panel-title">
+        <span class="ai-sparkle">✦</span> AI Аналитик
+      </div>
+      <button class="ai-panel-close" onclick="closeCompareModal()">×</button>
+    </div>
+    
+    <!-- Chat Messages -->
+    <div class="ai-chat" id="aiChat">
+      <!-- Welcome message -->
+      <div class="ai-message ai-welcome">
+        <div class="ai-avatar">✦</div>
+        <div class="ai-bubble">
+          <p>Привет! Я твой AI-ассистент по UX/UI дизайну.</p>
+          <p style="margin-top: 8px; font-size: 13px; color: var(--text-secondary);">Могу анализировать скриншоты и отвечать на вопросы о дизайне:</p>
+          
+          <div style="font-size: 11px; color: var(--text-secondary); margin-top: 12px; margin-bottom: 6px;">📸 Анализ скриншотов:</div>
+          <div class="ai-suggestions">
+            <button type="button" class="ai-suggestion" onclick="sendAiQuery('Сравни страницы Корзина у всех маркетплейсов')">🛒 Корзины</button>
+            <button type="button" class="ai-suggestion" onclick="sendAiQuery('Сравни главные страницы всех маркетплейсов')">🏠 Главные</button>
+            <button type="button" class="ai-suggestion" onclick="sendAiQuery('Проанализируй UX Wildberries')">💜 Wildberries</button>
+            <button type="button" class="ai-suggestion" onclick="sendAiQuery('Какой маркетплейс имеет лучший UX?')">🏆 Лучший UX</button>
+          </div>
+          
+          <div style="font-size: 11px; color: var(--text-secondary); margin-top: 12px; margin-bottom: 6px;">💡 Общие вопросы:</div>
+          <div class="ai-suggestions">
+            <button type="button" class="ai-suggestion" onclick="sendAiQuery('Какие тренды в мобильном e-commerce дизайне сейчас актуальны?')">📈 Тренды</button>
+            <button type="button" class="ai-suggestion" onclick="sendAiQuery('Как улучшить конверсию корзины?')">💰 Конверсия</button>
+            <button type="button" class="ai-suggestion" onclick="sendAiQuery('Что такое хороший UX для мобильного приложения?')">✨ Хороший UX</button>
+            <button type="button" class="ai-suggestion" onclick="sendAiQuery('Какие ошибки чаще всего делают в дизайне e-commerce?')">⚠️ Ошибки</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Input Area -->
+    <div class="ai-input-area">
+      <div class="ai-input-wrapper">
+        <textarea id="aiInput" class="ai-input" placeholder="Задайте вопрос..." rows="1" onkeydown="handleAiKeydown(event)"></textarea>
+        <button class="ai-send" onclick="sendAiMessage()">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Panel Overlay -->
+  <div class="ai-panel-overlay" id="aiPanelOverlay" onclick="closeCompareModal()"></div>
+
+  <!-- Upload Modal -->
+  <div class="modal-overlay" id="uploadModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 class="modal-title">Добавить</h2>
+        <button class="modal-close" onclick="closeUploadModal()">×</button>
+      </div>
+      
+      <!-- Tabs -->
+      <div class="upload-tabs">
+        <button type="button" class="upload-tab active" data-tab="screenshot" onclick="switchUploadTab('screenshot')">📱 Скриншот</button>
+        <button type="button" class="upload-tab" data-tab="link" onclick="switchUploadTab('link')">🔗 Ссылка</button>
+      </div>
+      
+      <div class="modal-body">
+        <!-- Screenshot Tab -->
+        <form id="uploadForm" onsubmit="handleUpload(event)" class="upload-tab-content active" data-tab="screenshot">
+          <div class="form-group">
+            <label class="form-label">Изображение</label>
+            <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()">
+              <div class="upload-zone-icon">📁</div>
+              <div class="upload-zone-text">Перетащите файл или <span>выберите</span></div>
+            </div>
+            <input type="file" id="fileInput" accept="image/*" style="display:none" onchange="handleFileSelect(event)">
+            <img id="previewImage" class="preview-image" style="display:none">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Маркетплейс</label>
+            <div class="combo-select">
+              <select class="form-select" id="marketplace" onchange="handleComboSelect(this, 'marketplaceCustom')" required>
+              </select>
+              <input type="text" class="form-input combo-input" id="marketplaceCustom" placeholder="Введите название..." style="display:none">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Страница / Раздел</label>
+            <div class="combo-select">
+              <select class="form-select" id="pageName" onchange="handleComboSelect(this, 'pageNameCustom')" required>
+              </select>
+              <input type="text" class="form-input combo-input" id="pageNameCustom" placeholder="Введите название..." style="display:none">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Дата скриншота</label>
+            <input type="date" class="form-input" id="screenshotDate" required>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Тип</label>
+            <div class="tag-toggle">
+              <button type="button" class="tag-toggle-btn active" data-tag="app" id="uploadTagApp" onclick="setUploadTag('app')">📱 App</button>
+              <button type="button" class="tag-toggle-btn" data-tag="web" id="uploadTagWeb" onclick="setUploadTag('web')">🌐 Web</button>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Описание (необязательно)</label>
+            <input type="text" class="form-input" id="description" placeholder="Краткое описание">
+          </div>
+
+          <button type="submit" class="submit-btn" id="submitBtn" disabled>Загрузить</button>
+        </form>
+        
+        <!-- Link Tab -->
+        <form id="linkForm" onsubmit="handleLinkUpload(event)" class="upload-tab-content" data-tab="link">
+          <div class="form-group">
+            <label class="form-label">Ссылка на страницу</label>
+            <input type="url" class="form-input" id="linkUrl" placeholder="https://www.ozon.ru/..." required>
+            <div class="form-hint">Вставьте URL страницы маркетплейса — скриншот будет создан автоматически</div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Маркетплейс <span class="optional">(опционально)</span></label>
+            <div class="combo-select">
+              <select class="form-select" id="linkMarketplace" onchange="handleComboSelect(this, 'linkMarketplaceCustom')">
+                <option value="">Определить автоматически</option>
+              </select>
+              <input type="text" class="form-input combo-input" id="linkMarketplaceCustom" placeholder="Введите название..." style="display:none">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Страница / Раздел <span class="optional">(опционально)</span></label>
+            <div class="combo-select">
+              <select class="form-select" id="linkPageName" onchange="handleComboSelect(this, 'linkPageNameCustom')">
+                <option value="">Определить автоматически</option>
+              </select>
+              <input type="text" class="form-input combo-input" id="linkPageNameCustom" placeholder="Введите название..." style="display:none">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Дата</label>
+            <input type="date" class="form-input" id="linkDate" required>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Тип</label>
+            <div class="tag-toggle">
+              <button type="button" class="tag-toggle-btn" data-tag="app" id="linkTagApp" onclick="setLinkTag('app')">📱 App</button>
+              <button type="button" class="tag-toggle-btn active" data-tag="web" id="linkTagWeb" onclick="setLinkTag('web')">🌐 Web</button>
+            </div>
+          </div>
+
+          <button type="submit" class="submit-btn" id="linkSubmitBtn">📸 Сделать скриншот</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Lightbox -->
+  <div class="lightbox" id="lightbox" onclick="closeLightbox()">
+    <span class="lightbox-close">×</span>
+    <img id="lightboxImage" src="" alt="">
+    <div class="lightbox-info">
+      <h3 id="lightboxTitle"></h3>
+      <p id="lightboxMeta"></p>
+    </div>
+  </div>
+
+  <!-- Detail Card Modal -->
+  <div class="modal-overlay" id="detailModal">
+    <div class="modal detail-modal">
+      <div class="modal-header">
+        <h2 class="modal-title" id="detailModalTitle">Детали скриншота</h2>
+        <button class="modal-close" onclick="closeDetailModal()">×</button>
+      </div>
+      <div class="modal-body detail-grid">
+        <div class="detail-left">
+          <div class="detail-info">
+            <div class="detail-row">
+              <span class="detail-label">Маркетплейс</span>
+              <div class="combo-select">
+                <select class="detail-select" id="detailMarketplace" onchange="handleComboSelect(this, 'detailMarketplaceCustom'); markDetailChanged()">
+                </select>
+                <input type="text" class="detail-select combo-input" id="detailMarketplaceCustom" placeholder="Введите название..." style="display:none" oninput="markDetailChanged()">
+              </div>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Страница</span>
+              <div class="combo-select">
+                <select class="detail-select" id="detailPage" onchange="handleComboSelect(this, 'detailPageCustom'); markDetailChanged()">
+                  <option value="">Выберите страницу</option>
+                  <option value="Главная">Главная</option>
+                  <option value="Каталог">Каталог</option>
+                  <option value="Карточка товара">Карточка товара</option>
+                  <option value="Корзина">Корзина</option>
+                  <option value="Поиск">Поиск</option>
+                  <option value="Профиль">Профиль</option>
+                  <option value="Заказы">Заказы</option>
+                  <option value="Избранное">Избранное</option>
+                  <option value="__custom__">+ Добавить свой...</option>
+                </select>
+                <input type="text" class="detail-select combo-input" id="detailPageCustom" placeholder="Введите название..." style="display:none" oninput="markDetailChanged()">
+              </div>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Дата</span>
+              <input type="date" class="detail-date-input" id="detailDate" onchange="markDetailChanged()">
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Описание</span>
+              <input type="text" class="detail-text-input" id="detailDescription" placeholder="Добавить описание..." onchange="markDetailChanged()">
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Тип</span>
+              <div class="tag-toggle">
+                <button type="button" class="tag-toggle-btn active" data-tag="app" id="tagApp" onclick="setDetailTag('app')">📱 App</button>
+                <button type="button" class="tag-toggle-btn" data-tag="web" id="tagWeb" onclick="setDetailTag('web')">🌐 Web</button>
+              </div>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Ссылка</span>
+              <div class="detail-link-container">
+                <input type="text" class="detail-link-input" id="detailUrl" readonly>
+                <button class="detail-copy-btn" onclick="copyDetailUrl()">📋</button>
+              </div>
+            </div>
+          </div>
+          <div class="detail-actions">
+            <button class="detail-btn detail-btn-save" id="detailSaveBtn" onclick="saveDetailChanges()" style="display: none;">
+              Сохранить
+            </button>
+            <a class="detail-btn detail-btn-secondary" id="detailOpenBtn" href="" target="_blank">
+              Открыть
+            </a>
+            <button class="detail-btn detail-btn-danger" id="detailDeleteBtn" onclick="deleteFromDetail()">
+              Удалить
+            </button>
+          </div>
+        </div>
+        <div class="detail-right">
+          <div class="detail-image-container">
+            <img id="detailImage" src="" alt="" onclick="openLightboxFromDetail()">
+            <div class="detail-image-overlay">
+              <span>🔍 Увеличить</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script>
+    const API_URL = window.location.origin;
+    let allImages = [];
+    let selectedFile = null;
+    let currentDetailImage = null;
+    let currentTagFilter = 'all';
+
+    // Tag filter function
+    function setTagFilter(tag) {
+      currentTagFilter = tag;
+      document.querySelectorAll('.tag-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.tag === tag);
+      });
+      applyFilters();
+    }
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('screenshotDate').valueAsDate = new Date();
+      loadImages();
+      setupDragDrop();
+      setupModalCloseOnOverlay();
+    });
+
+    // Close modals on overlay click
+    function setupModalCloseOnOverlay() {
+      document.getElementById('uploadModal').addEventListener('click', (e) => {
+        if (e.target.classList.contains('modal-overlay')) {
+          closeUploadModal();
+        }
+      });
+      document.getElementById('detailModal').addEventListener('click', (e) => {
+        if (e.target.classList.contains('modal-overlay')) {
+          closeDetailModal();
+        }
+      });
+      
+      // Close on Escape key
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          if (document.getElementById('lightbox').classList.contains('active')) {
+            closeLightbox();
+          } else if (document.getElementById('detailModal').classList.contains('active')) {
+            closeDetailModal();
+          } else if (document.getElementById('uploadModal').classList.contains('active')) {
+            closeUploadModal();
+          }
+        }
+      });
+    }
+
+    // Toast notification
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      toast.className = `toast ${type}`;
+      toast.textContent = message;
+      container.appendChild(toast);
+      setTimeout(() => toast.remove(), 3000);
+    }
+
+    // Modal functions
+    // Compare Modal functions
+    // AI Panel functions
+    let chatHistory = [];
+    
+    function openCompareModal() {
+      document.getElementById('aiPanel').classList.add('open');
+      document.getElementById('aiPanelOverlay').classList.add('visible');
+      document.body.style.overflow = 'hidden';
+      
+      // Reset chat if empty
+      if (chatHistory.length === 0) {
+        resetAiChat();
+      }
+    }
+    
+    function closeCompareModal() {
+      document.getElementById('aiPanel').classList.remove('open');
+      document.getElementById('aiPanelOverlay').classList.remove('visible');
+      document.body.style.overflow = '';
+    }
+    
+    function resetAiChat() {
+      chatHistory = [];
+      const chat = document.getElementById('aiChat');
+      chat.innerHTML = `
+        <div class="ai-message ai-welcome">
+          <div class="ai-avatar">✦</div>
+          <div class="ai-bubble">
+            <p>Привет! Я твой AI-ассистент по UX/UI дизайну.</p>
+            <p style="margin-top: 8px; font-size: 13px; color: var(--text-secondary);">Могу анализировать скриншоты и отвечать на вопросы о дизайне:</p>
+            
+            <div style="font-size: 11px; color: var(--text-secondary); margin-top: 12px; margin-bottom: 6px;">📸 Анализ скриншотов:</div>
+            <div class="ai-suggestions">
+              <button type="button" class="ai-suggestion" onclick="sendAiQuery('Сравни страницы Корзина у всех маркетплейсов')">🛒 Корзины</button>
+              <button type="button" class="ai-suggestion" onclick="sendAiQuery('Сравни главные страницы всех маркетплейсов')">🏠 Главные</button>
+              <button type="button" class="ai-suggestion" onclick="sendAiQuery('Проанализируй UX Wildberries')">💜 Wildberries</button>
+              <button type="button" class="ai-suggestion" onclick="sendAiQuery('Какой маркетплейс имеет лучший UX?')">🏆 Лучший UX</button>
+            </div>
+            
+            <div style="font-size: 11px; color: var(--text-secondary); margin-top: 12px; margin-bottom: 6px;">💡 Общие вопросы:</div>
+            <div class="ai-suggestions">
+              <button type="button" class="ai-suggestion" onclick="sendAiQuery('Какие тренды в мобильном e-commerce дизайне сейчас актуальны?')">📈 Тренды</button>
+              <button type="button" class="ai-suggestion" onclick="sendAiQuery('Как улучшить конверсию корзины?')">💰 Конверсия</button>
+              <button type="button" class="ai-suggestion" onclick="sendAiQuery('Что такое хороший UX для мобильного приложения?')">✨ Хороший UX</button>
+              <button type="button" class="ai-suggestion" onclick="sendAiQuery('Какие ошибки чаще всего делают в дизайне e-commerce?')">⚠️ Ошибки</button>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+    
+    function handleAiKeydown(e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendAiMessage();
+      }
+      // Auto-resize textarea
+      const textarea = e.target;
+      textarea.style.height = 'auto';
+      textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
+    }
+    
+    function sendAiMessage() {
+      const input = document.getElementById('aiInput');
+      const query = input.value.trim();
+      if (!query) return;
+      
+      input.value = '';
+      input.style.height = 'auto';
+      
+      sendAiQuery(query);
+    }
+    
+    async function sendAiQuery(query) {
+      const chat = document.getElementById('aiChat');
+      
+      // Add user message
+      const msgId = 'msg-' + Date.now();
+      chatHistory.push({ role: 'user', content: query, id: msgId });
+      const userMsg = document.createElement('div');
+      userMsg.className = 'ai-message user';
+      userMsg.id = msgId;
+      userMsg.innerHTML = `
+        <div class="ai-avatar">👤</div>
+        <div class="ai-bubble">${escapeHtml(query)}</div>
+        <button class="ai-msg-delete" onclick="deleteMessage('${msgId}')" title="Удалить">×</button>
+      `;
+      chat.appendChild(userMsg);
+      
+      // Add typing indicator
+      const typingMsg = document.createElement('div');
+      typingMsg.className = 'ai-message';
+      typingMsg.id = 'aiTyping';
+      typingMsg.innerHTML = `
+        <div class="ai-avatar">✦</div>
+        <div class="ai-bubble">
+          <div class="ai-typing">
+            <span></span><span></span><span></span>
+          </div>
+        </div>
+      `;
+      chat.appendChild(typingMsg);
+      chat.scrollTop = chat.scrollHeight;
+      
+      try {
+        const response = await fetch(`${API_URL}/api/analyze-query`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query })
+        });
+        
+        const data = await response.json();
+        
+        // Remove typing indicator
+        document.getElementById('aiTyping')?.remove();
+        
+        if (data.error) {
+          addAiMessage('Произошла ошибка: ' + data.error + (data.details ? ` (${data.details})` : ''), [], true);
+          return;
+        }
+        
+        // Format analysis
+        const analysis = formatAiResponse(data.analysis || 'Нет ответа');
+        
+        // Get images
+        const images = (data.images || []).map(imgData => {
+          const img = allImages.find(i => i.id === imgData.id);
+          return img ? { url: img.url, label: imgData.marketplace } : null;
+        }).filter(Boolean);
+        
+        // Get model info
+        const model = data.model || 'ai';
+        
+        const aiMsgId = addAiMessage(analysis, images, false, model);
+        chatHistory.push({ role: 'assistant', content: data.analysis, images, model, id: aiMsgId });
+        
+      } catch (err) {
+        document.getElementById('aiTyping')?.remove();
+        addAiMessage('Ошибка соединения: ' + err.message, [], true);
+      }
+    }
+    
+    function addAiMessage(content, images = [], isError = false, model = '') {
+      const chat = document.getElementById('aiChat');
+      const msg = document.createElement('div');
+      const msgId = 'msg-' + Date.now();
+      msg.className = 'ai-message';
+      msg.id = msgId;
+      
+      let imagesHtml = '';
+      if (images.length > 0) {
+        imagesHtml = `
+          <div class="ai-images">
+            ${images.map(img => `<img src="${img.url}" title="${img.label || ''}" onclick="window.open('${img.url}', '_blank')">`).join('')}
+          </div>
+        `;
+      }
+      
+      // Model badge
+      let modelBadge = '';
+      if (model && !isError) {
+        const modelName = model.includes('claude') ? 'Claude' : model.includes('gemini') ? 'Gemini' : 'AI';
+        const modelColor = model.includes('claude') ? '#cc785c' : '#4285f4';
+        modelBadge = `<div style="font-size: 10px; color: ${modelColor}; margin-top: 8px; opacity: 0.7;">powered by ${modelName}</div>`;
+      }
+      
+      msg.innerHTML = `
+        <div class="ai-avatar">✦</div>
+        <div class="ai-bubble" style="${isError ? 'background: rgba(255,68,68,0.1); color: #ff6b6b;' : ''}">
+          ${imagesHtml}
+          <div class="ai-text">${content}</div>
+          ${modelBadge}
+        </div>
+        <button class="ai-msg-delete" onclick="deleteMessage('${msgId}')" title="Удалить">×</button>
+      `;
+      chat.appendChild(msg);
+      chat.scrollTop = chat.scrollHeight;
+      
+      return msgId;
+    }
+    
+    function deleteMessage(msgId) {
+      const msg = document.getElementById(msgId);
+      if (msg) {
+        msg.style.opacity = '0';
+        msg.style.transform = 'translateX(20px)';
+        msg.style.transition = 'all 0.2s ease';
+        setTimeout(() => {
+          msg.remove();
+          // Remove from chat history
+          chatHistory = chatHistory.filter(m => m.id !== msgId);
+        }, 200);
+      }
+    }
+    
+    function formatAiResponse(text) {
+      return text
+        .replace(/^## (.+)$/gm, '<h3 style="color: var(--accent); margin-top: 16px; margin-bottom: 8px; font-size: 15px;">$1</h3>')
+        .replace(/^### (.+)$/gm, '<h4 style="color: var(--text); margin-top: 12px; margin-bottom: 6px; font-size: 14px;">$1</h4>')
+        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+        .replace(/^- (.+)$/gm, '<div style="padding-left: 12px;">• $1</div>')
+        .replace(/\n\n/g, '<br><br>')
+        .replace(/\n/g, '<br>');
+    }
+    
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    let currentUploadTag = 'app';
+    let currentLinkTag = 'web';
+
+    function openUploadModal() {
+      document.getElementById('uploadModal').classList.add('active');
+      // Set today's date for link form
+      document.getElementById('linkDate').value = new Date().toISOString().split('T')[0];
+      // Populate link form selects
+      populateLinkSelects();
+    }
+
+    function closeUploadModal() {
+      document.getElementById('uploadModal').classList.remove('active');
+      resetForm();
+    }
+
+    function switchUploadTab(tab) {
+      // Update tab buttons
+      document.querySelectorAll('.upload-tab').forEach(t => {
+        t.classList.toggle('active', t.dataset.tab === tab);
+      });
+      // Update tab content
+      document.querySelectorAll('.upload-tab-content').forEach(c => {
+        c.classList.toggle('active', c.dataset.tab === tab);
+      });
+    }
+
+    function setUploadTag(tag) {
+      currentUploadTag = tag;
+      document.getElementById('uploadTagApp').classList.toggle('active', tag === 'app');
+      document.getElementById('uploadTagWeb').classList.toggle('active', tag === 'web');
+    }
+
+    function setLinkTag(tag) {
+      currentLinkTag = tag;
+      document.getElementById('linkTagApp').classList.toggle('active', tag === 'app');
+      document.getElementById('linkTagWeb').classList.toggle('active', tag === 'web');
+    }
+
+    function populateLinkSelects() {
+      const linkMpSelect = document.getElementById('linkMarketplace');
+      const linkPgSelect = document.getElementById('linkPageName');
+      
+      // Get options from main selects
+      const mpOptions = document.getElementById('marketplace').innerHTML;
+      const pgOptions = document.getElementById('pageName').innerHTML;
+      
+      linkMpSelect.innerHTML = '<option value="">Определить автоматически</option>' + mpOptions;
+      linkPgSelect.innerHTML = '<option value="">Определить автоматически</option>' + pgOptions;
+    }
+
+    function resetForm() {
+      document.getElementById('uploadForm').reset();
+      document.getElementById('linkForm').reset();
+      document.getElementById('previewImage').style.display = 'none';
+      document.getElementById('uploadZone').style.display = 'block';
+      document.getElementById('submitBtn').disabled = true;
+      selectedFile = null;
+      currentUploadTag = 'app';
+      currentLinkTag = 'web';
+      
+      // Reset upload tags
+      setUploadTag('app');
+      setLinkTag('web');
+      
+      // Reset combo selects
+      document.getElementById('marketplace').style.display = 'block';
+      document.getElementById('marketplaceCustom').style.display = 'none';
+      document.getElementById('marketplaceCustom').value = '';
+      document.getElementById('pageName').style.display = 'block';
+      document.getElementById('pageNameCustom').style.display = 'none';
+      document.getElementById('pageNameCustom').value = '';
+      
+      // Reset link combo selects
+      document.getElementById('linkMarketplace').style.display = 'block';
+      document.getElementById('linkMarketplaceCustom').style.display = 'none';
+      document.getElementById('linkMarketplaceCustom').value = '';
+      document.getElementById('linkPageName').style.display = 'block';
+      document.getElementById('linkPageNameCustom').style.display = 'none';
+      document.getElementById('linkPageNameCustom').value = '';
+      
+      // Switch to screenshot tab
+      switchUploadTab('screenshot');
+    }
+
+    async function handleLinkUpload(e) {
+      e.preventDefault();
+      
+      const url = document.getElementById('linkUrl').value.trim();
+      const marketplace = getComboValue('linkMarketplace', 'linkMarketplaceCustom');
+      const page = getComboValue('linkPageName', 'linkPageNameCustom');
+      const date = document.getElementById('linkDate').value;
+      
+      const submitBtn = document.getElementById('linkSubmitBtn');
+      submitBtn.disabled = true;
+      submitBtn.textContent = '⏳ Создание скриншота (до 30 сек)...';
+      
+      try {
+        const response = await fetch(`${API_URL}/api/screenshot-url`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            url,
+            marketplace: marketplace || undefined,
+            page: page || undefined,
+            date,
+            tag: currentLinkTag
+          })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          showToast(`Скриншот создан! ${data.marketplace} - ${data.page}`, 'success');
+          closeUploadModal();
+          loadImages();
+        } else {
+          showToast(data.error || 'Ошибка создания скриншота', 'error');
+        }
+      } catch (err) {
+        showToast('Ошибка: ' + err.message, 'error');
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = '📸 Сделать скриншот';
+      }
+    }
+
+    // File handling
+    function setupDragDrop() {
+      const zone = document.getElementById('uploadZone');
+      
+      zone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        zone.classList.add('dragover');
+      });
+
+      zone.addEventListener('dragleave', () => {
+        zone.classList.remove('dragover');
+      });
+
+      zone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        zone.classList.remove('dragover');
+        const file = e.dataTransfer.files[0];
+        if (file && file.type.startsWith('image/')) {
+          handleFile(file);
+        }
+      });
+    }
+
+    function handleFileSelect(e) {
+      const file = e.target.files[0];
+      if (file) handleFile(file);
+    }
+
+    function handleFile(file) {
+      selectedFile = file;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const preview = document.getElementById('previewImage');
+        preview.src = e.target.result;
+        preview.style.display = 'block';
+        document.getElementById('uploadZone').style.display = 'none';
+      };
+      reader.readAsDataURL(file);
+      document.getElementById('submitBtn').disabled = false;
+    }
+
+    // Upload
+    async function handleUpload(e) {
+      e.preventDefault();
+      if (!selectedFile) return;
+
+      const btn = document.getElementById('submitBtn');
+      btn.disabled = true;
+      btn.textContent = 'Загрузка...';
+
+      const metadata = {
+        marketplace: getComboValue('marketplace', 'marketplaceCustom'),
+        page: getComboValue('pageName', 'pageNameCustom'),
+        date: document.getElementById('screenshotDate').value,
+        description: document.getElementById('description').value,
+        tag: currentUploadTag
+      };
+
+      const formData = new FormData();
+      formData.append('image', selectedFile);
+      formData.append('metadata', JSON.stringify(metadata));
+
+      try {
+        const response = await fetch(`${API_URL}/api/upload`, {
+          method: 'POST',
+          body: formData
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          showToast('Скриншот загружен!', 'success');
+          closeUploadModal();
+          loadImages();
+        } else {
+          showToast('Ошибка загрузки', 'error');
+        }
+      } catch (error) {
+        showToast('Ошибка загрузки', 'error');
+      }
+
+      btn.disabled = false;
+      btn.textContent = 'Загрузить';
+    }
+
+    // Load images
+    async function loadImages(preserveFilters = false) {
+      // Save current filter state if needed
+      let savedFilters = null;
+      if (preserveFilters) {
+        savedFilters = {
+          marketplaces: [...document.querySelectorAll('#marketplaceFilters input:checked')].map(el => el.value),
+          pages: [...document.querySelectorAll('#pageFilters input:checked')].map(el => el.value),
+          search: document.getElementById('searchInput').value,
+          dateFrom: document.getElementById('dateFrom').value,
+          dateTo: document.getElementById('dateTo').value
+        };
+      }
+
+      try {
+        const response = await fetch(`${API_URL}/api/images`);
+        const data = await response.json();
+
+        if (data.success) {
+          allImages = data.images;
+          updateFilters();
+          
+          // Restore filters if saved
+          if (savedFilters) {
+            document.getElementById('searchInput').value = savedFilters.search;
+            document.getElementById('dateFrom').value = savedFilters.dateFrom;
+            document.getElementById('dateTo').value = savedFilters.dateTo;
+            
+            savedFilters.marketplaces.forEach(val => {
+              const checkbox = document.querySelector(`#marketplaceFilters input[value="${val}"]`);
+              if (checkbox) checkbox.checked = true;
+            });
+            
+            savedFilters.pages.forEach(val => {
+              const checkbox = document.querySelector(`#pageFilters input[value="${val}"]`);
+              if (checkbox) checkbox.checked = true;
+            });
+            
+            updateDropdownButtons();
+          }
+          
+          applyFilters();
+        }
+      } catch (error) {
+        console.error('Load error:', error);
+      }
+    }
+
+    // Toggle dropdown
+    function toggleDropdown(id) {
+      const dropdown = document.getElementById(id);
+      const wasOpen = dropdown.classList.contains('open');
+      
+      // Close all dropdowns
+      document.querySelectorAll('.filter-dropdown').forEach(d => d.classList.remove('open'));
+      
+      // Open this one if it was closed
+      if (!wasOpen) {
+        dropdown.classList.add('open');
+      }
+    }
+
+    // Close dropdowns when clicking outside
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.filter-dropdown')) {
+        document.querySelectorAll('.filter-dropdown').forEach(d => d.classList.remove('open'));
+      }
+    });
+
+    // Default options with logos
+    const marketplaceLogos = {
+      'Ozon': '🔵',
+      'Wildberries': '🟣',
+      'Яндекс Маркет': '🟡',
+      'AliExpress': '🟠',
+      'Мегамаркет': '🟢',
+      'Amazon': '📦',
+      'Lamoda': '⚫',
+      'Avito': '🟢'
+    };
+    
+    const defaultMarketplaces = ['Ozon', 'Wildberries', 'Яндекс Маркет', 'AliExpress', 'Мегамаркет', 'Amazon', 'Lamoda', 'Avito'];
+    const defaultPages = ['Главная', 'Каталог', 'Карточка товара', 'Корзина', 'Поиск', 'Заказы', 'Профиль', 'Акции', 'Избранное', 'Оформление заказа'];
+
+    // Normalize marketplace name (merge variations)
+    function normalizeMarketplace(name) {
+      if (!name) return '';
+      const lower = name.toLowerCase();
+      
+      // Merge СберМегаМаркет, Мегамаркет, Мега маркет variations
+      if (lower.includes('мегамаркет') || lower.includes('мега маркет') || lower.includes('сбермегамаркет')) {
+        return 'Мегамаркет';
+      }
+      // Normalize Яндекс.Маркет variations
+      if (lower.includes('яндекс') && lower.includes('маркет')) {
+        return 'Яндекс Маркет';
+      }
+      // Filter out unknown/invalid values
+      if (lower === 'unknown' || lower === 'не указан' || lower === 'не определён' || lower === '') {
+        return '';
+      }
+      return name;
+    }
+
+    // Get logo for marketplace
+    function getMarketplaceLogo(name) {
+      return marketplaceLogos[name] || '🏪';
+    }
+
+    // Handle combo select (dropdown + custom input)
+    function handleComboSelect(selectEl, inputId) {
+      const inputEl = document.getElementById(inputId);
+      if (selectEl.value === '__custom__') {
+        selectEl.style.display = 'none';
+        inputEl.style.display = 'block';
+        inputEl.focus();
+      }
+    }
+
+    // Get combo value (from select or custom input)
+    function getComboValue(selectId, inputId) {
+      const selectEl = document.getElementById(selectId);
+      const inputEl = document.getElementById(inputId);
+      if (selectEl.value === '__custom__' || selectEl.style.display === 'none') {
+        return inputEl.value.trim();
+      }
+      return selectEl.value;
+    }
+
+    // Set combo value
+    function setComboValue(selectId, inputId, value) {
+      const selectEl = document.getElementById(selectId);
+      const inputEl = document.getElementById(inputId);
+      
+      // Normalize undefined/empty values
+      const invalidValues = ['не определена', 'не определён', 'не указана', 'не указан', '', 'n/a', 'unknown'];
+      const normalizedValue = value ? value.toLowerCase() : '';
+      
+      if (invalidValues.includes(normalizedValue)) {
+        // Show select with empty value for undefined pages/marketplaces
+        selectEl.value = '';
+        selectEl.style.display = 'block';
+        inputEl.style.display = 'none';
+        inputEl.value = '';
+        return;
+      }
+      
+      // Check if value exists in options
+      const optionExists = [...selectEl.options].some(o => o.value === value);
+      
+      if (optionExists && value !== '__custom__') {
+        selectEl.value = value;
+        selectEl.style.display = 'block';
+        inputEl.style.display = 'none';
+        inputEl.value = '';
+      } else if (value) {
+        // Custom value - show input
+        selectEl.value = '__custom__';
+        selectEl.style.display = 'none';
+        inputEl.style.display = 'block';
+        inputEl.value = value;
+      } else {
+        // Empty value
+        selectEl.value = '';
+        selectEl.style.display = 'block';
+        inputEl.style.display = 'none';
+        inputEl.value = '';
+      }
+    }
+
+    // Populate select with options
+    function populateSelect(selectId, options, placeholder, isMarketplace = false) {
+      const select = document.getElementById(selectId);
+      if (!select) return;
+      const currentValue = select.value;
+      
+      // Ensure options is not empty
+      if (!options || options.length === 0) {
+        options = isMarketplace ? defaultMarketplaces : defaultPages;
+      }
+      
+      let optionsHtml = '';
+      if (isMarketplace) {
+        // Marketplace select with logos, no placeholder
+        optionsHtml = options.map(o => `<option value="${o}">${getMarketplaceLogo(o)} ${o}</option>`).join('') +
+          `<option value="__custom__">➕ Добавить свой...</option>`;
+      } else {
+        // Regular select with placeholder
+        optionsHtml = `<option value="">${placeholder}</option>` +
+          options.map(o => `<option value="${o}">${o}</option>`).join('') +
+          `<option value="__custom__">+ Добавить свой...</option>`;
+      }
+      
+      select.innerHTML = optionsHtml;
+      
+      // Restore value if it exists
+      if (currentValue && [...select.options].some(o => o.value === currentValue)) {
+        select.value = currentValue;
+      }
+    }
+
+    // Update filter options and selects
+    const monthNames = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 
+                        'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'];
+
+    function updateFilters() {
+      // Save current filter selections before rebuilding
+      const selectedMarketplaces = [...document.querySelectorAll('#marketplaceFilters input:checked')].map(el => el.value);
+      const selectedPages = [...document.querySelectorAll('#pageFilters input:checked')].map(el => el.value);
+      const selectedDates = [...document.querySelectorAll('#dateFilters input:checked')].map(el => el.value);
+
+      const marketplaces = {};
+      const pages = {};
+      const dates = {};
+
+      allImages.forEach(img => {
+        // Normalize marketplace name
+        let mp = normalizeMarketplace(img.metadata?.marketplace) || 'Не указан';
+        const pg = img.metadata?.page || 'Не указана';
+        const date = img.metadata?.date || '';
+        
+        // Skip unknown/empty values in counts
+        if (mp && mp !== 'Не указан') {
+          marketplaces[mp] = (marketplaces[mp] || 0) + 1;
+        } else {
+          marketplaces['Не указан'] = (marketplaces['Не указан'] || 0) + 1;
+        }
+        pages[pg] = (pages[pg] || 0) + 1;
+        
+        // Extract month-year from date
+        if (date) {
+          const [year, month] = date.split('-');
+          if (year && month) {
+            const key = `${year}-${month}`;
+            dates[key] = (dates[key] || 0) + 1;
+          }
+        }
+      });
+
+      // Update filter dropdowns with logos
+      document.getElementById('marketplaceFilters').innerHTML = Object.entries(marketplaces)
+        .filter(([name]) => name !== 'unknown') // Filter out unknown
+        .map(([name, count]) => `
+          <div class="filter-option">
+            <input type="checkbox" id="mp-${name}" value="${name}" ${selectedMarketplaces.includes(name) ? 'checked' : ''} onchange="applyFilters(); updateDropdownButtons()">
+            <label for="mp-${name}">${getMarketplaceLogo(name)} ${name}</label>
+            <span class="option-count">${count}</span>
+          </div>
+        `).join('');
+
+      document.getElementById('pageFilters').innerHTML = Object.entries(pages)
+        .map(([name, count]) => `
+          <div class="filter-option">
+            <input type="checkbox" id="pg-${name}" value="${name}" ${selectedPages.includes(name) ? 'checked' : ''} onchange="applyFilters(); updateDropdownButtons()">
+            <label for="pg-${name}">${name}</label>
+            <span class="option-count">${count}</span>
+          </div>
+        `).join('');
+
+      // Update date filters - sorted by date descending (newest first)
+      const sortedDates = Object.entries(dates).sort((a, b) => b[0].localeCompare(a[0]));
+      document.getElementById('dateFilters').innerHTML = sortedDates
+        .map(([key, count]) => {
+          const [year, month] = key.split('-');
+          const monthName = monthNames[parseInt(month) - 1];
+          const label = `${monthName} ${year}`;
+          return `
+            <div class="filter-option">
+              <input type="checkbox" id="dt-${key}" value="${key}" ${selectedDates.includes(key) ? 'checked' : ''} onchange="applyFilters(); updateDropdownButtons()">
+              <label for="dt-${key}">${label}</label>
+              <span class="option-count">${count}</span>
+            </div>
+          `;
+        }).join('');
+
+      // Update dropdown buttons to reflect restored selections
+      updateDropdownButtons();
+
+      // Merge defaults with values from data, filter out invalid
+      const allMarketplaces = [...new Set([...defaultMarketplaces, ...Object.keys(marketplaces)])]
+        .filter(m => m && m !== 'Не указан' && m !== 'unknown' && m !== 'Не определён');
+      const allPages = [...new Set([...defaultPages, ...Object.keys(pages)])]
+        .filter(p => p && p !== 'Не указана' && p !== 'Не определена');
+
+      // Update all selects (marketplace selects with logos)
+      populateSelect('marketplace', allMarketplaces, '', true);
+      populateSelect('detailMarketplace', allMarketplaces, '', true);
+      populateSelect('pageName', allPages, 'Выберите страницу');
+      populateSelect('detailPage', allPages, 'Выберите страницу');
+    }
+
+    // Update dropdown button states
+    function updateDropdownButtons() {
+      const mpCount = document.querySelectorAll('#marketplaceFilters input:checked').length;
+      const pgCount = document.querySelectorAll('#pageFilters input:checked').length;
+      const dtCount = document.querySelectorAll('#dateFilters input:checked').length;
+
+      const mpBtn = document.querySelector('#marketplaceDropdown .filter-dropdown-btn');
+      const pgBtn = document.querySelector('#pageDropdown .filter-dropdown-btn');
+      const dateBtn = document.querySelector('#dateDropdown .filter-dropdown-btn');
+
+      mpBtn.innerHTML = `Маркетплейс ${mpCount ? `<span class="count">${mpCount}</span>` : ''} <span class="arrow">▼</span>`;
+      mpBtn.classList.toggle('active', mpCount > 0);
+
+      pgBtn.innerHTML = `Страница ${pgCount ? `<span class="count">${pgCount}</span>` : ''} <span class="arrow">▼</span>`;
+      pgBtn.classList.toggle('active', pgCount > 0);
+
+      dateBtn.innerHTML = `Период ${dtCount ? `<span class="count">${dtCount}</span>` : ''} <span class="arrow">▼</span>`;
+      dateBtn.classList.toggle('active', dtCount > 0);
+    }
+
+    // Apply filters
+    function applyFilters() {
+      const search = document.getElementById('searchInput').value.toLowerCase();
+
+      const selectedMarketplaces = [...document.querySelectorAll('#marketplaceFilters input:checked')].map(el => el.value);
+      const selectedPages = [...document.querySelectorAll('#pageFilters input:checked')].map(el => el.value);
+      const selectedDates = [...document.querySelectorAll('#dateFilters input:checked')].map(el => el.value);
+
+      const filtered = allImages.filter(img => {
+        // Normalize marketplace for filtering
+        const mp = normalizeMarketplace(img.metadata?.marketplace) || 'Не указан';
+        const pg = img.metadata?.page || 'Не указана';
+        const date = img.metadata?.date || '';
+        const desc = (img.metadata?.description || '').toLowerCase();
+        const tag = img.metadata?.tag || 'app';
+
+        // Tag filter
+        if (currentTagFilter !== 'all' && tag !== currentTagFilter) {
+          return false;
+        }
+
+        if (search && !desc.includes(search) && !mp.toLowerCase().includes(search) && !pg.toLowerCase().includes(search)) {
+          return false;
+        }
+
+        if (selectedMarketplaces.length > 0 && !selectedMarketplaces.includes(mp)) {
+          return false;
+        }
+
+        if (selectedPages.length > 0 && !selectedPages.includes(pg)) {
+          return false;
+        }
+
+        // Date filter by month-year
+        if (selectedDates.length > 0) {
+          if (!date) return false;
+          const [year, month] = date.split('-');
+          const dateKey = `${year}-${month}`;
+          if (!selectedDates.includes(dateKey)) return false;
+        }
+
+        return true;
+      });
+
+      renderGallery(filtered);
+    }
+
+    // Clear filters
+    function clearFilters() {
+      document.getElementById('searchInput').value = '';
+      document.querySelectorAll('.filter-dropdown-menu input[type="checkbox"]').forEach(el => el.checked = false);
+      setTagFilter('all');
+      updateDropdownButtons();
+      applyFilters();
+    }
+
+    // Render gallery
+    function renderGallery(images) {
+      const gallery = document.getElementById('gallery');
+      document.getElementById('resultsCount').textContent = `${images.length} скриншотов`;
+
+      if (images.length === 0) {
+        gallery.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">🔍</div>
+            <h3>Ничего не найдено</h3>
+            <p>Попробуйте изменить фильтры</p>
+          </div>
+        `;
+        return;
+      }
+
+      gallery.innerHTML = images.map((img, index) => {
+        const mp = normalizeMarketplace(img.metadata?.marketplace) || 'Не указан';
+        const pg = img.metadata?.page || 'Не указана';
+        const date = img.metadata?.date || '';
+        const logo = getMarketplaceLogo(mp);
+        const title = `${logo} ${mp} • ${pg}`;
+        const formattedDate = date ? new Date(date).toLocaleDateString('ru-RU') : '';
+
+        return `
+          <div class="card" onclick="openDetailModal('${img.id}')">
+            <div class="card-image">
+              <img src="${img.url}" alt="${mp} - ${pg}" loading="lazy">
+            </div>
+            <div class="card-body">
+              <div class="card-title">${title}</div>
+              <div class="card-meta">
+                <span class="card-date">${formattedDate}</span>
+                <button class="action-btn delete-btn" onclick="event.stopPropagation(); deleteImage('${img.id}')" title="Удалить">🗑️</button>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // Detail Modal
+    let detailChanged = false;
+
+    function openDetailModal(imageId) {
+      const img = allImages.find(i => i.id === imageId);
+      if (!img) return;
+      
+      currentDetailImage = img;
+      detailChanged = false;
+      
+      // Normalize marketplace
+      const mp = normalizeMarketplace(img.metadata?.marketplace) || '';
+      const pg = img.metadata?.page || '';
+      const date = img.metadata?.date || '';
+      const desc = img.metadata?.description || '';
+      const logo = mp ? getMarketplaceLogo(mp) : '';
+      const title = `${logo} ${mp || 'Не указан'} • ${pg || 'Не указана'}`;
+      
+      document.getElementById('detailModalTitle').textContent = title;
+      document.getElementById('detailImage').src = img.url;
+      
+      // Set combo values with normalized marketplace
+      setComboValue('detailMarketplace', 'detailMarketplaceCustom', mp);
+      setComboValue('detailPage', 'detailPageCustom', pg);
+      document.getElementById('detailDate').value = date;
+      document.getElementById('detailDescription').value = desc;
+      document.getElementById('detailUrl').value = img.url;
+      document.getElementById('detailOpenBtn').href = img.url;
+      
+      // Set tag
+      const tag = img.metadata?.tag || 'app';
+      setDetailTagUI(tag);
+      
+      // Hide save button initially
+      document.getElementById('detailSaveBtn').style.display = 'none';
+      
+      document.getElementById('detailModal').classList.add('active');
+    }
+    
+    function setDetailTagUI(tag) {
+      document.getElementById('tagApp').classList.toggle('active', tag === 'app');
+      document.getElementById('tagWeb').classList.toggle('active', tag === 'web');
+    }
+    
+    function setDetailTag(tag) {
+      setDetailTagUI(tag);
+      markDetailChanged();
+    }
+    
+    function getDetailTag() {
+      return document.getElementById('tagApp').classList.contains('active') ? 'app' : 'web';
+    }
+
+    function closeDetailModal() {
+      document.getElementById('detailModal').classList.remove('active');
+      currentDetailImage = null;
+      detailChanged = false;
+    }
+
+    function markDetailChanged() {
+      detailChanged = true;
+      document.getElementById('detailSaveBtn').style.display = 'block';
+      
+      // Update title preview with logo
+      const mp = getComboValue('detailMarketplace', 'detailMarketplaceCustom') || 'Не указан';
+      const pg = getComboValue('detailPage', 'detailPageCustom') || 'Не указана';
+      const logo = getMarketplaceLogo(mp);
+      document.getElementById('detailModalTitle').textContent = `${logo} ${mp} • ${pg}`;
+    }
+
+    async function saveDetailChanges() {
+      if (!currentDetailImage || !detailChanged) return;
+      
+      const saveBtn = document.getElementById('detailSaveBtn');
+      saveBtn.disabled = true;
+      saveBtn.textContent = 'Сохранение...';
+      
+      const metadata = {
+        marketplace: getComboValue('detailMarketplace', 'detailMarketplaceCustom'),
+        page: getComboValue('detailPage', 'detailPageCustom'),
+        date: document.getElementById('detailDate').value,
+        description: document.getElementById('detailDescription').value,
+        tag: getDetailTag()
+      };
+      
+      try {
+        const response = await fetch(`${API_URL}/api/images/${currentDetailImage.id}/metadata`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(metadata)
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          showToast('Изменения сохранены!', 'success');
+          detailChanged = false;
+          saveBtn.style.display = 'none';
+          
+          // Update local data
+          const imgIndex = allImages.findIndex(i => i.id === currentDetailImage.id);
+          if (imgIndex !== -1) {
+            allImages[imgIndex].metadata = metadata;
+          }
+          currentDetailImage.metadata = metadata;
+          
+          // Only re-apply filters (don't rebuild filter options)
+          applyFilters();
+        } else {
+          showToast('Ошибка сохранения', 'error');
+        }
+      } catch (error) {
+        showToast('Ошибка сохранения', 'error');
+      }
+      
+      saveBtn.disabled = false;
+      saveBtn.textContent = 'Сохранить изменения';
+    }
+
+    function openLightboxFromDetail() {
+      if (!currentDetailImage) return;
+      const img = currentDetailImage;
+      const desc = img.metadata?.description || img.metadata?.page || '';
+      const mp = img.metadata?.marketplace || 'Другой';
+      const pg = img.metadata?.page || 'Не указана';
+      const date = img.metadata?.date || '';
+      const formattedDate = date ? new Date(date).toLocaleDateString('ru-RU') : '';
+      
+      openLightbox(img.url, desc, `${mp} • ${pg} • ${formattedDate}`);
+    }
+
+    function copyDetailUrl() {
+      const url = document.getElementById('detailUrl').value;
+      navigator.clipboard.writeText(url).then(() => {
+        showToast('Ссылка скопирована!', 'success');
+      });
+    }
+
+    async function deleteFromDetail() {
+      if (!currentDetailImage) return;
+      if (!confirm('Удалить этот скриншот?')) return;
+      
+      const id = currentDetailImage.id;
+      try {
+        const res = await fetch(`${API_URL}/api/images/${id}`, { method: 'DELETE' });
+        if (res.ok) {
+          closeDetailModal();
+          showToast('Удалено!', 'success');
+          loadImages(true); // Preserve filters
+        } else {
+          showToast('Ошибка удаления', 'error');
+        }
+      } catch (err) {
+        showToast('Ошибка: ' + err.message, 'error');
+      }
+    }
+
+    // Lightbox
+    function openLightbox(url, title, meta) {
+      document.getElementById('lightboxImage').src = url;
+      document.getElementById('lightboxTitle').textContent = title;
+      document.getElementById('lightboxMeta').textContent = meta;
+      document.getElementById('lightbox').classList.add('active');
+    }
+
+    function closeLightbox() {
+      document.getElementById('lightbox').classList.remove('active');
+    }
+
+    // Copy URL
+    function copyUrl(url) {
+      navigator.clipboard.writeText(url).then(() => {
+        showToast('Ссылка скопирована!', 'success');
+      });
+    }
+
+    // Delete image
+    async function deleteImage(id) {
+      if (!confirm('Удалить этот скриншот?')) return;
+
+      try {
+        const response = await fetch(`${API_URL}/api/images/${id}`, { method: 'DELETE' });
+        const data = await response.json();
+
+        if (data.success) {
+          showToast('Скриншот удалён', 'success');
+          loadImages(true); // Preserve filters
+        }
+      } catch (error) {
+        showToast('Ошибка удаления', 'error');
+      }
+    }
+
+    // Keyboard
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        closeLightbox();
+        closeUploadModal();
+      }
+    });
+  </script>
+</body>
 </html>

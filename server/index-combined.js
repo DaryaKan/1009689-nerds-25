@@ -1,0 +1,339 @@
+/**
+ * Image Library - Combined Server + Telegram Bot
+ * For deployment on Railway/Render/Fly.io
+ */
+
+require('dotenv').config();
+const express = require('express');
+const cors = require('cors');
+const multer = require('multer');
+const { v4: uuidv4 } = require('uuid');
+const { createClient } = require('@supabase/supabase-js');
+const path = require('path');
+const TelegramBot = require('node-telegram-bot-api');
+const https = require('https');
+const http = require('http');
+
+// ============ EXPRESS SERVER ============
+
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+// Supabase client
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_ANON_KEY
+);
+
+const BUCKET = process.env.SUPABASE_BUCKET || 'screenshots';
+
+// Middleware
+app.use(cors());
+app.use(express.json());
+app.use(express.static(path.join(__dirname, '../')));
+
+// Multer configuration
+const storage = multer.memoryStorage();
+const upload = multer({
+  storage,
+  limits: { fileSize: 10 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    if (allowedTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Invalid file type'));
+    }
+  }
+});
+
+function getExtension(mimetype) {
+  const extensions = {
+    'image/jpeg': 'jpg',
+    'image/png': 'png',
+    'image/gif': 'gif',
+    'image/webp': 'webp'
+  };
+  return extensions[mimetype] || 'jpg';
+}
+
+// Upload single image
+app.post('/api/upload', upload.single('image'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No image file provided' });
+    }
+
+    const file = req.file;
+    const ext = getExtension(file.mimetype);
+    const fileName = `${uuidv4()}.${ext}`;
+    const filePath = `images/${fileName}`;
+
+    const { data, error } = await supabase.storage
+      .from(BUCKET)
+      .upload(filePath, file.buffer, {
+        contentType: file.mimetype,
+        upsert: false
+      });
+
+    if (error) {
+      return res.status(500).json({ error: 'Failed to upload', details: error.message });
+    }
+
+    const { data: urlData } = supabase.storage
+      .from(BUCKET)
+      .getPublicUrl(filePath);
+
+    res.json({
+      success: true,
+      image: {
+        id: fileName,
+        path: filePath,
+        url: urlData.publicUrl,
+        originalName: file.originalname,
+        size: file.size
+      }
+    });
+
+  } catch (error) {
+    res.status(500).json({ error: 'Upload failed', details: error.message });
+  }
+});
+
+// Upload multiple images
+app.post('/api/upload-multiple', upload.array('images', 10), async (req, res) => {
+  try {
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({ error: 'No files provided' });
+    }
+
+    const uploadedImages = [];
+
+    for (const file of req.files) {
+      const ext = getExtension(file.mimetype);
+      const fileName = `${uuidv4()}.${ext}`;
+      const filePath = `images/${fileName}`;
+
+      const { error } = await supabase.storage
+        .from(BUCKET)
+        .upload(filePath, file.buffer, {
+          contentType: file.mimetype
+        });
+
+      if (!error) {
+        const { data: urlData } = supabase.storage
+          .from(BUCKET)
+          .getPublicUrl(filePath);
+
+        uploadedImages.push({
+          id: fileName,
+          url: urlData.publicUrl,
+          originalName: file.originalname
+        });
+      }
+    }
+
+    res.json({
+      success: true,
+      message: `Uploaded ${uploadedImages.length} images`,
+      images: uploadedImages
+    });
+
+  } catch (error) {
+    res.status(500).json({ error: 'Upload failed' });
+  }
+});
+
+// Get all images
+app.get('/api/images', async (req, res) => {
+  try {
+    const { data, error } = await supabase.storage
+      .from(BUCKET)
+      .list('images', {
+        limit: 100,
+        sortBy: { column: 'created_at', order: 'desc' }
+      });
+
+    if (error) {
+      return res.status(500).json({ error: 'Failed to list images' });
+    }
+
+    const images = data
+      .filter(file => file.name !== '.emptyFolderPlaceholder')
+      .map(file => {
+        const { data: urlData } = supabase.storage
+          .from(BUCKET)
+          .getPublicUrl(`images/${file.name}`);
+
+        return {
+          id: file.name,
+          url: urlData.publicUrl,
+          size: file.metadata?.size,
+          createdAt: file.created_at
+        };
+      });
+
+    res.json({ success: true, count: images.length, images });
+
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to list images' });
+  }
+});
+
+// Delete image
+app.delete('/api/images/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const { error } = await supabase.storage
+      .from(BUCKET)
+      .remove([`images/${id}`]);
+
+    if (error) {
+      return res.status(500).json({ error: 'Failed to delete' });
+    }
+
+    res.json({ success: true, message: 'Deleted' });
+
+  } catch (error) {
+    res.status(500).json({ error: 'Delete failed' });
+  }
+});
+
+// Health check
+app.get('/api/health', (req, res) => {
+  res.json({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    bot: process.env.TELEGRAM_BOT_TOKEN ? 'enabled' : 'disabled'
+  });
+});
+
+// Serve library page
+app.get('/library', (req, res) => {
+  res.sendFile(path.join(__dirname, '../library.html'));
+});
+
+// Root redirect
+app.get('/', (req, res) => {
+  res.redirect('/library');
+});
+
+// Start server
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+  console.log(`Library: http://localhost:${PORT}/library`);
+});
+
+// ============ TELEGRAM BOT ============
+
+const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+
+if (BOT_TOKEN) {
+  const bot = new TelegramBot(BOT_TOKEN, { polling: true });
+  console.log('Telegram bot started');
+
+  async function downloadFile(fileUrl) {
+    return new Promise((resolve, reject) => {
+      const protocol = fileUrl.startsWith('https') ? https : http;
+      protocol.get(fileUrl, (response) => {
+        const chunks = [];
+        response.on('data', (chunk) => chunks.push(chunk));
+        response.on('end', () => resolve(Buffer.concat(chunks)));
+        response.on('error', reject);
+      }).on('error', reject);
+    });
+  }
+
+  bot.onText(/\/start/, (msg) => {
+    bot.sendMessage(msg.chat.id, `
+🖼 *Image Library Bot*
+
+Отправьте мне фото — я загружу его в облако!
+
+Команды:
+/list — последние изображения
+/stats — статистика
+    `, { parse_mode: 'Markdown' });
+  });
+
+  bot.onText(/\/list/, async (msg) => {
+    try {
+      const { data } = await supabase.storage
+        .from(BUCKET)
+        .list('images', { limit: 10, sortBy: { column: 'created_at', order: 'desc' } });
+
+      const images = data?.filter(f => f.name !== '.emptyFolderPlaceholder') || [];
+
+      if (images.length === 0) {
+        bot.sendMessage(msg.chat.id, '📭 Библиотека пуста');
+        return;
+      }
+
+      let message = `📸 *Последние ${images.length} изображений:*\n\n`;
+      images.forEach((file, i) => {
+        const { data: urlData } = supabase.storage
+          .from(BUCKET)
+          .getPublicUrl(`images/${file.name}`);
+        message += `${i + 1}. [${file.name}](${urlData.publicUrl})\n`;
+      });
+
+      bot.sendMessage(msg.chat.id, message, { parse_mode: 'Markdown', disable_web_page_preview: true });
+    } catch (e) {
+      bot.sendMessage(msg.chat.id, '❌ Ошибка');
+    }
+  });
+
+  bot.onText(/\/stats/, async (msg) => {
+    try {
+      const { data } = await supabase.storage.from(BUCKET).list('images', { limit: 1000 });
+      const images = data?.filter(f => f.name !== '.emptyFolderPlaceholder') || [];
+      bot.sendMessage(msg.chat.id, `📊 Всего изображений: *${images.length}*`, { parse_mode: 'Markdown' });
+    } catch (e) {
+      bot.sendMessage(msg.chat.id, '❌ Ошибка');
+    }
+  });
+
+  bot.on('photo', async (msg) => {
+    const chatId = msg.chat.id;
+    try {
+      const photo = msg.photo[msg.photo.length - 1];
+      const statusMsg = await bot.sendMessage(chatId, '⏳ Загружаю...');
+
+      const file = await bot.getFile(photo.file_id);
+      const fileUrl = `https://api.telegram.org/file/bot${BOT_TOKEN}/${file.file_path}`;
+      const fileBuffer = await downloadFile(fileUrl);
+
+      const ext = file.file_path.split('.').pop() || 'jpg';
+      const fileName = `${uuidv4()}.${ext}`;
+
+      const { error } = await supabase.storage
+        .from(BUCKET)
+        .upload(`images/${fileName}`, fileBuffer, {
+          contentType: `image/${ext === 'jpg' ? 'jpeg' : ext}`
+        });
+
+      if (error) {
+        await bot.editMessageText('❌ Ошибка загрузки', { chat_id: chatId, message_id: statusMsg.message_id });
+        return;
+      }
+
+      const { data: urlData } = supabase.storage.from(BUCKET).getPublicUrl(`images/${fileName}`);
+
+      await bot.editMessageText(`✅ Загружено!\n🔗 ${urlData.publicUrl}`, {
+        chat_id: chatId,
+        message_id: statusMsg.message_id
+      });
+
+    } catch (e) {
+      bot.sendMessage(chatId, '❌ Ошибка');
+    }
+  });
+
+  bot.on('polling_error', (error) => {
+    console.error('Bot polling error:', error.code);
+  });
+
+} else {
+  console.log('Telegram bot disabled (no token)');
+}
