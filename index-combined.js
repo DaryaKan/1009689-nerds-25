@@ -1074,34 +1074,48 @@ app.post('/api/screenshot-url', express.json(), async (req, res) => {
       });
     });
     
-    // Check if it's an image
-    const contentType = imageBuffer.slice(0, 8);
-    const isJpeg = contentType[0] === 0xFF && contentType[1] === 0xD8;
-    const isPng = contentType[0] === 0x89 && contentType[1] === 0x50;
-    const isGif = contentType[0] === 0x47 && contentType[1] === 0x49;
-    const isWebp = contentType[8] === 0x57 && contentType[9] === 0x45;
+    // Check if it's an image by magic bytes
+    const magicBytes = imageBuffer.slice(0, 12);
+    const isJpeg = magicBytes[0] === 0xFF && magicBytes[1] === 0xD8 && magicBytes[2] === 0xFF;
+    const isPng = magicBytes[0] === 0x89 && magicBytes[1] === 0x50 && magicBytes[2] === 0x4E && magicBytes[3] === 0x47;
+    const isGif = magicBytes[0] === 0x47 && magicBytes[1] === 0x49 && magicBytes[2] === 0x46;
+    const isWebp = magicBytes[8] === 0x57 && magicBytes[9] === 0x45 && magicBytes[10] === 0x42 && magicBytes[11] === 0x50;
     
-    if (!isJpeg && !isPng && !isGif) {
+    // Also check by URL extension as fallback
+    const urlLower = url.toLowerCase();
+    const hasImageExt = urlLower.includes('.jpg') || urlLower.includes('.jpeg') || 
+                        urlLower.includes('.png') || urlLower.includes('.gif') || 
+                        urlLower.includes('.webp');
+    
+    const isImage = isJpeg || isPng || isGif || isWebp || hasImageExt;
+    
+    if (!isImage || imageBuffer.length < 100) {
       return res.status(400).json({ 
-        error: 'URL должен вести на изображение (JPEG, PNG, GIF)',
+        error: 'URL должен вести на изображение (JPEG, PNG, GIF, WebP)',
         hint: 'Попробуйте скопировать прямую ссылку на изображение'
       });
     }
     
     // Determine file extension
     let ext = 'jpg';
-    if (isPng) ext = 'png';
-    if (isGif) ext = 'gif';
+    if (isPng || urlLower.includes('.png')) ext = 'png';
+    if (isGif || urlLower.includes('.gif')) ext = 'gif';
+    if (isWebp || urlLower.includes('.webp')) ext = 'webp';
     
     // Generate unique filename
     const fileName = `${uuidv4()}.${ext}`;
     const filePath = `images/${fileName}`;
     
     // Upload to Supabase
+    let mimeType = 'image/jpeg';
+    if (ext === 'png') mimeType = 'image/png';
+    if (ext === 'gif') mimeType = 'image/gif';
+    if (ext === 'webp') mimeType = 'image/webp';
+    
     const { error: uploadError } = await supabase.storage
       .from(BUCKET)
       .upload(filePath, imageBuffer, {
-        contentType: isJpeg ? 'image/jpeg' : isPng ? 'image/png' : 'image/gif'
+        contentType: mimeType
       });
     
     if (uploadError) {
