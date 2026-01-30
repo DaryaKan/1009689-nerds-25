@@ -14,7 +14,7 @@ const TelegramBot = require('node-telegram-bot-api');
 const https = require('https');
 const http = require('http');
 const Tesseract = require('tesseract.js');
-const puppeteer = require('puppeteer');
+const puppeteer = require('puppeteer-core');
 
 // Initialize Gemini AI
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
@@ -1044,16 +1044,18 @@ app.post('/api/screenshot-url', express.json(), async (req, res) => {
     
     console.log('Creating screenshot from URL:', url);
     
-    // Launch Puppeteer
+    // Launch Puppeteer with system Chromium
     browser = await puppeteer.launch({
       headless: true,
+      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/chromium',
       args: [
         '--no-sandbox',
         '--disable-setuid-sandbox',
         '--disable-dev-shm-usage',
         '--disable-gpu',
         '--single-process',
-        '--no-zygote'
+        '--no-zygote',
+        '--disable-extensions'
       ]
     });
     
