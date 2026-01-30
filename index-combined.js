@@ -1042,16 +1042,15 @@ app.post('/api/screenshot-url', express.json(), async (req, res) => {
     
     console.log('Creating screenshot from URL:', url);
     
-    // Use Thum.io - free screenshot API with good bot bypass
-    // Parameters: width, crop (height), wait (delay), noanimate
-    const thumUrl = `https://image.thum.io/get/width/1920/crop/1080/wait/5/noanimate/https://${url.replace(/^https?:\/\//, '')}`;
+    // Use Thum.io - free screenshot API
+    // Parameters: width, crop (height), wait (delay in seconds), maxAge (cache)
+    const cleanUrl = url.replace(/^https?:\/\//, '');
+    const thumUrl = `https://image.thum.io/get/width/1920/crop/1080/wait/8/maxAge/0/${cleanUrl}`;
     
-    console.log('Requesting screenshot from Thum.io...');
+    console.log('Requesting screenshot from Thum.io:', thumUrl);
     
     const response = await fetch(thumUrl, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-      }
+      timeout: 90000
     });
     
     if (!response.ok) {
@@ -1059,9 +1058,10 @@ app.post('/api/screenshot-url', express.json(), async (req, res) => {
     }
     
     const imageBuffer = Buffer.from(await response.arrayBuffer());
+    console.log('Screenshot received, size:', imageBuffer.length);
     
-    if (imageBuffer.length < 1000) {
-      throw new Error('Screenshot too small, probably failed');
+    if (imageBuffer.length < 5000) {
+      throw new Error('Screenshot too small, page may have blocked access');
     }
     
     console.log('Screenshot captured, size:', imageBuffer.length);
