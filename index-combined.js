@@ -14,9 +14,7 @@ const TelegramBot = require('node-telegram-bot-api');
 const https = require('https');
 const http = require('http');
 const Tesseract = require('tesseract.js');
-const puppeteer = require('puppeteer-extra');
-const StealthPlugin = require('puppeteer-extra-plugin-stealth');
-puppeteer.use(StealthPlugin());
+// Screenshot API - using external services to bypass bot detection
 
 // Initialize Gemini AI
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
@@ -1026,12 +1024,10 @@ async function saveMetadata() {
 // Load metadata on startup
 loadMetadata();
 
-// Create screenshot from web page URL using Puppeteer
+// Create screenshot from web page URL using external API
 app.post('/api/screenshot-url', express.json(), async (req, res) => {
-  let browser = null;
-  
   try {
-    const { url, marketplace, page, date, tag, device } = req.body;
+    const { url, marketplace, page, date, tag } = req.body;
     
     if (!url) {
       return res.status(400).json({ error: 'URL is required' });
@@ -1046,96 +1042,36 @@ app.post('/api/screenshot-url', express.json(), async (req, res) => {
     
     console.log('Creating screenshot from URL:', url);
     
-    // Launch Puppeteer with stealth mode
-    browser = await puppeteer.launch({
-      headless: 'new',
-      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/chromium',
-      args: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage',
-        '--disable-gpu',
-        '--disable-blink-features=AutomationControlled',
-        '--window-size=1920,1080'
-      ]
-    });
+    // Use screenshotone.com API (free tier available)
+    // Or use alternative services
+    const screenshotApiKey = process.env.SCREENSHOT_API_KEY;
     
-    const browserPage = await browser.newPage();
+    let imageBuffer;
     
-    // Set realistic desktop viewport
-    await browserPage.setViewport({
-      width: 1920,
-      height: 1080,
-      deviceScaleFactor: 1
-    });
-    
-    // Set realistic headers
-    await browserPage.setExtraHTTPHeaders({
-      'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7',
-      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
-      'Accept-Encoding': 'gzip, deflate, br',
-      'Connection': 'keep-alive',
-      'Upgrade-Insecure-Requests': '1'
-    });
-    
-    // Override navigator properties to look more human
-    await browserPage.evaluateOnNewDocument(() => {
-      Object.defineProperty(navigator, 'webdriver', { get: () => false });
-      Object.defineProperty(navigator, 'plugins', { get: () => [1, 2, 3, 4, 5] });
-      Object.defineProperty(navigator, 'languages', { get: () => ['ru-RU', 'ru', 'en-US', 'en'] });
-      window.chrome = { runtime: {} };
-    });
-    
-    // Navigate to URL
-    await browserPage.goto(url, {
-      waitUntil: 'networkidle2',
-      timeout: 60000
-    });
-    
-    // Random delay to look more human (3-5 seconds)
-    await new Promise(resolve => setTimeout(resolve, 3000 + Math.random() * 2000));
-    
-    // Simulate mouse movement
-    await browserPage.mouse.move(100 + Math.random() * 200, 100 + Math.random() * 200);
-    await new Promise(resolve => setTimeout(resolve, 500));
-    await browserPage.mouse.move(300 + Math.random() * 200, 200 + Math.random() * 200);
-    
-    // Wait for page to fully render
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    // Smooth scroll down to trigger lazy loading
-    await browserPage.evaluate(async () => {
-      await new Promise(resolve => {
-        let totalHeight = 0;
-        const distance = 100;
-        const timer = setInterval(() => {
-          window.scrollBy(0, distance);
-          totalHeight += distance;
-          if (totalHeight >= document.body.scrollHeight / 3) {
-            clearInterval(timer);
-            resolve();
-          }
-        }, 100);
-      });
-    });
-    
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    // Scroll back to top smoothly
-    await browserPage.evaluate(() => {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    });
-    
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    // Take screenshot
-    const imageBuffer = await browserPage.screenshot({
-      type: 'png',
-      fullPage: false
-    });
-    
-    await browser.close();
-    browser = null;
+    if (screenshotApiKey) {
+      // Use ScreenshotOne API
+      const apiUrl = `https://api.screenshotone.com/take?access_key=${screenshotApiKey}&url=${encodeURIComponent(url)}&viewport_width=1920&viewport_height=1080&format=png&block_ads=true&block_trackers=true&delay=5&timeout=60`;
+      
+      const response = await fetch(apiUrl);
+      if (!response.ok) {
+        throw new Error(`Screenshot API error: ${response.status}`);
+      }
+      imageBuffer = Buffer.from(await response.arrayBuffer());
+    } else {
+      // Fallback: Use free microlink API
+      const microlinkUrl = `https://api.microlink.io/?url=${encodeURIComponent(url)}&screenshot=true&meta=false&embed=screenshot.url`;
+      
+      const response = await fetch(microlinkUrl);
+      const data = await response.json();
+      
+      if (data.status !== 'success' || !data.data?.screenshot?.url) {
+        throw new Error('Microlink API failed');
+      }
+      
+      // Download the screenshot image
+      const imgResponse = await fetch(data.data.screenshot.url);
+      imageBuffer = Buffer.from(await imgResponse.arrayBuffer());
+    }
     
     console.log('Screenshot captured, size:', imageBuffer.length);
     
@@ -1199,9 +1135,6 @@ app.post('/api/screenshot-url', express.json(), async (req, res) => {
     
   } catch (error) {
     console.error('Screenshot URL error:', error);
-    if (browser) {
-      try { await browser.close(); } catch (e) {}
-    }
     res.status(500).json({ error: 'Не удалось создать скриншот', details: error.message });
   }
 });
