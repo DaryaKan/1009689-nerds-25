@@ -1654,9 +1654,9 @@
         <!-- Link Tab -->
         <form id="linkForm" onsubmit="handleLinkUpload(event)" class="upload-tab-content" data-tab="link">
           <div class="form-group">
-            <label class="form-label">Ссылка на изображение</label>
-            <input type="url" class="form-input" id="linkUrl" placeholder="https://..." required>
-            <div class="form-hint">Вставьте прямую ссылку на изображение (JPEG, PNG, GIF)</div>
+            <label class="form-label">Ссылка на страницу</label>
+            <input type="url" class="form-input" id="linkUrl" placeholder="https://www.ozon.ru/..." required>
+            <div class="form-hint">Вставьте URL страницы маркетплейса — скриншот будет создан автоматически</div>
           </div>
 
           <div class="form-group">
@@ -1692,7 +1692,7 @@
             </div>
           </div>
 
-          <button type="submit" class="submit-btn" id="linkSubmitBtn">📥 Загрузить по ссылке</button>
+          <button type="submit" class="submit-btn" id="linkSubmitBtn">📸 Сделать скриншот</button>
         </form>
       </div>
     </div>
@@ -2162,7 +2162,7 @@
       
       const submitBtn = document.getElementById('linkSubmitBtn');
       submitBtn.disabled = true;
-      submitBtn.textContent = '⏳ Загрузка...';
+      submitBtn.textContent = '⏳ Создание скриншота (до 30 сек)...';
       
       try {
         const response = await fetch(`${API_URL}/api/screenshot-url`, {
@@ -2180,20 +2180,17 @@
         const data = await response.json();
         
         if (data.success) {
-          showToast('Изображение загружено!', 'success');
+          showToast(`Скриншот создан! ${data.marketplace} - ${data.page}`, 'success');
           closeUploadModal();
           loadImages();
         } else {
-          showToast(data.error || 'Ошибка загрузки', 'error');
-          if (data.hint) {
-            showToast(data.hint, 'info');
-          }
+          showToast(data.error || 'Ошибка создания скриншота', 'error');
         }
       } catch (err) {
         showToast('Ошибка: ' + err.message, 'error');
       } finally {
         submitBtn.disabled = false;
-        submitBtn.textContent = '📥 Загрузить по ссылке';
+        submitBtn.textContent = '📸 Сделать скриншот';
       }
     }
 

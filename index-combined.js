@@ -14,6 +14,7 @@ const TelegramBot = require('node-telegram-bot-api');
 const https = require('https');
 const http = require('http');
 const Tesseract = require('tesseract.js');
+const puppeteer = require('puppeteer');
 
 // Initialize Gemini AI
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
@@ -1023,104 +1024,94 @@ async function saveMetadata() {
 // Load metadata on startup
 loadMetadata();
 
-// Download image from URL and save
+// Create screenshot from web page URL using Puppeteer
 app.post('/api/screenshot-url', express.json(), async (req, res) => {
+  let browser = null;
+  
   try {
-    const { url, marketplace, page, date, tag } = req.body;
+    const { url, marketplace, page, date, tag, device } = req.body;
     
     if (!url) {
       return res.status(400).json({ error: 'URL is required' });
     }
     
-    console.log('Downloading image from URL:', url);
+    // Validate URL
+    try {
+      new URL(url);
+    } catch (e) {
+      return res.status(400).json({ error: 'Некорректный URL' });
+    }
     
-    // Download image from URL
-    const imageBuffer = await new Promise((resolve, reject) => {
-      const protocol = url.startsWith('https') ? https : http;
-      
-      const request = protocol.get(url, {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-        }
-      }, (response) => {
-        // Handle redirects
-        if (response.statusCode >= 300 && response.statusCode < 400 && response.headers.location) {
-          const redirectUrl = response.headers.location;
-          const redirectProtocol = redirectUrl.startsWith('https') ? https : http;
-          redirectProtocol.get(redirectUrl, (redirectResponse) => {
-            const chunks = [];
-            redirectResponse.on('data', (chunk) => chunks.push(chunk));
-            redirectResponse.on('end', () => resolve(Buffer.concat(chunks)));
-            redirectResponse.on('error', reject);
-          }).on('error', reject);
-          return;
-        }
-        
-        if (response.statusCode !== 200) {
-          reject(new Error(`HTTP ${response.statusCode}`));
-          return;
-        }
-        
-        const chunks = [];
-        response.on('data', (chunk) => chunks.push(chunk));
-        response.on('end', () => resolve(Buffer.concat(chunks)));
-        response.on('error', reject);
-      });
-      
-      request.on('error', reject);
-      request.setTimeout(30000, () => {
-        request.destroy();
-        reject(new Error('Request timeout'));
-      });
+    console.log('Creating screenshot from URL:', url);
+    
+    // Launch Puppeteer
+    browser = await puppeteer.launch({
+      headless: true,
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-gpu',
+        '--single-process',
+        '--no-zygote'
+      ]
     });
     
-    // Check if it's an image by magic bytes
-    const magicBytes = imageBuffer.slice(0, 12);
-    const isJpeg = magicBytes[0] === 0xFF && magicBytes[1] === 0xD8 && magicBytes[2] === 0xFF;
-    const isPng = magicBytes[0] === 0x89 && magicBytes[1] === 0x50 && magicBytes[2] === 0x4E && magicBytes[3] === 0x47;
-    const isGif = magicBytes[0] === 0x47 && magicBytes[1] === 0x49 && magicBytes[2] === 0x46;
-    const isWebp = magicBytes[8] === 0x57 && magicBytes[9] === 0x45 && magicBytes[10] === 0x42 && magicBytes[11] === 0x50;
+    const browserPage = await browser.newPage();
     
-    // Also check by URL extension as fallback
-    const urlLower = url.toLowerCase();
-    const hasImageExt = urlLower.includes('.jpg') || urlLower.includes('.jpeg') || 
-                        urlLower.includes('.png') || urlLower.includes('.gif') || 
-                        urlLower.includes('.webp');
-    
-    const isImage = isJpeg || isPng || isGif || isWebp || hasImageExt;
-    
-    if (!isImage || imageBuffer.length < 100) {
-      return res.status(400).json({ 
-        error: 'URL должен вести на изображение (JPEG, PNG, GIF, WebP)',
-        hint: 'Попробуйте скопировать прямую ссылку на изображение'
+    // Set mobile viewport (iPhone 12 Pro)
+    const isMobile = device !== 'desktop';
+    if (isMobile) {
+      await browserPage.setViewport({
+        width: 390,
+        height: 844,
+        deviceScaleFactor: 3,
+        isMobile: true,
+        hasTouch: true
+      });
+      await browserPage.setUserAgent('Mozilla/5.0 (iPhone; CPU iPhone OS 14_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0 Mobile/15E148 Safari/604.1');
+    } else {
+      await browserPage.setViewport({
+        width: 1440,
+        height: 900,
+        deviceScaleFactor: 2
       });
     }
     
-    // Determine file extension
-    let ext = 'jpg';
-    if (isPng || urlLower.includes('.png')) ext = 'png';
-    if (isGif || urlLower.includes('.gif')) ext = 'gif';
-    if (isWebp || urlLower.includes('.webp')) ext = 'webp';
+    // Navigate to URL
+    await browserPage.goto(url, {
+      waitUntil: 'networkidle2',
+      timeout: 30000
+    });
+    
+    // Wait a bit for dynamic content
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    
+    // Take screenshot
+    const imageBuffer = await browserPage.screenshot({
+      type: 'png',
+      fullPage: false
+    });
+    
+    await browser.close();
+    browser = null;
+    
+    console.log('Screenshot captured, size:', imageBuffer.length);
     
     // Generate unique filename
-    const fileName = `${uuidv4()}.${ext}`;
+    const fileName = `${uuidv4()}.png`;
     const filePath = `images/${fileName}`;
     
     // Upload to Supabase
-    let mimeType = 'image/jpeg';
-    if (ext === 'png') mimeType = 'image/png';
-    if (ext === 'gif') mimeType = 'image/gif';
-    if (ext === 'webp') mimeType = 'image/webp';
-    
     const { error: uploadError } = await supabase.storage
       .from(BUCKET)
       .upload(filePath, imageBuffer, {
-        contentType: mimeType
+        contentType: 'image/png'
       });
     
     if (uploadError) {
       console.error('Upload error:', uploadError);
-      return res.status(500).json({ error: 'Failed to upload image' });
+      return res.status(500).json({ error: 'Failed to upload screenshot' });
     }
     
     // Try to analyze if marketplace/page not provided
@@ -1136,6 +1127,7 @@ app.post('/api/screenshot-url', express.json(), async (req, res) => {
         if (!finalPage && analysis.page) {
           finalPage = analysis.page;
         }
+        console.log('AI Analysis result:', finalMarketplace, finalPage);
       } catch (e) {
         console.log('Analysis failed:', e.message);
       }
@@ -1146,7 +1138,7 @@ app.post('/api/screenshot-url', express.json(), async (req, res) => {
       marketplace: finalMarketplace || 'Не определён',
       page: finalPage || 'Не определена',
       date: date || new Date().toISOString().split('T')[0],
-      description: `Загружено с: ${url.substring(0, 50)}...`,
+      description: `Скриншот: ${url.substring(0, 80)}`,
       tag: tag || 'web'
     });
     
@@ -1160,13 +1152,16 @@ app.post('/api/screenshot-url', express.json(), async (req, res) => {
       success: true,
       id: fileName,
       url: urlData.publicUrl,
-      marketplace: finalMarketplace,
-      page: finalPage
+      marketplace: finalMarketplace || 'Не определён',
+      page: finalPage || 'Не определена'
     });
     
   } catch (error) {
     console.error('Screenshot URL error:', error);
-    res.status(500).json({ error: 'Не удалось загрузить изображение', details: error.message });
+    if (browser) {
+      try { await browser.close(); } catch (e) {}
+    }
+    res.status(500).json({ error: 'Не удалось создать скриншот', details: error.message });
   }
 });
 
