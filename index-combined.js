@@ -1071,12 +1071,22 @@ app.post('/api/screenshot-url', express.json(), async (req, res) => {
     
     // Navigate to URL
     await browserPage.goto(url, {
-      waitUntil: 'networkidle2',
-      timeout: 30000
+      waitUntil: 'networkidle0',
+      timeout: 60000
     });
     
-    // Wait a bit for dynamic content
+    // Wait for dynamic content to load (images, JS rendering)
+    await new Promise(resolve => setTimeout(resolve, 5000));
+    
+    // Scroll down and back up to trigger lazy loading
+    await browserPage.evaluate(() => {
+      window.scrollTo(0, document.body.scrollHeight / 2);
+    });
     await new Promise(resolve => setTimeout(resolve, 2000));
+    await browserPage.evaluate(() => {
+      window.scrollTo(0, 0);
+    });
+    await new Promise(resolve => setTimeout(resolve, 1000));
     
     // Take screenshot
     const imageBuffer = await browserPage.screenshot({
