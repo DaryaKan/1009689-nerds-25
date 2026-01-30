@@ -1151,17 +1151,22 @@ app.get('/api/images', async (req, res) => {
           .from(BUCKET)
           .getPublicUrl(`images/${file.name}`);
 
+        const meta = imageMetadata.get(file.name) || {
+          marketplace: 'Не указан',
+          page: 'Не указана',
+          date: file.created_at ? file.created_at.split('T')[0] : '',
+          description: '',
+          tag: 'app'
+        };
+        // Ensure tag exists
+        if (!meta.tag) meta.tag = 'app';
+        
         return {
           id: file.name,
           url: urlData.publicUrl,
           size: file.metadata?.size,
           createdAt: file.created_at,
-          metadata: imageMetadata.get(file.name) || {
-            marketplace: 'Не указан',
-            page: 'Не указана',
-            date: file.created_at ? file.created_at.split('T')[0] : '',
-            description: ''
-          }
+          metadata: meta
         };
       });
 
@@ -1200,7 +1205,7 @@ app.delete('/api/images/:id', async (req, res) => {
 app.put('/api/images/:id/metadata', express.json(), async (req, res) => {
   try {
     const { id } = req.params;
-    const { marketplace, page, date, description } = req.body;
+    const { marketplace, page, date, description, tag } = req.body;
     
     // Check if image exists
     const existingMeta = imageMetadata.get(id);
@@ -1218,7 +1223,8 @@ app.put('/api/images/:id/metadata', express.json(), async (req, res) => {
       marketplace: marketplace || existingMeta?.marketplace || '',
       page: page || existingMeta?.page || '',
       date: date || existingMeta?.date || '',
-      description: description !== undefined ? description : (existingMeta?.description || '')
+      description: description !== undefined ? description : (existingMeta?.description || ''),
+      tag: tag !== undefined ? tag : (existingMeta?.tag || 'app')
     };
     
     imageMetadata.set(id, newMetadata);
@@ -2726,6 +2732,37 @@ app.get('/api/compare-options', async (req, res) => {
   } catch (error) {
     console.error('Compare options error:', error);
     res.status(500).json({ error: 'Failed to get options' });
+  }
+});
+
+// Set tag for all images
+app.post('/api/set-all-tags', express.json(), async (req, res) => {
+  try {
+    const { tag } = req.body;
+    
+    if (!tag || !['app', 'web'].includes(tag)) {
+      return res.status(400).json({ error: 'Tag must be "app" or "web"' });
+    }
+    
+    let updated = 0;
+    
+    for (const [id, meta] of imageMetadata.entries()) {
+      meta.tag = tag;
+      imageMetadata.set(id, meta);
+      updated++;
+    }
+    
+    await saveMetadata();
+    
+    res.json({ 
+      success: true, 
+      message: `Updated ${updated} images with tag "${tag}"`,
+      updated 
+    });
+    
+  } catch (error) {
+    console.error('Set all tags error:', error);
+    res.status(500).json({ error: 'Failed to set tags' });
   }
 });
 

@@ -692,6 +692,68 @@
       border-color: var(--accent);
     }
 
+    .tag-filter {
+      display: flex;
+      gap: 4px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 4px;
+    }
+
+    .tag-btn {
+      padding: 6px 12px;
+      background: transparent;
+      border: none;
+      border-radius: 6px;
+      font-size: 12px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+
+    .tag-btn:hover {
+      background: var(--bg-elevated);
+      color: var(--text);
+    }
+
+    .tag-btn.active {
+      background: linear-gradient(135deg, var(--gradient-blue), var(--gradient-purple));
+      color: #fff;
+    }
+
+    .tag-toggle {
+      display: flex;
+      gap: 4px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 4px;
+    }
+
+    .tag-toggle-btn {
+      padding: 6px 14px;
+      background: transparent;
+      border: none;
+      border-radius: 6px;
+      font-size: 13px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+
+    .tag-toggle-btn:hover {
+      background: var(--bg-elevated);
+      color: var(--text);
+    }
+
+    .tag-toggle-btn.active {
+      background: linear-gradient(135deg, var(--gradient-blue), var(--gradient-purple));
+      color: #fff;
+    }
+
     .clear-filters-btn {
       padding: 8px 14px;
       background: transparent;
@@ -1405,6 +1467,12 @@
         </div>
       </div>
 
+      <div class="tag-filter">
+        <button class="tag-btn active" data-tag="all" onclick="setTagFilter('all')">Все</button>
+        <button class="tag-btn" data-tag="app" onclick="setTagFilter('app')">📱 App</button>
+        <button class="tag-btn" data-tag="web" onclick="setTagFilter('web')">🌐 Web</button>
+      </div>
+
       <button class="clear-filters-btn" onclick="clearFilters()">Сбросить</button>
 
       <div class="results-count" id="resultsCount">0 скриншотов</div>
@@ -1582,6 +1650,13 @@
               <input type="text" class="detail-text-input" id="detailDescription" placeholder="Добавить описание..." onchange="markDetailChanged()">
             </div>
             <div class="detail-row">
+              <span class="detail-label">Тип</span>
+              <div class="tag-toggle">
+                <button type="button" class="tag-toggle-btn active" data-tag="app" id="tagApp" onclick="setDetailTag('app')">📱 App</button>
+                <button type="button" class="tag-toggle-btn" data-tag="web" id="tagWeb" onclick="setDetailTag('web')">🌐 Web</button>
+              </div>
+            </div>
+            <div class="detail-row">
               <span class="detail-label">Ссылка</span>
               <div class="detail-link-container">
                 <input type="text" class="detail-link-input" id="detailUrl" readonly>
@@ -1621,6 +1696,16 @@
     let allImages = [];
     let selectedFile = null;
     let currentDetailImage = null;
+    let currentTagFilter = 'all';
+
+    // Tag filter function
+    function setTagFilter(tag) {
+      currentTagFilter = tag;
+      document.querySelectorAll('.tag-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.tag === tag);
+      });
+      applyFilters();
+    }
 
     // Initialize
     document.addEventListener('DOMContentLoaded', () => {
@@ -2283,6 +2368,12 @@
         const pg = img.metadata?.page || 'Не указана';
         const date = img.metadata?.date || '';
         const desc = (img.metadata?.description || '').toLowerCase();
+        const tag = img.metadata?.tag || 'app';
+
+        // Tag filter
+        if (currentTagFilter !== 'all' && tag !== currentTagFilter) {
+          return false;
+        }
 
         if (search && !desc.includes(search) && !mp.toLowerCase().includes(search) && !pg.toLowerCase().includes(search)) {
           return false;
@@ -2311,6 +2402,7 @@
       document.getElementById('dateFrom').value = '';
       document.getElementById('dateTo').value = '';
       document.querySelectorAll('.filter-dropdown-menu input[type="checkbox"]').forEach(el => el.checked = false);
+      setTagFilter('all');
       updateDropdownButtons();
       applyFilters();
     }
@@ -2385,10 +2477,28 @@
       document.getElementById('detailUrl').value = img.url;
       document.getElementById('detailOpenBtn').href = img.url;
       
+      // Set tag
+      const tag = img.metadata?.tag || 'app';
+      setDetailTagUI(tag);
+      
       // Hide save button initially
       document.getElementById('detailSaveBtn').style.display = 'none';
       
       document.getElementById('detailModal').classList.add('active');
+    }
+    
+    function setDetailTagUI(tag) {
+      document.getElementById('tagApp').classList.toggle('active', tag === 'app');
+      document.getElementById('tagWeb').classList.toggle('active', tag === 'web');
+    }
+    
+    function setDetailTag(tag) {
+      setDetailTagUI(tag);
+      markDetailChanged();
+    }
+    
+    function getDetailTag() {
+      return document.getElementById('tagApp').classList.contains('active') ? 'app' : 'web';
     }
 
     function closeDetailModal() {
@@ -2419,7 +2529,8 @@
         marketplace: getComboValue('detailMarketplace', 'detailMarketplaceCustom'),
         page: getComboValue('detailPage', 'detailPageCustom'),
         date: document.getElementById('detailDate').value,
-        description: document.getElementById('detailDescription').value
+        description: document.getElementById('detailDescription').value,
+        tag: getDetailTag()
       };
       
       try {
