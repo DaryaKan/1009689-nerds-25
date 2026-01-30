@@ -14,7 +14,10 @@ const TelegramBot = require('node-telegram-bot-api');
 const https = require('https');
 const http = require('http');
 const Tesseract = require('tesseract.js');
-// Screenshot API - using external services to bypass bot detection
+// Puppeteer with stealth for screenshots
+const puppeteer = require('puppeteer-extra');
+const StealthPlugin = require('puppeteer-extra-plugin-stealth');
+puppeteer.use(StealthPlugin());
 
 // Initialize Gemini AI
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
@@ -1024,10 +1027,12 @@ async function saveMetadata() {
 // Load metadata on startup
 loadMetadata();
 
-// Create screenshot from web page URL using external API
+// Create screenshot from web page URL with Puppeteer in incognito mode
 app.post('/api/screenshot-url', express.json(), async (req, res) => {
+  let browser = null;
+  
   try {
-    const { url, marketplace, page, date, tag } = req.body;
+    const { url, marketplace: inputMarketplace, page: inputPage, date, tag } = req.body;
     
     if (!url) {
       return res.status(400).json({ error: 'URL is required' });
@@ -1042,29 +1047,104 @@ app.post('/api/screenshot-url', express.json(), async (req, res) => {
     
     console.log('Creating screenshot from URL:', url);
     
-    // Use Thum.io - free screenshot API
-    // Parameters: width, crop (height), wait (delay in seconds), maxAge (cache)
-    const cleanUrl = url.replace(/^https?:\/\//, '');
-    const thumUrl = `https://image.thum.io/get/width/1920/crop/1080/wait/8/maxAge/0/${cleanUrl}`;
-    
-    console.log('Requesting screenshot from Thum.io:', thumUrl);
-    
-    const response = await fetch(thumUrl, {
-      timeout: 90000
+    // Launch browser with stealth
+    browser = await puppeteer.launch({
+      headless: 'new',
+      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/chromium',
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-blink-features=AutomationControlled',
+        '--disable-infobars',
+        '--window-size=1920,1080',
+        '--incognito'
+      ],
+      ignoreDefaultArgs: ['--enable-automation']
     });
     
-    if (!response.ok) {
-      throw new Error(`Screenshot API error: ${response.status}`);
-    }
+    // Create incognito context for clean session
+    const context = await browser.createBrowserContext();
+    const browserPage = await context.newPage();
     
-    const imageBuffer = Buffer.from(await response.arrayBuffer());
-    console.log('Screenshot received, size:', imageBuffer.length);
+    // Set viewport
+    await browserPage.setViewport({ width: 1920, height: 1080, deviceScaleFactor: 1 });
     
-    if (imageBuffer.length < 5000) {
-      throw new Error('Screenshot too small, page may have blocked access');
-    }
+    // Set realistic user agent
+    await browserPage.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36');
     
+    // Set headers like real browser
+    await browserPage.setExtraHTTPHeaders({
+      'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7',
+      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+      'sec-ch-ua': '"Chromium";v="122", "Not(A:Brand";v="24", "Google Chrome";v="122"',
+      'sec-ch-ua-mobile': '?0',
+      'sec-ch-ua-platform': '"Windows"',
+      'Upgrade-Insecure-Requests': '1'
+    });
+    
+    // Override webdriver and other bot detection
+    await browserPage.evaluateOnNewDocument(() => {
+      // Hide webdriver
+      Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
+      
+      // Fake plugins
+      Object.defineProperty(navigator, 'plugins', {
+        get: () => [
+          { name: 'Chrome PDF Plugin', filename: 'internal-pdf-viewer' },
+          { name: 'Chrome PDF Viewer', filename: 'mhjfbmdgcfjbbpaeojofohoefgiehjai' },
+          { name: 'Native Client', filename: 'internal-nacl-plugin' }
+        ]
+      });
+      
+      // Fake languages
+      Object.defineProperty(navigator, 'languages', { get: () => ['ru-RU', 'ru', 'en-US', 'en'] });
+      
+      // Add chrome object
+      window.chrome = { 
+        runtime: {},
+        loadTimes: () => ({ commitLoadTime: Date.now() / 1000 }),
+        csi: () => ({ startE: Date.now(), onloadT: Date.now() })
+      };
+      
+      // Override permissions
+      const originalQuery = window.navigator.permissions.query;
+      window.navigator.permissions.query = (parameters) => (
+        parameters.name === 'notifications' 
+          ? Promise.resolve({ state: Notification.permission }) 
+          : originalQuery(parameters)
+      );
+    });
+    
+    // Navigate to URL
+    console.log('Navigating to:', url);
+    await browserPage.goto(url, { 
+      waitUntil: 'networkidle2', 
+      timeout: 60000 
+    });
+    
+    // Wait for page to render
+    await new Promise(r => setTimeout(r, 5000));
+    
+    // Simulate human behavior
+    await browserPage.mouse.move(100 + Math.random() * 400, 100 + Math.random() * 200);
+    await new Promise(r => setTimeout(r, 200 + Math.random() * 300));
+    await browserPage.mouse.move(300 + Math.random() * 600, 200 + Math.random() * 300);
+    
+    // Small scroll
+    await browserPage.evaluate(() => window.scrollBy(0, 100));
+    await new Promise(r => setTimeout(r, 1000));
+    await browserPage.evaluate(() => window.scrollTo({ top: 0, behavior: 'smooth' }));
+    await new Promise(r => setTimeout(r, 1000));
+    
+    // Take screenshot
+    const imageBuffer = await browserPage.screenshot({ type: 'png' });
     console.log('Screenshot captured, size:', imageBuffer.length);
+    
+    // Close browser
+    await context.close();
+    await browser.close();
+    browser = null;
     
     // Generate unique filename
     const fileName = `${uuidv4()}.png`;
@@ -1073,29 +1153,23 @@ app.post('/api/screenshot-url', express.json(), async (req, res) => {
     // Upload to Supabase
     const { error: uploadError } = await supabase.storage
       .from(BUCKET)
-      .upload(filePath, imageBuffer, {
-        contentType: 'image/png'
-      });
+      .upload(filePath, imageBuffer, { contentType: 'image/png' });
     
     if (uploadError) {
       console.error('Upload error:', uploadError);
       return res.status(500).json({ error: 'Failed to upload screenshot' });
     }
     
-    // Try to analyze if marketplace/page not provided
-    let finalMarketplace = marketplace || '';
-    let finalPage = page || '';
+    // Analyze screenshot
+    let finalMarketplace = inputMarketplace || '';
+    let finalPage = inputPage || '';
     
     if (!finalMarketplace || !finalPage) {
       try {
         const analysis = await analyzeScreenshotPipeline(imageBuffer);
-        if (!finalMarketplace && analysis.marketplace) {
-          finalMarketplace = analysis.marketplace;
-        }
-        if (!finalPage && analysis.page) {
-          finalPage = analysis.page;
-        }
-        console.log('AI Analysis result:', finalMarketplace, finalPage);
+        if (!finalMarketplace && analysis.marketplace) finalMarketplace = analysis.marketplace;
+        if (!finalPage && analysis.page) finalPage = analysis.page;
+        console.log('AI Analysis:', finalMarketplace, finalPage);
       } catch (e) {
         console.log('Analysis failed:', e.message);
       }
@@ -1112,9 +1186,7 @@ app.post('/api/screenshot-url', express.json(), async (req, res) => {
     
     await saveMetadata();
     
-    const { data: urlData } = supabase.storage
-      .from(BUCKET)
-      .getPublicUrl(filePath);
+    const { data: urlData } = supabase.storage.from(BUCKET).getPublicUrl(filePath);
     
     res.json({
       success: true,
@@ -1126,6 +1198,9 @@ app.post('/api/screenshot-url', express.json(), async (req, res) => {
     
   } catch (error) {
     console.error('Screenshot URL error:', error);
+    if (browser) {
+      try { await browser.close(); } catch (e) {}
+    }
     res.status(500).json({ error: 'Не удалось создать скриншот', details: error.message });
   }
 });
