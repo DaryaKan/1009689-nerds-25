@@ -14,7 +14,9 @@ const TelegramBot = require('node-telegram-bot-api');
 const https = require('https');
 const http = require('http');
 const Tesseract = require('tesseract.js');
-const puppeteer = require('puppeteer-core');
+const puppeteer = require('puppeteer-extra');
+const StealthPlugin = require('puppeteer-extra-plugin-stealth');
+puppeteer.use(StealthPlugin());
 
 // Initialize Gemini AI
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
@@ -1044,49 +1046,87 @@ app.post('/api/screenshot-url', express.json(), async (req, res) => {
     
     console.log('Creating screenshot from URL:', url);
     
-    // Launch Puppeteer with system Chromium
+    // Launch Puppeteer with stealth mode
     browser = await puppeteer.launch({
-      headless: true,
+      headless: 'new',
       executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/chromium',
       args: [
         '--no-sandbox',
         '--disable-setuid-sandbox',
         '--disable-dev-shm-usage',
         '--disable-gpu',
-        '--single-process',
-        '--no-zygote',
-        '--disable-extensions'
+        '--disable-blink-features=AutomationControlled',
+        '--window-size=1920,1080'
       ]
     });
     
     const browserPage = await browser.newPage();
     
-    // Set desktop viewport by default
+    // Set realistic desktop viewport
     await browserPage.setViewport({
-      width: 1440,
-      height: 900,
-      deviceScaleFactor: 2
+      width: 1920,
+      height: 1080,
+      deviceScaleFactor: 1
     });
-    await browserPage.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
+    
+    // Set realistic headers
+    await browserPage.setExtraHTTPHeaders({
+      'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7',
+      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+      'Accept-Encoding': 'gzip, deflate, br',
+      'Connection': 'keep-alive',
+      'Upgrade-Insecure-Requests': '1'
+    });
+    
+    // Override navigator properties to look more human
+    await browserPage.evaluateOnNewDocument(() => {
+      Object.defineProperty(navigator, 'webdriver', { get: () => false });
+      Object.defineProperty(navigator, 'plugins', { get: () => [1, 2, 3, 4, 5] });
+      Object.defineProperty(navigator, 'languages', { get: () => ['ru-RU', 'ru', 'en-US', 'en'] });
+      window.chrome = { runtime: {} };
+    });
     
     // Navigate to URL
     await browserPage.goto(url, {
-      waitUntil: 'networkidle0',
+      waitUntil: 'networkidle2',
       timeout: 60000
     });
     
-    // Wait for dynamic content to load (images, JS rendering)
-    await new Promise(resolve => setTimeout(resolve, 5000));
+    // Random delay to look more human (3-5 seconds)
+    await new Promise(resolve => setTimeout(resolve, 3000 + Math.random() * 2000));
     
-    // Scroll down and back up to trigger lazy loading
-    await browserPage.evaluate(() => {
-      window.scrollTo(0, document.body.scrollHeight / 2);
-    });
+    // Simulate mouse movement
+    await browserPage.mouse.move(100 + Math.random() * 200, 100 + Math.random() * 200);
+    await new Promise(resolve => setTimeout(resolve, 500));
+    await browserPage.mouse.move(300 + Math.random() * 200, 200 + Math.random() * 200);
+    
+    // Wait for page to fully render
     await new Promise(resolve => setTimeout(resolve, 2000));
-    await browserPage.evaluate(() => {
-      window.scrollTo(0, 0);
+    
+    // Smooth scroll down to trigger lazy loading
+    await browserPage.evaluate(async () => {
+      await new Promise(resolve => {
+        let totalHeight = 0;
+        const distance = 100;
+        const timer = setInterval(() => {
+          window.scrollBy(0, distance);
+          totalHeight += distance;
+          if (totalHeight >= document.body.scrollHeight / 3) {
+            clearInterval(timer);
+            resolve();
+          }
+        }, 100);
+      });
     });
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    
+    // Scroll back to top smoothly
+    await browserPage.evaluate(() => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+    
+    await new Promise(resolve => setTimeout(resolve, 1500));
     
     // Take screenshot
     const imageBuffer = await browserPage.screenshot({
