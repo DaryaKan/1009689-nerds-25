@@ -1083,57 +1083,145 @@ app.post('/api/screenshot-url', express.json(), async (req, res) => {
       'Upgrade-Insecure-Requests': '1'
     });
     
-    // Override webdriver and other bot detection
+    // Override webdriver and other bot detection - comprehensive
     await browserPage.evaluateOnNewDocument(() => {
-      // Hide webdriver
-      Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
+      // Delete webdriver property
+      delete navigator.__proto__.webdriver;
       
-      // Fake plugins
-      Object.defineProperty(navigator, 'plugins', {
-        get: () => [
-          { name: 'Chrome PDF Plugin', filename: 'internal-pdf-viewer' },
-          { name: 'Chrome PDF Viewer', filename: 'mhjfbmdgcfjbbpaeojofohoefgiehjai' },
-          { name: 'Native Client', filename: 'internal-nacl-plugin' }
-        ]
+      // Override webdriver getter
+      Object.defineProperty(navigator, 'webdriver', {
+        get: () => false,
+        configurable: true
       });
       
-      // Fake languages
-      Object.defineProperty(navigator, 'languages', { get: () => ['ru-RU', 'ru', 'en-US', 'en'] });
+      // Fake plugins array
+      const makePluginArray = () => {
+        const plugins = [
+          { name: 'Chrome PDF Plugin', filename: 'internal-pdf-viewer', description: 'Portable Document Format' },
+          { name: 'Chrome PDF Viewer', filename: 'mhjfbmdgcfjbbpaeojofohoefgiehjai', description: '' },
+          { name: 'Native Client', filename: 'internal-nacl-plugin', description: '' }
+        ];
+        plugins.refresh = () => {};
+        plugins.item = (i) => plugins[i];
+        plugins.namedItem = (name) => plugins.find(p => p.name === name);
+        return plugins;
+      };
+      Object.defineProperty(navigator, 'plugins', { get: makePluginArray });
       
-      // Add chrome object
-      window.chrome = { 
-        runtime: {},
-        loadTimes: () => ({ commitLoadTime: Date.now() / 1000 }),
+      // Languages
+      Object.defineProperty(navigator, 'languages', { get: () => ['ru-RU', 'ru', 'en-US', 'en'] });
+      Object.defineProperty(navigator, 'language', { get: () => 'ru-RU' });
+      
+      // Platform
+      Object.defineProperty(navigator, 'platform', { get: () => 'Win32' });
+      
+      // Hardware concurrency (CPU cores)
+      Object.defineProperty(navigator, 'hardwareConcurrency', { get: () => 8 });
+      
+      // Device memory
+      Object.defineProperty(navigator, 'deviceMemory', { get: () => 8 });
+      
+      // Connection
+      Object.defineProperty(navigator, 'connection', {
+        get: () => ({ effectiveType: '4g', rtt: 50, downlink: 10, saveData: false })
+      });
+      
+      // Chrome object
+      window.chrome = {
+        runtime: { 
+          connect: () => {}, 
+          sendMessage: () => {},
+          onMessage: { addListener: () => {} }
+        },
+        loadTimes: () => ({
+          commitLoadTime: Date.now() / 1000,
+          connectionInfo: 'http/1.1',
+          finishDocumentLoadTime: Date.now() / 1000,
+          finishLoadTime: Date.now() / 1000,
+          firstPaintAfterLoadTime: 0,
+          firstPaintTime: Date.now() / 1000,
+          navigationType: 'Other',
+          npnNegotiatedProtocol: 'unknown',
+          requestTime: Date.now() / 1000,
+          startLoadTime: Date.now() / 1000,
+          wasAlternateProtocolAvailable: false,
+          wasFetchedViaSpdy: false,
+          wasNpnNegotiated: false
+        }),
         csi: () => ({ startE: Date.now(), onloadT: Date.now() })
       };
       
-      // Override permissions
+      // Permissions
       const originalQuery = window.navigator.permissions.query;
       window.navigator.permissions.query = (parameters) => (
         parameters.name === 'notifications' 
-          ? Promise.resolve({ state: Notification.permission }) 
+          ? Promise.resolve({ state: 'default' }) 
           : originalQuery(parameters)
       );
+      
+      // WebGL vendor/renderer
+      const getParameterProxyHandler = {
+        apply: function(target, ctx, args) {
+          if (args[0] === 37445) return 'Intel Inc.';
+          if (args[0] === 37446) return 'Intel Iris OpenGL Engine';
+          return Reflect.apply(target, ctx, args);
+        }
+      };
+      
+      // Canvas fingerprint randomization
+      const originalToDataURL = HTMLCanvasElement.prototype.toDataURL;
+      HTMLCanvasElement.prototype.toDataURL = function(type) {
+        if (type === 'image/png' && this.width === 16 && this.height === 16) {
+          return originalToDataURL.apply(this, arguments);
+        }
+        return originalToDataURL.apply(this, arguments);
+      };
     });
     
     // Navigate to URL
     console.log('Navigating to:', url);
     await browserPage.goto(url, { 
-      waitUntil: 'networkidle2', 
+      waitUntil: 'domcontentloaded', 
       timeout: 60000 
     });
     
-    // Wait for page to render
-    await new Promise(r => setTimeout(r, 5000));
+    // Wait like a human would - random 3-6 seconds
+    await new Promise(r => setTimeout(r, 3000 + Math.random() * 3000));
     
-    // Simulate human behavior
-    await browserPage.mouse.move(100 + Math.random() * 400, 100 + Math.random() * 200);
-    await new Promise(r => setTimeout(r, 200 + Math.random() * 300));
-    await browserPage.mouse.move(300 + Math.random() * 600, 200 + Math.random() * 300);
+    // Wait for network to settle
+    await browserPage.waitForNetworkIdle({ timeout: 10000 }).catch(() => {});
     
-    // Small scroll
-    await browserPage.evaluate(() => window.scrollBy(0, 100));
-    await new Promise(r => setTimeout(r, 1000));
+    // Additional wait for JS rendering
+    await new Promise(r => setTimeout(r, 3000));
+    
+    // Simulate realistic mouse movements
+    const moves = 3 + Math.floor(Math.random() * 3);
+    for (let i = 0; i < moves; i++) {
+      await browserPage.mouse.move(
+        100 + Math.random() * 800,
+        100 + Math.random() * 500,
+        { steps: 10 + Math.floor(Math.random() * 10) }
+      );
+      await new Promise(r => setTimeout(r, 100 + Math.random() * 200));
+    }
+    
+    // Random click on page (not on links)
+    await browserPage.mouse.click(500 + Math.random() * 200, 300 + Math.random() * 100);
+    await new Promise(r => setTimeout(r, 500));
+    
+    // Smooth scroll like human
+    await browserPage.evaluate(async () => {
+      const scrollAmount = 200 + Math.random() * 300;
+      const steps = 10;
+      for (let i = 0; i < steps; i++) {
+        window.scrollBy(0, scrollAmount / steps);
+        await new Promise(r => setTimeout(r, 50 + Math.random() * 50));
+      }
+    });
+    
+    await new Promise(r => setTimeout(r, 1500 + Math.random() * 1000));
+    
+    // Scroll back to top
     await browserPage.evaluate(() => window.scrollTo({ top: 0, behavior: 'smooth' }));
     await new Promise(r => setTimeout(r, 1000));
     
