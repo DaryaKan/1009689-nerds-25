@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Color Guesser</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="container">
+    <h1 class="title">Color Guesser</h1>
+    <p class="subtitle">Угадай цвет по HEX-коду!</p>
+
+    <div class="score-board">
+      <span class="score">Счёт: <strong id="score">0</strong></span>
+      <span class="round">Раунд: <strong id="round">1</strong> / <strong id="total-rounds">10</strong></span>
+    </div>
+
+    <div class="hex-display" id="hex-display">#??????</div>
+
+    <div class="options" id="options"></div>
+
+    <div class="result" id="result"></div>
+
+    <button class="btn btn-next" id="btn-next" hidden>Следующий раунд</button>
+    <button class="btn btn-restart" id="btn-restart" hidden>Играть снова</button>
+  </div>
+
+  <script src="js/script.js"></script>
+</body>
+</html>
